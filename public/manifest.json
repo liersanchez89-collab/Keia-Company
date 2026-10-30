@@ -1,7 +1,7 @@
 {
-  "name": "Dashboard",
-  "short_name": "Dashboard",
-  "description": "Dashboard de gestión",
+  "name": "KEIA",
+  "short_name": "KEIA",
+  "description": "KEIA – gestión de la empresa",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
