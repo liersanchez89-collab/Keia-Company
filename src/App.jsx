@@ -10247,7 +10247,7 @@ function ChatWidget(){
             newOnes.forEach(m=>{
               new Notification(EMPRESA+" Chat — "+grpInfo.label,{
                 body:`${m.autor}: ${m.texto}`,
-                icon:"/favicon.ico"
+                icon:"/icon-192.png"
               });
             });
           }
