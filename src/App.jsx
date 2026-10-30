@@ -11004,7 +11004,7 @@ export default function Dashboard(){
         <div className="blesk-header-pad" style={{padding:"0 32px",display:"flex",alignItems:"center",justifyContent:"space-between",height:52}}>
           {/* Logo */}
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{background:"#111827",width:30,height:30,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:"#FFF",fontSize:13,letterSpacing:"-0.5px"}}>B</div>
+            <img src="/icon-192.png" alt={EMPRESA} style={{width:30,height:30,borderRadius:8,display:"block",objectFit:"cover"}}/>
             <div>
               <div style={{fontWeight:700,fontSize:13,color:"#111827",letterSpacing:"-0.4px"}}>{EMPRESA}</div>
               <div style={{fontSize:9,color:"#9CA3AF",fontWeight:400,letterSpacing:"0.2px"}}>{EMPRESA_SUB}</div>
