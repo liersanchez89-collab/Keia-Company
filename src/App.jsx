@@ -10962,7 +10962,7 @@ export default function Dashboard(){
 
   if(loading) return(
     <div style={{minHeight:"100vh",background:"#F0F2F5",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
-      <div style={{background:"#1E3A5F",width:48,height:48,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,color:"#FFF",fontSize:22}}>B</div>
+      <img src="/icon-192.png" alt={EMPRESA} style={{width:48,height:48,borderRadius:10,display:"block",objectFit:"cover"}}/>
       <div style={{color:"#9C9B97",fontSize:13,fontWeight:500}}>Cargando datos...</div>
     </div>
   );
