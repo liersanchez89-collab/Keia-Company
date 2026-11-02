@@ -58,3 +58,7 @@ create policy "hoja_gasto cambiar" on storage.objects for update to authenticate
   using (bucket_id = 'hoja_gasto' and public.es_admin());
 create policy "hoja_gasto borrar" on storage.objects for delete to authenticated
   using (bucket_id = 'hoja_gasto' and public.es_admin());
+
+-- 5) Proyectos: cualquier miembro puede AÑADIR uno nuevo (editar/borrar sigue siendo solo admin)
+drop policy if exists "todos anaden" on public.projects;
+create policy "todos anaden" on public.projects for insert to authenticated with check (public.es_miembro());
