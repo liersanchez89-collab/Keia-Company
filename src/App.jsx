@@ -3846,8 +3846,12 @@ const nuevoIdHoras=()=>`${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
 
 function HorasTab({projects}){
   const [entries,setEntries,recargar]=useHoras();
-  const [persona,setPersonaRaw]=useState(()=>{ try{ return localStorage.getItem("blesk_horas_persona")||MIEMBROS_VISIBLES[0].name; }catch{ return MIEMBROS_VISIBLES[0].name; } });
-  const setPersona=p=>{ setPersonaRaw(p); try{ localStorage.setItem("blesk_horas_persona",p); }catch{} };
+  // Cada uno registra sus horas con su propio perfil; solo los admin pueden cambiar de persona.
+  const [persona,setPersonaRaw]=useState(()=>{
+    if(perfil.nombre&&perfil.rol!=="admin") return perfil.nombre;
+    try{ return localStorage.getItem("blesk_horas_persona")||perfil.nombre||MIEMBROS_VISIBLES[0].name; }catch{ return perfil.nombre||MIEMBROS_VISIBLES[0].name; }
+  });
+  const setPersona=p=>{ if(perfil.rol!=="admin"&&p!==perfil.nombre) return; setPersonaRaw(p); try{ localStorage.setItem("blesk_horas_persona",p); }catch{} };
   const [proyecto,setProyecto]=useState("");
   const [desc,setDesc]=useState("");
   const [facturable,setFacturableRaw]=useState(()=>{ try{ return localStorage.getItem("blesk_horas_fact")!=="0"; }catch{ return true; } });
@@ -4032,7 +4036,7 @@ function HorasTab({projects}){
       {/* ── Registrar ── */}
       <div style={{background:"#FFF",border:`1.5px solid ${enMarcha?pc+"88":"#E5E7EB"}`,borderRadius:14,padding:"14px 16px",marginBottom:18,boxShadow:"0 1px 3px rgba(0,0,0,0.05)"}}>
         <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>
-          {MIEMBROS_VISIBLES.map(mem=>(
+          {MIEMBROS_VISIBLES.filter(mem=>perfil.rol==="admin"||mem.name===perfil.nombre).map(mem=>(
             <button key={mem.name} onClick={()=>setPersona(mem.name)} style={{
               background:persona===mem.name?mem.color:"#F9FAFB",color:persona===mem.name?"#FFF":"#374151",
               border:`1.5px solid ${persona===mem.name?mem.color:"#E5E7EB"}`,borderRadius:99,padding:"5px 12px",fontSize:11,
