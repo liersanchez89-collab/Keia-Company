@@ -1,10 +1,6 @@
 import { useState, useEffect, useCallback, useRef, Fragment } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { EMPRESA, EMPRESA_SUB, MIEMBROS, MIEMBROS_ANTIGUOS, EXTERNOS, PROYECTOS_INICIALES, CLAVE_EDICION, CLAVE_CHAT_PRIVADO } from "./config.js";
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+import { sb } from "./supabase.js";
 
 // ── Clockify ──────────────────────────────────────────────────────────────────
 const CLOCKIFY_KEY = ""; // la clave de Clockify va en la variable CLOCKIFY_KEY de Vercel (api/clockify.js)
@@ -11027,6 +11023,10 @@ export default function Dashboard(){
               </div>
             ))}
           </div>
+          <button onClick={()=>sb.auth.signOut()} title="Cerrar sesión"
+            style={{marginLeft:12,background:"#F3F4F6",color:"#374151",border:"none",borderRadius:6,padding:"6px 12px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
+            Salir
+          </button>
         </div>
         {/* Banner actualización */}
         {updateAvailable&&(
