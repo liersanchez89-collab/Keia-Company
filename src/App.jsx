@@ -8705,7 +8705,9 @@ function InicioTab({bp,cv,ing,gas,hojas,projects,tareas,setTareas}){
   const pendientes=ing.filter(r=>!r.pagado).length;
 
   // ── Cuenta atrás evaluación ────────────────────────────────────────────────
-  const evalDate = new Date(2026,4,31,9,0,0); // 31 mayo 2026
+  // Siempre apunta al próximo 31 de mayo (9:00). Pasado ese día, salta al año siguiente.
+  const evalYear = now > new Date(now.getFullYear(),4,31,23,59,59) ? now.getFullYear()+1 : now.getFullYear();
+  const evalDate = new Date(evalYear,4,31,9,0,0);
   const diff = evalDate - now;
   const dias  = Math.max(0,Math.floor(diff/86400000));
   const horas = Math.max(0,Math.floor((diff%86400000)/3600000));
@@ -8809,7 +8811,7 @@ function InicioTab({bp,cv,ing,gas,hojas,projects,tareas,setTareas}){
         {/* ── Cuenta atrás evaluación ── */}
         <div style={{background:"#312E81",borderRadius:14,padding:"20px 22px"}}>
           <div style={{fontSize:10,color:"#A5B4FC",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:4}}>Evaluación LEINN</div>
-          <div style={{fontSize:11,color:"#C7D2FE",marginBottom:16,opacity:0.7}}>31 de mayo de 2026</div>
+          <div style={{fontSize:11,color:"#C7D2FE",marginBottom:16,opacity:0.7}}>31 de mayo de {evalYear}</div>
           {diff>0?(
             <div style={{display:"flex",gap:8,marginBottom:16}}>
               {[{v:dias,l:"días"},{v:horas,l:"horas"},{v:mins,l:"min"},{v:segs,l:"seg"}].map(u=>(
