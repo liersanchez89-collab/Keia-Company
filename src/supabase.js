@@ -52,6 +52,7 @@ export const sb = new Proxy(cliente, {
           if(!ESCRITURAS.has(metodo) || esAdmin() || typeof real!=="function") return typeof real==="function" ? real.bind(qt) : real;
           // Proyectos: todos pueden AÑADIR; editar/borrar sigue siendo de admin
           if(tabla==="projects" && metodo==="insert") return real.bind(qt);
+          // El equipo de un proyecto nuevo lo guarda la base de datos al crearlo (participantes)
           if(TABLAS_SOLO_ADMIN.has(tabla)) return ()=>bloqueado(tabla);
           if(tabla==="audit_progress" && (metodo==="insert"||metodo==="upsert"))
             return (filas,...r)=> horasDeOtro(filas) ? bloqueado(tabla) : real.call(qt,filas,...r);

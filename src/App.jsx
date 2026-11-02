@@ -677,7 +677,7 @@ function ProjectModal({p, pCVs, pIng, pGas, pHojas, totIng, totGas, sortRef, onC
 
 // ── ROLES POR PROYECTO ───────────────────────────────────────────────────────
 const ROLES_PROYECTO = [
-  "Líder de proyecto","Encargado de ventas","Encargado financiero",
+  "Participante","Líder de proyecto","Encargado de ventas","Encargado financiero",
   "Diseño / Comunicación","Desarrollo / Producto","Soporte operativo","Asesor externo",
 ];
 
@@ -1439,6 +1439,15 @@ function useProyectosOcultos(){
 
 function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,customers,ingresos,gastos,hojas,ing,cv,bp}){
   const [subTabProy,setSubTabProy]=useState("proyectos");
+  // Participantes: se eligen al crear el proyecto y salen en cada tarjeta
+  const [participantes,setParticipantes]=useState(()=>perfil.nombre?[perfil.nombre]:[]);
+  const [equipos,setEquipos]=useState({}); // {proyecto:[miembros]}
+  useEffect(()=>{
+    sb.from("proyecto_roles").select("proyecto,miembro").then(({data})=>{
+      const m={}; (data||[]).forEach(r=>{ (m[r.proyecto]=m[r.proyecto]||[]).push(r.miembro); }); setEquipos(m);
+    });
+  },[]);
+  const toggleParticipante=n=>setParticipantes(ps=>ps.includes(n)?ps.filter(x=>x!==n):[...ps,n]);
   const [newName,setNewName]=useState("");
   const [newColor,setNewColor]=useState("#0F3460");
   const [newLight,setNewLight]=useState("#112845");
@@ -1451,6 +1460,7 @@ function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,custo
     const name=newName.trim();
     if(!name){setErr("Escribe un nombre");return;}
     if(projects.find(p=>p.name.toLowerCase()===name.toLowerCase())){setErr("Ya existe ese proyecto");return;}
+    if(!participantes.length){setErr("Elige quién va a participar en el proyecto");return;}
     const idx=projects.length%PROJ_PALETTE.length;
     const [dc,lc]=PROJ_PALETTE[idx];
     const color=newColor||dc, light=newLight||lc;
@@ -1460,9 +1470,11 @@ function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,custo
       const cpResult = await createClockifyProject(name);
       clockifyId = cpResult?.id || null;
     } catch(e){ console.warn("Clockify create failed", e); }
-    setProjects(ps=>[...ps,{name,color,light,clockifyId}]);
+    const equipo=MIEMBROS_VISIBLES.map(m=>m.name).filter(n=>participantes.includes(n));
+    setProjects(ps=>[...ps,{name,color,light,clockifyId,participantes:equipo}]);
+    setEquipos(e=>({...e,[name]:equipo}));
     setCRM(d=>({...d,[name]:{g1:{name:"GRUPO 1",rows:[]},g2:{name:"GRUPO 2",rows:[]}}}));
-    setNewName("");setErr("");
+    setNewName("");setErr("");setParticipantes(perfil.nombre?[perfil.nombre]:[]);
   }
 
   const [confirmDelete,setConfirmDelete]=useState(null);
@@ -1484,6 +1496,8 @@ function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,custo
       catch(e){ console.warn("Clockify archive failed",e); }
     }
     setProjects(ps=>ps.filter(p=>p.name!==pname));
+    sb.from("proyecto_roles").delete().eq("proyecto",pname).then(()=>{});
+    setEquipos(e=>{ const n={...e}; delete n[pname]; return n; });
     setCRM(d=>{const nd={...d};delete nd[pname];return nd;});
   }
 
@@ -1500,6 +1514,10 @@ function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,custo
     const newLight = renameModal.tmpLight;
     // Update in Supabase directly
     await sb.from("projects").update({name:newN,color:newColor,light:newLight}).eq("name",oldName);
+    if(newN!==oldName){
+      await sb.from("proyecto_roles").update({proyecto:newN}).eq("proyecto",oldName);
+      setEquipos(e=>{ const n={...e}; if(n[oldName]){ n[newN]=n[oldName]; delete n[oldName]; } return n; });
+    }
     // Update local state
     setProjectsDirectly(ps=>ps.map(p=>p.name===oldName?{...p,name:newN,color:newColor,light:newLight}:p));
     // Update CRM keys
@@ -1670,7 +1688,24 @@ function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,custo
           </div>
           <button onClick={addProject} style={{background:"#3A414D",color:"#FFF",border:"none",borderRadius:8,padding:"8px 18px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>Crear proyecto</button>
         </div>
-        {err&&<div style={{color:"#EF4444",fontSize:11,marginTop:6}}>⚠ {err}</div>}
+        <div style={{marginTop:14}}>
+          <div style={{fontSize:12,color:"#C3C8D0",fontWeight:600,marginBottom:2}}>¿Quién participa?</div>
+          <div style={{fontSize:11,color:"#7F8692",marginBottom:8}}>Toca los nombres de las personas que van a trabajar en este proyecto.</div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {MIEMBROS_VISIBLES.map(m=>{
+              const on=participantes.includes(m.name);
+              return(
+                <button key={m.name} type="button" aria-pressed={on} onClick={()=>{toggleParticipante(m.name);setErr("");}}
+                  style={{display:"inline-flex",alignItems:"center",gap:6,background:on?m.color+"2E":"transparent",color:on?m.color:"#9AA1AC",
+                    border:`1px solid ${on?m.color+"88":"#2E343E"}`,borderRadius:99,padding:"5px 12px 5px 6px",fontSize:12,fontWeight:on?600:500,cursor:"pointer",fontFamily:"inherit"}}>
+                  <span style={{width:20,height:20,borderRadius:99,background:on?m.color:"#2E343E",color:on?"#15181D":"#9AA1AC",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700}}>{on?"✓":m.name[0]}</span>
+                  {m.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        {err&&<div style={{color:"#F26D6D",fontSize:11,marginTop:8}}>⚠ {err}</div>}
         {newName&&<div style={{marginTop:10,display:"inline-flex",alignItems:"center",gap:8,background:newLight,border:`2px solid ${newColor}`,borderRadius:8,padding:"6px 14px"}}>
           <div style={{width:10,height:10,borderRadius:99,background:newColor}}/>
           <span style={{fontWeight:700,fontSize:12,color:newColor}}>{newName}</span>
@@ -1687,20 +1722,20 @@ function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,custo
               onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
               onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
               {/* Actions - completely separate from card click */}
-              <div style={{position:"absolute",top:12,right:12,display:"flex",gap:4,zIndex:2}}>
+              {perfil.rol==="admin"&&<div style={{position:"absolute",top:12,right:12,display:"flex",gap:4,zIndex:2}}>
                 <button
                   onPointerDown={e=>e.stopPropagation()}
                   onClick={e=>{e.preventDefault();e.stopPropagation();setRenameModal({proj:p,tmpName:p.name,tmpColor:p.color||"#ECEEF2",tmpLight:p.light||"#2A2F38"});}}
-                  style={{background:"rgba(255,255,255,0.7)",border:"none",color:textColor,borderRadius:6,width:28,height:28,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  style={{background:"rgba(255,255,255,0.08)",border:"none",color:textColor,borderRadius:6,width:28,height:28,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 </button>
                 <button
                   onPointerDown={e=>e.stopPropagation()}
                   onClick={e=>{e.preventDefault();e.stopPropagation();if(p.name&&p.name.trim())setConfirmDelete(p.name);}}
-                  style={{background:"rgba(255,255,255,0.7)",border:"none",color:textColor,borderRadius:6,width:28,height:28,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  style={{background:"rgba(255,255,255,0.08)",border:"none",color:textColor,borderRadius:6,width:28,height:28,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
-              </div>
+              </div>}
               {/* Clickable body */}
               <div style={{cursor:"pointer"}} onClick={()=>setSelectedProject(p.name)}>
               {/* Header */}
@@ -1724,6 +1759,16 @@ function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,custo
                   </div>
                 ))}
               </div>
+              {(equipos[p.name]||[]).length>0&&(
+                <div style={{display:"flex",gap:5,flexWrap:"wrap",marginTop:14,paddingTop:12,borderTop:`1px solid ${textColor}22`}}>
+                  {(equipos[p.name]||[]).map(n=>{
+                    const mc=INIT_MEMBERS.find(x=>x.name===n)?.color||"#9AA1AC";
+                    return <span key={n} style={{display:"inline-flex",alignItems:"center",gap:5,background:"rgba(0,0,0,.22)",borderRadius:99,padding:"3px 9px 3px 4px",fontSize:11,color:"#ECEEF2",fontWeight:500}}>
+                      <span style={{width:16,height:16,borderRadius:99,background:mc,color:"#15181D",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700}}>{n[0]}</span>{n}
+                    </span>;
+                  })}
+                </div>
+              )}
               </div>{/* end clickable body */}
             </div>
           );
@@ -10955,7 +11000,7 @@ export default function Dashboard(){
         return old && old.name!==n.name;
       });
       if(deleted.length) sb.from("projects").delete().in("id",deleted.map(p=>p.id)).then(({error})=>{if(error)console.error("delete projects",error);});
-      if(added.length)   sb.from("projects").insert(added.map(p=>({name:p.name,color:p.color,light:p.light,...(p.clockifyId?{clockify_id:p.clockifyId}:{})}))).then(({error})=>{if(error)console.error("insert projects",error);});
+      if(added.length)   sb.from("projects").insert(added.map(p=>({name:p.name,color:p.color,light:p.light,...(p.clockifyId?{clockify_id:p.clockifyId}:{}),...(p.participantes?.length?{participantes:p.participantes}:{})}))).then(({error})=>{if(error)console.error("insert projects",error);});
       if(renamed.length){
         renamed.forEach(p=>{
           sb.from("projects").update({name:p.name}).eq("id",p.id).then(({error})=>{if(error)console.error("rename project supabase",error);});
