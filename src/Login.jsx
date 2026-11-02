@@ -3,16 +3,19 @@ import { sb } from "./supabase.js";
 import { EMPRESA } from "./config.js";
 import { perfil } from "./perfil.js";
 
-const box = {minHeight:"100vh",background:"#F0F2F5",display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:"'DM Sans','Segoe UI',sans-serif",color:"#111827"};
-const card = {background:"#FFF",borderRadius:14,boxShadow:"0 4px 24px rgba(0,0,0,0.06)",padding:"32px 28px",width:"100%",maxWidth:360,display:"flex",flexDirection:"column",gap:14};
-const input = {width:"100%",boxSizing:"border-box",border:"1px solid #E5E7EB",borderRadius:8,padding:"11px 12px",fontSize:16,fontFamily:"inherit",outline:"none"};
-const btn = {background:"#111827",color:"#FFF",border:"none",borderRadius:8,padding:"12px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"};
+const font = "'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif";
+const calor = "linear-gradient(90deg,#FFB547 0%,#FF6A1F 45%,#C81E4A 100%)";
+const box = {minHeight:"100vh",background:"radial-gradient(120% 80% at 50% 0%,#2A2F39 0%,#1F232B 45%,#171A20 100%)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:font,color:"#1A1D23"};
+const card = {position:"relative",overflow:"hidden",background:"#FFF",borderRadius:16,boxShadow:"0 30px 60px -30px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04)",padding:"36px 30px 30px",width:"100%",maxWidth:370,display:"flex",flexDirection:"column",gap:16};
+const input = {width:"100%",boxSizing:"border-box",border:"1px solid #E3E6EA",background:"#F7F8FA",borderRadius:10,padding:"12px 14px",fontSize:16,fontFamily:"inherit",outline:"none",color:"#1A1D23"};
+const btn = {background:"#1F232B",color:"#FFF",border:"none",borderRadius:10,padding:"13px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit"};
 
 function Pantalla({children}){
   return (
     <div style={box}>
       <div style={card}>
-        <img src="/icon-192.png" alt={EMPRESA} style={{width:52,height:52,borderRadius:12,alignSelf:"center",objectFit:"cover"}}/>
+        <div aria-hidden="true" style={{position:"absolute",top:0,left:0,right:0,height:3,background:calor}}/>
+        <img src="/icon-192.png" alt={EMPRESA} style={{width:56,height:56,borderRadius:14,alignSelf:"center",objectFit:"cover",boxShadow:"0 8px 22px -8px rgba(255,106,31,.6)"}}/>
         {children}
       </div>
     </div>
@@ -36,8 +39,8 @@ function Login(){
   return (
     <Pantalla>
       <div style={{textAlign:"center"}}>
-        <div style={{fontWeight:700,fontSize:18}}>{EMPRESA}</div>
-        <div style={{fontSize:12,color:"#6B7280",marginTop:4}}>Acceso solo para miembros</div>
+        <div style={{fontWeight:700,fontSize:22,letterSpacing:"-0.4px"}}>{EMPRESA}</div>
+        <div style={{fontSize:13,color:"#646B76",marginTop:4}}>Entra con tu correo de Mondragon</div>
       </div>
       <form onSubmit={entrar} style={{display:"flex",flexDirection:"column",gap:10}}>
         <input style={input} type="email" autoComplete="username" placeholder="tu.correo@alumni.mondragon.edu" value={email} onChange={e=>setEmail(e.target.value)} required/>
