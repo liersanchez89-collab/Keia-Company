@@ -1518,6 +1518,14 @@ function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,custo
       await sb.from("proyecto_roles").update({proyecto:newN}).eq("proyecto",oldName);
       setEquipos(e=>{ const n={...e}; if(n[oldName]){ n[newN]=n[oldName]; delete n[oldName]; } return n; });
     }
+    // Participantes: añade los nuevos (rol "Participante") y quita los desmarcados
+    {
+      const antes=equipos[oldName]||[], ahora=renameModal.tmpEquipo||antes;
+      const nuevos=ahora.filter(n=>!antes.includes(n)), fuera=antes.filter(n=>!ahora.includes(n));
+      if(nuevos.length) await sb.from("proyecto_roles").upsert(nuevos.map(miembro=>({proyecto:newN,miembro,rol:"Participante"})),{onConflict:"proyecto,miembro",ignoreDuplicates:true});
+      if(fuera.length) await sb.from("proyecto_roles").delete().eq("proyecto",newN).in("miembro",fuera);
+      setEquipos(e=>({...e,[newN]:MIEMBROS_VISIBLES.map(m=>m.name).filter(n=>ahora.includes(n))}));
+    }
     // Update local state
     setProjectsDirectly(ps=>ps.map(p=>p.name===oldName?{...p,name:newN,color:newColor,light:newLight}:p));
     // Update CRM keys
@@ -1580,7 +1588,7 @@ function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,custo
       {/* Rename modal */}
       {renameModal&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <div style={{background:"#1F232B",borderRadius:16,padding:"28px 32px",maxWidth:400,width:"90%",boxShadow:"0 24px 64px rgba(0,0,0,0.16)"}}>
+          <div style={{background:"#1F232B",borderRadius:16,padding:"28px 32px",maxWidth:480,width:"92%",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 24px 64px rgba(0,0,0,0.5)"}}>
             <div style={{fontWeight:700,fontSize:14,color:"#ECEEF2",marginBottom:2,letterSpacing:"-0.3px"}}>Editar proyecto</div>
             <div style={{fontSize:11,color:"#7F8692",marginBottom:20}}>Las horas registradas en este proyecto pasan al nombre nuevo</div>
             
@@ -1606,6 +1614,22 @@ function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,custo
               <input type="color" value={renameModal.tmpColor} onChange={e=>setRenameModal(r=>({...r,tmpColor:e.target.value,tmpLight:e.target.value+"22"}))}
                 style={{width:32,height:26,border:"1.5px solid #2E343E",borderRadius:6,padding:2,cursor:"pointer",background:"none"}}/>
               <div style={{width:60,height:26,borderRadius:6,background:renameModal.tmpColor,border:"1px solid #2E343E"}}/>
+            </div>
+
+            <div style={{fontSize:11,fontWeight:600,color:"#9AA1AC",marginBottom:8}}>Participantes</div>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:22,maxHeight:180,overflowY:"auto"}}>
+              {MIEMBROS_VISIBLES.map(m=>{
+                const on=(renameModal.tmpEquipo||[]).includes(m.name);
+                return(
+                  <button key={m.name} type="button" aria-pressed={on}
+                    onClick={()=>setRenameModal(r=>({...r,tmpEquipo:on?(r.tmpEquipo||[]).filter(x=>x!==m.name):[...(r.tmpEquipo||[]),m.name]}))}
+                    style={{display:"inline-flex",alignItems:"center",gap:6,background:on?m.color+"2E":"transparent",color:on?m.color:"#9AA1AC",
+                      border:`1px solid ${on?m.color+"88":"#2E343E"}`,borderRadius:99,padding:"4px 10px 4px 4px",fontSize:11.5,fontWeight:on?600:500,cursor:"pointer",fontFamily:"inherit"}}>
+                    <span style={{width:18,height:18,borderRadius:99,background:on?m.color:"#2E343E",color:on?"#15181D":"#9AA1AC",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700}}>{on?"✓":m.name[0]}</span>
+                    {m.name}
+                  </button>
+                );
+              })}
             </div>
 
             <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
@@ -1725,7 +1749,7 @@ function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,custo
               {perfil.rol==="admin"&&<div style={{position:"absolute",top:12,right:12,display:"flex",gap:4,zIndex:2}}>
                 <button
                   onPointerDown={e=>e.stopPropagation()}
-                  onClick={e=>{e.preventDefault();e.stopPropagation();setRenameModal({proj:p,tmpName:p.name,tmpColor:p.color||"#ECEEF2",tmpLight:p.light||"#2A2F38"});}}
+                  onClick={e=>{e.preventDefault();e.stopPropagation();setRenameModal({proj:p,tmpName:p.name,tmpColor:p.color||"#ECEEF2",tmpLight:p.light||"#2A2F38",tmpEquipo:[...(equipos[p.name]||[])]});}}
                   style={{background:"rgba(255,255,255,0.08)",border:"none",color:textColor,borderRadius:6,width:28,height:28,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 </button>
