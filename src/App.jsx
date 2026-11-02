@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, Fragment } from "react";
 import { EMPRESA, EMPRESA_SUB, MIEMBROS, MIEMBROS_ANTIGUOS, EXTERNOS, PROYECTOS_INICIALES, CLAVE_EDICION, CLAVE_CHAT_PRIVADO } from "./config.js";
 import { sb } from "./supabase.js";
+import { perfil, puedoEditar } from "./perfil.js";
 
 // ── Clockify ──────────────────────────────────────────────────────────────────
 const CLOCKIFY_KEY = ""; // la clave de Clockify va en la variable CLOCKIFY_KEY de Vercel (api/clockify.js)
@@ -10193,14 +10194,14 @@ const ALL_MEMBERS_CHAT = [...INIT_MEMBERS.map(m=>m.name),...EXTERNAL_MEMBERS.map
 function ChatWidget(){
   const [open, setOpen]         = useState(false);
   const [grupo, setGrupo]       = useState("general");
-  const [autor, setAutor]       = useState(()=>localStorage.getItem("chat_autor")||"");
+  const [autor, setAutor]       = useState(()=>perfil.nombre||"");
   const [texto, setTexto]       = useState("");
   const [msgs, setMsgs]         = useState([]);
   const [unread, setUnread]     = useState(0);
   const [pwInput, setPwInput]   = useState("");
   const [pwError, setPwError]   = useState(false);
   const [unlocked, setUnlocked] = useState({tlt:false,general:true,training:true});
-  const [nameModal, setNameModal] = useState(!localStorage.getItem("chat_autor"));
+  const [nameModal, setNameModal] = useState(false); // el nombre sale del perfil, no se elige
   const [nameTmp, setNameTmp]   = useState("");
   const bottomRef = useRef(null);
   const inputRef  = useRef(null);
@@ -10434,7 +10435,6 @@ function ChatWidget(){
               {/* Footer */}
               <div style={{padding:"4px 12px 6px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
                 <span style={{fontSize:9,color:"#6B7280"}}>Como: <b style={{color:"#111827"}}>{autor}</b></span>
-                <button onClick={()=>setNameModal(true)} style={{fontSize:9,color:"#6B7280",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",textDecoration:"underline"}}>cambiar</button>
               </div>
             </>
           )}
@@ -10769,9 +10769,24 @@ export default function Dashboard(){
     if(upserted.length){const{error}=await sb.from(table).upsert(upserted);if(error)console.error("❌ syncTable upsert",table,member,error);else console.log("✅",table,member,"guardado");}
   }
 
+  // Solo puedes tocar tus propias filas (la base de datos también lo bloquea).
+  // En Customers también puedes tocar las copias que tú creaste en la lista de un compañero.
+  function cambiosAjenos(prev, next, permitirLinked){
+    return INIT_MEMBERS.some(m=>{
+      if(puedoEditar(m.name)) return false;
+      const a=prev[m.name]||[], b=next[m.name]||[];
+      if(JSON.stringify(a)===JSON.stringify(b)) return false;
+      if(!permitirLinked) return true;
+      const tocadas=[...a.filter(o=>!b.find(n=>n.id===o.id)), ...b.filter(n=>JSON.stringify(n)!==JSON.stringify(a.find(o=>o.id===n.id)))];
+      return tocadas.some(r=>r.linkedOwner!==perfil.nombre);
+    });
+  }
+  function avisoAjeno(){ setTimeout(()=>alert(`Solo puedes editar tus propios datos (${perfil.nombre||"sin perfil"}).`),0); }
+
   function setBP(updater){
     setBPRaw(prev=>{
       const next = typeof updater==="function" ? updater(prev) : updater;
+      if(cambiosAjenos(prev,next,false)){ avisoAjeno(); return prev; }
       INIT_MEMBERS.forEach(m=>{
         const po=JSON.stringify(prev[m.name]), pn=JSON.stringify(next[m.name]);
         if(po!==pn) syncTable("bookpoints", prev, next, m.name);
@@ -10782,6 +10797,7 @@ export default function Dashboard(){
   function setCV(updater){
     setCVRaw(prev=>{
       const next = typeof updater==="function" ? updater(prev) : updater;
+      if(cambiosAjenos(prev,next,true)){ avisoAjeno(); return prev; }
       INIT_MEMBERS.forEach(m=>{
         const po=JSON.stringify(prev[m.name]), pn=JSON.stringify(next[m.name]);
         if(po!==pn) syncTable("customers", prev, next, m.name);

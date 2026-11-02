@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { sb } from "./supabase.js";
 import { EMPRESA } from "./config.js";
+import { perfil } from "./perfil.js";
 
 const box = {minHeight:"100vh",background:"#F0F2F5",display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:"'DM Sans','Segoe UI',sans-serif",color:"#111827"};
 const card = {background:"#FFF",borderRadius:14,boxShadow:"0 4px 24px rgba(0,0,0,0.06)",padding:"32px 28px",width:"100%",maxWidth:360,display:"flex",flexDirection:"column",gap:14};
@@ -61,7 +62,12 @@ export default function AuthGate({children}){
 
   useEffect(()=>{
     if(!session){ setMiembro(undefined); return; }
-    sb.rpc("es_miembro").then(({data,error})=>setMiembro(!error&&data===true));
+    // Carga el perfil (nombre + rol) ligado a este correo. Sin perfil no se entra.
+    sb.from("perfiles").select("nombre,rol").eq("email",(session.user.email||"").toLowerCase()).maybeSingle()
+      .then(({data,error})=>{
+        if(error||!data){ perfil.nombre=null; perfil.rol=null; setMiembro(false); return; }
+        perfil.nombre=data.nombre; perfil.rol=data.rol; setMiembro(true);
+      });
   },[session?.user?.id]);
 
   if(session===undefined||(session&&miembro===undefined)) return <div style={box}/>;
