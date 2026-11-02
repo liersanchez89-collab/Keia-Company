@@ -50,6 +50,6 @@ npm run dev
 ```
 
 ## A tener en cuenta
-- Cualquiera que tenga la dirección de la web puede verla. Las partes de dinero se editan con la contraseña de `src/config.js`.
+- Solo pueden entrar los miembros: hace falta iniciar sesión y que el correo esté en la tabla `miembros_permitidos` (ver `supabase/acceso_miembros.sql`). Las partes de dinero se editan además con la contraseña de `src/config.js`.
 - La pestaña de previsiones tiene un periodo extra (“Corea”) y unos objetivos de ahorro (“NY + Corea”) que se usaban para un viaje: se pueden renombrar en `src/App.jsx` (`PERIODOS_PREV` y `ObjetivosCard`).
 - Las pestañas Documentos, Auditoría, MTA Model y Evaluaciones están ocultas: para enseñarlas, añádelas a la lista `TABS` de `src/App.jsx`.
