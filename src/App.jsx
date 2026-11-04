@@ -3944,6 +3944,20 @@ function parseDuracion(s){
   m=t.match(/^(\d+)m(in)?$/); if(m) return (+m[1])*60;
   const n=parseFloat(t.replace(",",".")); return isNaN(n)?0:Math.round(n*3600);
 }
+// Interruptor bien visible: ¿estas horas son facturables o no?
+function FactSwitch({value,onChange,compact}){
+  const op=(v,label,on,off)=>(
+    <button type="button" onClick={()=>{ if(value!==v) onChange(v); }}
+      style={{background:value===v?on:"transparent",color:value===v?"#FFF":"#9AA1AC",border:"none",
+      padding:compact?"4px 10px":"9px 16px",fontSize:compact?10.5:12.5,fontWeight:value===v?800:500,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>{label}</button>
+  );
+  return(
+    <div title="Elige si estas horas son facturables o no" style={{display:"inline-flex",border:"1.5px solid #4A515D",borderRadius:compact?7:10,overflow:"hidden",background:"#232831"}}>
+      {op(true,"€ Facturable","#059669")}
+      {op(false,"No facturable","#6B7280")}
+    </div>
+  );
+}
 const TODOS="__todos"; // "persona" especial: las horas se cuentan a todo el equipo a la vez
 const HORAS_ACT_DEFAULT=["Training Session","TLT","Finanzas","Reuniones de equipo","Formación"];
 const nuevoIdHoras=()=>`${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
@@ -4187,7 +4201,14 @@ function HorasTab({projects}){
           <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
             <div style={{flex:1,minWidth:200}}>
               <div style={{fontSize:13,fontWeight:700,color:"#ECEEF2"}}>{enMarcha.descripcion||"(sin descripción)"}</div>
-              <div style={{fontSize:11,color:projColorMap[enMarcha.proyecto]||"#9AA1AC",fontWeight:600}}>{enMarcha.proyecto||"Sin proyecto"} · desde las {hhmm(enMarcha.inicio)} · <span onClick={()=>guardar({...enMarcha,facturable:!enMarcha.facturable})} style={{cursor:"pointer",color:enMarcha.facturable?"#047857":"#7F8692"}}>{enMarcha.facturable?"€ facturable":"no facturable"}</span></div>
+              <div style={{fontSize:11,color:projColorMap[enMarcha.proyecto]||"#9AA1AC",fontWeight:600}}>{enMarcha.proyecto||"Sin proyecto"} · desde las {hhmm(enMarcha.inicio)}</div>
+              <div style={{marginTop:8}}>
+                <FactSwitch value={!!enMarcha.facturable} onChange={v=>{
+                  if(esTodos&&enMarcha.grupo) guardarVarios(lista.filter(x=>x.enCurso&&x.grupo===enMarcha.grupo).map(x=>({...x,facturable:v})));
+                  else guardar({...enMarcha,facturable:v});
+                  setFacturable(v);
+                }}/>
+              </div>
             </div>
             <div style={{fontSize:26,fontWeight:800,color:pc,fontVariantNumeric:"tabular-nums",letterSpacing:"-0.5px"}}>{fmtReloj(horasSegs(enMarcha))}</div>
             <button onClick={()=>parar(enMarcha)} style={{background:"#DC2626",color:"#FFF",border:"none",borderRadius:10,padding:"10px 22px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>■ Parar</button>
@@ -4205,9 +4226,10 @@ function HorasTab({projects}){
                 {opcionesProyecto(proyecto)}
               </select>
             </div>
-            <button onClick={()=>setFacturable(!facturable)} title="¿Estas horas son facturables?" style={{background:facturable?"#11452D":"#232831",color:facturable?"#047857":"#7F8692",border:`1.5px solid ${facturable?"#1F7A56":"#2E343E"}`,borderRadius:8,padding:"6px 11px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
-              {facturable?"€ Facturable":"No facturable"}
-            </button>
+            <div>
+              <div style={lbl}>¿Facturable?</div>
+              <FactSwitch value={facturable} onChange={setFacturable}/>
+            </div>
             <div style={{display:"flex",border:"1px solid #2E343E",borderRadius:8,overflow:"hidden"}}>
               {[["timer","⏱ Temporizador"],["manual","✍️ A mano"]].map(([k,l])=>(
                 <button key={k} onClick={()=>setModo(k)} style={{background:modo===k?"#323844":"#1F232B",color:modo===k?"#FFF":"#9AA1AC",border:"none",padding:"7px 11px",fontSize:11,fontWeight:modo===k?700:500,cursor:"pointer",fontFamily:"inherit"}}>{l}</button>
@@ -4266,8 +4288,7 @@ function HorasTab({projects}){
                   <option value="">Sin proyecto</option>
                   {opcionesProyecto(e.proyecto)}
                 </select>
-                <button onClick={()=>guardar({...e,facturable:!e.facturable})} title={e.facturable?"Facturable (clic para cambiar)":"No facturable (clic para cambiar)"}
-                  style={{background:e.facturable?"#11452D":"transparent",color:e.facturable?"#047857":"#5C6370",border:`1px solid ${e.facturable?"#1F7A56":"#2E343E"}`,borderRadius:6,padding:"1px 7px",fontSize:11,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>€</button>
+                <FactSwitch compact value={!!e.facturable} onChange={v=>guardar({...e,facturable:v})}/>
                 <input type="date" value={ymdLocal(new Date(e.inicio))} onChange={ev=>cambiarFecha(e,ev.target.value)} style={{border:"none",background:"transparent",fontSize:10.5,color:"#7F8692",fontFamily:"inherit",width:108}}/>
                 <span onClick={()=>cambiarHoras(e)} title="Cambiar horas" style={{fontSize:11,color:"#9AA1AC",cursor:"pointer",whiteSpace:"nowrap"}}>{hhmm(e.inicio)} – {e.enCurso?"ahora":hhmm(e.fin||e.inicio)}</span>
                 <span onClick={()=>cambiarHoras(e)} style={{fontSize:12.5,fontWeight:800,color:e.enCurso?"#059669":"#ECEEF2",minWidth:62,textAlign:"right",fontVariantNumeric:"tabular-nums",cursor:"pointer"}}>{e.enCurso?fmtReloj(horasSegs(e)):fmtHoras(horasSegs(e))}</span>
