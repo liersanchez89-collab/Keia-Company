@@ -8878,6 +8878,14 @@ function InicioTab({bp,cv,ing,gas,hojas,projects,tareas,setTareas}){
   const mins  = Math.max(0,Math.floor((diff%3600000)/60000));
   const segs  = Math.max(0,Math.floor((diff%60000)/1000));
 
+  // ── Cuenta atrás viaje a Berlín (24 de enero de 2027) ─────────────────────
+  const berlinDate = new Date(2027,0,24,0,0,0);
+  const diffB = berlinDate - now;
+  const diasB  = Math.max(0,Math.floor(diffB/86400000));
+  const horasB = Math.max(0,Math.floor((diffB%86400000)/3600000));
+  const minsB  = Math.max(0,Math.floor((diffB%3600000)/60000));
+  const segsB  = Math.max(0,Math.floor((diffB%60000)/1000));
+
   // ── Próximas TS ────────────────────────────────────────────────────────────
   const todayStr = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()}`;
   const parseDate = f=>{if(!f)return 0;const[d,m,y]=f.split("/");return new Date(y,m-1,d).getTime();};
@@ -8998,6 +9006,24 @@ function InicioTab({bp,cv,ing,gas,hojas,projects,tareas,setTareas}){
           )}
         </div>
 
+        {/* ── Cuenta atrás viaje a Berlín ── */}
+        <div style={{background:"#312E81",borderRadius:14,padding:"20px 22px"}}>
+          <div style={{fontSize:10,color:"#A5B4FC",fontWeight:600,letterSpacing:"0",marginBottom:4}}>Viaje a Berlín ✈️</div>
+          <div style={{fontSize:11,color:"#C7D2FE",marginBottom:16,opacity:0.7}}>24 de enero de 2027</div>
+          {diffB>0?(
+            <div style={{display:"flex",gap:8,marginBottom:16}}>
+              {[{v:diasB,l:"días"},{v:horasB,l:"horas"},{v:minsB,l:"min"},{v:segsB,l:"seg"}].map(u=>(
+                <div key={u.l} style={{background:"#3730A3",borderRadius:10,padding:"10px 12px",textAlign:"center",flex:1}}>
+                  <div style={{fontSize:24,fontWeight:500,letterSpacing:"-1px",lineHeight:1,color:"#E0E7FF"}}>{String(u.v).padStart(2,"0")}</div>
+                  <div style={{fontSize:8,color:"#818CF8",marginTop:4,letterSpacing:"0"}}>{u.l}</div>
+                </div>
+              ))}
+            </div>
+          ):(
+            <div style={{fontSize:16,fontWeight:500,color:"#34D399",marginBottom:16}}>Ya es el día</div>
+          )}
+        </div>
+
         {/* ── Top proyectos por ingresos ── */}
         {(()=>{
           const topProj=[...projects].map(p=>({
@@ -9006,7 +9032,7 @@ function InicioTab({bp,cv,ing,gas,hojas,projects,tareas,setTareas}){
           })).filter(p=>p.ing>0).sort((a,b)=>b.ing-a.ing).slice(0,5);
           const maxIng=Math.max(...topProj.map(p=>p.ing),1);
           return topProj.length>0?(
-            <div style={{background:"#113145",borderRadius:14,padding:"16px 18px"}}>
+            <div style={{background:"#113145",borderRadius:14,padding:"16px 18px",gridColumn:"1 / -1"}}>
               <div style={{fontSize:10,color:"#7EC7F1",fontWeight:600,letterSpacing:"0",marginBottom:14}}>Top proyectos</div>
               {topProj.map(p=>(
                 <div key={p.name} style={{marginBottom:10}}>
