@@ -3944,6 +3944,7 @@ function parseDuracion(s){
   m=t.match(/^(\d+)m(in)?$/); if(m) return (+m[1])*60;
   const n=parseFloat(t.replace(",",".")); return isNaN(n)?0:Math.round(n*3600);
 }
+const TODOS="__todos"; // "persona" especial: las horas se cuentan a todo el equipo a la vez
 const HORAS_ACT_DEFAULT=["Training Session","TLT","Finanzas","Reuniones de equipo","Formación"];
 const nuevoIdHoras=()=>`${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
 
@@ -3954,7 +3955,7 @@ function HorasTab({projects}){
     if(perfil.nombre&&perfil.rol!=="admin") return perfil.nombre;
     try{ return localStorage.getItem("blesk_horas_persona")||perfil.nombre||MIEMBROS_VISIBLES[0].name; }catch{ return perfil.nombre||MIEMBROS_VISIBLES[0].name; }
   });
-  const setPersona=p=>{ if(perfil.rol!=="admin"&&p!==perfil.nombre) return; setPersonaRaw(p); try{ localStorage.setItem("blesk_horas_persona",p); }catch{} };
+  const setPersona=p=>{ if(perfil.rol!=="admin"&&p!==perfil.nombre) return; setPersonaRaw(p); if(p!==TODOS){ try{ localStorage.setItem("blesk_horas_persona",p); }catch{} } };
   const [proyecto,setProyecto]=useState("");
   const [desc,setDesc]=useState("");
   const [facturable,setFacturableRaw]=useState(()=>{ try{ return localStorage.getItem("blesk_horas_fact")!=="0"; }catch{ return true; } });
@@ -3975,7 +3976,9 @@ function HorasTab({projects}){
   const [imp,setImp]=useState({abierto:false,desde:`${new Date().getFullYear()}-01-01`,hasta:hoyStr,estado:"",msg:""});
 
   const lista=entries||[];
-  const enMarcha=lista.find(e=>e.enCurso&&e.persona===persona);
+  const esTodos=persona===TODOS;
+  const nombresEquipo=MIEMBROS_VISIBLES.map(m=>m.name);
+  const enMarcha=esTodos?lista.find(e=>e.enCurso&&e.grupo&&nombresEquipo.includes(e.persona)):lista.find(e=>e.enCurso&&e.persona===persona);
   const algunoEnMarcha=lista.some(e=>e.enCurso);
   useEffect(()=>{ if(!algunoEnMarcha) return; const t=setInterval(()=>setTick(x=>x+1),1000); return ()=>clearInterval(t); },[algunoEnMarcha]);
   // Se recarga cada minuto para ver lo que meten los demás
@@ -4006,15 +4009,36 @@ function HorasTab({projects}){
   const errorGuardar=err=>{ console.error("❌ horas",err); alert("No se ha podido guardar: "+(err?.message||err)); recargar(); };
   function guardar(e){ setEntries(prev=>[e,...(prev||[]).filter(x=>x.id!==e.id)]); horasGuardar(e).catch(errorGuardar); }
 
+  // Guarda varios registros de golpe (modo "Todos")
+  function guardarVarios(nuevos){
+    const ids=new Set(nuevos.map(x=>x.id));
+    setEntries(prev=>[...nuevos,...(prev||[]).filter(x=>!ids.has(x.id))]);
+    horasGuardar(nuevos).catch(errorGuardar);
+  }
+  const cerrar=(e,cuando)=>({...e,fin:cuando.toISOString(),segundos:Math.max(0,Math.round((cuando.getTime()-new Date(e.inicio).getTime())/1000)),enCurso:false});
   function empezar(pr=proyecto,de=desc,fa=facturable){
     const ahora=new Date();
+    if(esTodos){
+      // Un temporizador para cada miembro; si alguien ya tenía uno en marcha, se cierra
+      const grupo=nuevoIdHoras();
+      const cerrados=lista.filter(e=>e.enCurso&&nombresEquipo.includes(e.persona)).map(e=>cerrar(e,ahora));
+      const nuevos=nombresEquipo.map(n=>({id:nuevoIdHoras(),persona:n,proyecto:pr,descripcion:de.trim(),facturable:!!fa,inicio:ahora.toISOString(),fin:null,segundos:0,enCurso:true,grupo}));
+      guardarVarios([...cerrados,...nuevos]);
+      setProyecto(pr); setDesc(de); setFacturable(!!fa);
+      return;
+    }
     if(enMarcha) parar(enMarcha,ahora);
     guardar({id:nuevoIdHoras(),persona,proyecto:pr,descripcion:de.trim(),facturable:!!fa,inicio:ahora.toISOString(),fin:null,segundos:0,enCurso:true});
     setProyecto(pr); setDesc(de); setFacturable(!!fa);
   }
   function parar(e,cuando=new Date()){
-    const segundos=Math.max(0,Math.round((cuando.getTime()-new Date(e.inicio).getTime())/1000));
-    guardar({...e,fin:cuando.toISOString(),segundos,enCurso:false});
+    if(e.grupo&&esTodos){
+      // Para el temporizador de todo el equipo a la vez
+      guardarVarios(lista.filter(x=>x.enCurso&&x.grupo===e.grupo).map(x=>cerrar(x,cuando)));
+      setDesc("");
+      return;
+    }
+    guardar(cerrar(e,cuando));
     setDesc("");
   }
   function añadirManual(){
@@ -4028,11 +4052,13 @@ function HorasTab({projects}){
     if(b){ let fin=new Date(y,mo-1,d,b[0],b[1]); if(fin<=ini) fin=new Date(fin.getTime()+864e5); segs=(fin-ini)/1000; }
     else segs=parseDuracion(mDur);
     if(!(segs>0)){ alert("Pon la hora de fin o la duración (por ejemplo 1:30 o 1,5)"); return; }
-    guardar({id:nuevoIdHoras(),persona,proyecto,descripcion:desc.trim(),facturable,inicio:ini.toISOString(),fin:new Date(ini.getTime()+segs*1000).toISOString(),segundos:Math.round(segs),enCurso:false});
+    const base={proyecto,descripcion:desc.trim(),facturable,inicio:ini.toISOString(),fin:new Date(ini.getTime()+segs*1000).toISOString(),segundos:Math.round(segs),enCurso:false};
+    if(esTodos){ const grupo=nuevoIdHoras(); guardarVarios(nombresEquipo.map(n=>({...base,id:nuevoIdHoras(),persona:n,grupo}))); }
+    else guardar({id:nuevoIdHoras(),persona,...base});
     setDesc(""); setMFin(""); setMDur(""); setMIni(b?mFin:"");
   }
   function borrar(e){
-    if(e.persona!==persona){ alert(`Solo ${e.persona} puede borrar sus horas. Elige su perfil arriba para hacerlo.`); return; }
+    if(!esTodos&&e.persona!==persona){ alert(`Solo ${e.persona} puede borrar sus horas. Elige su perfil arriba para hacerlo.`); return; }
     if(!window.confirm(`¿Borrar ${fmtHoras(horasSegs(e))} de ${e.persona}${e.proyecto?` en ${e.proyecto}`:""}?`)) return;
     setEntries(prev=>(prev||[]).filter(x=>x.id!==e.id));
     horasBorrar(e.id).catch(errorGuardar);
@@ -4096,13 +4122,13 @@ function HorasTab({projects}){
   }
 
   // ── Lista de registros (como Clockify: por días) ──
-  const visibles=lista.filter(e=>verTodos||e.persona===persona).sort((a,b)=>new Date(b.inicio)-new Date(a.inicio));
+  const visibles=lista.filter(e=>verTodos||esTodos||e.persona===persona).sort((a,b)=>new Date(b.inicio)-new Date(a.inicio));
   const mostrados=visibles.slice(0,nLista);
   const porDia=[];
   mostrados.forEach(e=>{ const k=ymdLocal(new Date(e.inicio)); let g=porDia.find(x=>x.k===k); if(!g){ g={k,items:[]}; porDia.push(g); } g.items.push(e); });
   const totalDia=k=>visibles.filter(e=>ymdLocal(new Date(e.inicio))===k).reduce((a,e)=>a+horasSegs(e),0);
   const [semIni]=rangoPeriodo("week");
-  const miSemana=lista.filter(e=>e.persona===persona&&new Date(e.inicio).getTime()>=semIni).reduce((a,e)=>a+horasSegs(e),0);
+  const miSemana=lista.filter(e=>(esTodos||e.persona===persona)&&new Date(e.inicio).getTime()>=semIni).reduce((a,e)=>a+horasSegs(e),0);
   const etiquetaDia=k=>{ const [y,m,d]=k.split("-").map(Number); const dt=new Date(y,m-1,d); if(k===hoyStr) return "Hoy"; const ay=new Date(); ay.setDate(ay.getDate()-1); if(k===ymdLocal(ay)) return "Ayer"; return dt.toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"short"}); };
 
   // ── Informe por persona / proyecto ──
@@ -4124,7 +4150,7 @@ function HorasTab({projects}){
 
   const inp={border:"1px solid #2E343E",borderRadius:7,padding:"7px 10px",fontSize:11.5,fontFamily:"inherit",outline:"none",background:"#1F232B"};
   const lbl={fontSize:9,color:"#9AA1AC",fontWeight:600,letterSpacing:"0.3px",marginBottom:4};
-  const pc=persona&&getMemberColor(persona);
+  const pc=esTodos?"#E8501C":(persona&&getMemberColor(persona));
 
   return(
     <div>
@@ -4146,9 +4172,17 @@ function HorasTab({projects}){
               fontWeight:persona===mem.name?700:500,cursor:"pointer",fontFamily:"inherit",
             }}>{mem.name}{lista.some(e=>e.enCurso&&e.persona===mem.name)?" ⏺":""}</button>
           ))}
-          <span style={{marginLeft:"auto",fontSize:11,color:"#9AA1AC",alignSelf:"center"}}>Esta semana {persona}: <b style={{color:pc}}>{fmtHoras(miSemana)}</b></span>
+          {perfil.rol==="admin"&&(
+            <button onClick={()=>setPersona(TODOS)} title="Las horas que registres se cuentan a todo el equipo a la vez" style={{
+              background:esTodos?"#E8501C":"#F9FAFB",color:esTodos?"#FFF":"#C3C8D0",
+              border:`1.5px solid ${esTodos?"#E8501C":"#4A515D"}`,borderRadius:99,padding:"5px 12px",fontSize:11,
+              fontWeight:esTodos?700:500,cursor:"pointer",fontFamily:"inherit",
+            }}>👥 Todos{lista.some(e=>e.enCurso&&e.grupo)?" ⏺":""}</button>
+          )}
+          <span style={{marginLeft:"auto",fontSize:11,color:"#9AA1AC",alignSelf:"center"}}>{esTodos?"Esta semana el equipo (suma)":`Esta semana ${persona}`}: <b style={{color:pc}}>{fmtHoras(miSemana)}</b></span>
         </div>
 
+        {esTodos&&<div style={{fontSize:11,color:"#E8501C",fontWeight:600,marginBottom:10}}>👥 Modo Todos: lo que registres aquí se cuenta a los {nombresEquipo.length} miembros del equipo a la vez.</div>}
         {enMarcha?(
           <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
             <div style={{flex:1,minWidth:200}}>
@@ -4182,6 +4216,7 @@ function HorasTab({projects}){
             {modo==="timer"?(
               <button onClick={()=>empezar()} style={{background:"#059669",color:"#FFF",border:"none",borderRadius:10,padding:"9px 22px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>▶ Empezar</button>
             ):(<>
+              {esTodos&&<button onClick={()=>{ setProyecto("Training Session"); setMIni("09:00"); setMFin("13:00"); setMDur(""); }} title="Rellena Training Session de 9:00 a 13:00" style={{background:"#232831",color:"#E8501C",border:"1.5px solid #E8501C",borderRadius:8,padding:"7px 11px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>🎯 TS 9–13</button>}
               <div><div style={lbl}>Fecha</div><input type="date" value={mFecha} onChange={e=>setMFecha(e.target.value)} style={inp}/></div>
               <div><div style={lbl}>Inicio</div><input type="time" value={mIni} onChange={e=>setMIni(e.target.value)} style={{...inp,width:92}}/></div>
               <div><div style={lbl}>Fin</div><input type="time" value={mFin} onChange={e=>setMFin(e.target.value)} style={{...inp,width:92}}/></div>
@@ -4209,7 +4244,7 @@ function HorasTab({projects}){
       {/* ── Registros ── */}
       <div style={{background:"#1F232B",border:"1px solid #2E343E",borderRadius:14,padding:"12px 16px",marginBottom:22}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:6}}>
-          <div style={{fontWeight:700,fontSize:12.5,color:"#ECEEF2"}}>📋 {verTodos?"Registros de todo el equipo":`Registros de ${persona}`}</div>
+          <div style={{fontWeight:700,fontSize:12.5,color:"#ECEEF2"}}>📋 {verTodos||esTodos?"Registros de todo el equipo":`Registros de ${persona}`}</div>
           <label style={{fontSize:11,color:"#9AA1AC",display:"flex",alignItems:"center",gap:5,cursor:"pointer"}}>
             <input type="checkbox" checked={verTodos} onChange={e=>setVerTodos(e.target.checked)}/> Ver los de todos
           </label>
@@ -4238,7 +4273,7 @@ function HorasTab({projects}){
                 <span onClick={()=>cambiarHoras(e)} style={{fontSize:12.5,fontWeight:800,color:e.enCurso?"#059669":"#ECEEF2",minWidth:62,textAlign:"right",fontVariantNumeric:"tabular-nums",cursor:"pointer"}}>{e.enCurso?fmtReloj(horasSegs(e)):fmtHoras(horasSegs(e))}</span>
                 {e.origen==="clockify"&&<span title="Traído de Clockify" style={{fontSize:9,color:"#7F8692"}}>CK</span>}
                 {!e.enCurso&&e.persona===persona&&<button onClick={()=>empezar(e.proyecto||"",e.descripcion||"",!!e.facturable)} title="Seguir con esto" style={{background:"none",border:"none",color:"#059669",cursor:"pointer",fontSize:13}}>▶</button>}
-                {e.persona===persona
+                {(esTodos||e.persona===persona)
                   ?<button onClick={()=>borrar(e)} title="Borrar" style={{background:"none",border:"none",color:"#5C6370",cursor:"pointer",fontSize:13}}>✕</button>
                   :<span title={`Solo se puede borrar desde el perfil de ${e.persona}`} style={{width:22,textAlign:"center",fontSize:10,color:"#4A515D"}}>🔒</span>}
               </div>
