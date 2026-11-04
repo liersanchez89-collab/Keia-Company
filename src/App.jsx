@@ -385,15 +385,37 @@ function InpBlur({value,onChange,placeholder,w,bold,color,locked,onLock}){
     width:w||"100%",background:"#232831",outline:"none",color:color||"#D5D9E0",fontWeight:bold?"600":"400",minWidth:0}}/>;
 }
 function DateInp({value,onChange,w,locked,onLock}){
-  // value es DD/MM/YYYY, input type=date usa YYYY-MM-DD
+  // value es DD/MM/YYYY, input type=date usa YYYY-MM-DD.
+  // Estado local: mientras se teclea el año (0002, 0020, 0202...) no se propaga
+  // ni se re-renderiza el valor del padre; solo se guarda cuando la fecha es completa y válida.
+  const [local,setLocal]=useState(toDateInput(value||""));
+  const focused=useRef(false);
+  useEffect(()=>{ if(!focused.current) setLocal(toDateInput(value||"")); },[value]);
+  const validYear = v => { const y=parseInt((v||"").split("-")[0],10); return y>=1900 && y<=2100; };
+  function commit(v){
+    if(v===""){ if(toDateInput(value||"")!=="") onChange(""); return; }
+    if(validYear(v) && v!==toDateInput(value||"")) onChange(fromDateInput(v));
+  }
   function handleChange(e){
     if(locked){ if(onLock) onLock(); return; }
-    onChange(fromDateInput(e.target.value));
+    const v=e.target.value;
+    setLocal(v);
+    // Año completo (4 dígitos, ≥1900) → guardar ya (p.ej. al elegir del calendario)
+    if(v!=="" && validYear(v) && (v.split("-")[0]||"").length===4) commit(v);
   }
-  return <input type="date" value={toDateInput(value||"")} onChange={handleChange}
-    style={{border:"1px solid #2E343E",borderRadius:5,padding:"3px 6px",fontSize:11,fontFamily:"inherit",
-    width:w||"110px",background:"#232831",outline:"none",color:"#D5D9E0",minWidth:0,cursor:"pointer"}}
-    onFocus={e=>e.target.style.borderColor="#E8501C"} onBlur={e=>e.target.style.borderColor="#2E343E"}/>;
+  function handleBlur(e){
+    focused.current=false;
+    e.target.style.borderColor="#2E343E";
+    if(locked) return;
+    if(local===""||validYear(local)) commit(local);
+    else setLocal(toDateInput(value||"")); // año incompleto/inválido → vuelve al valor anterior
+  }
+  return <input type="date" value={local} onChange={handleChange}
+    min="1900-01-01" max="2100-12-31"
+    onKeyDown={e=>{ if(e.key==="Enter") e.target.blur(); }}
+    style={{border:"1px solid #2E343E",borderRadius:5,padding:"4px 8px",fontSize:12,fontFamily:"inherit",
+    width:w||"130px",minWidth:"130px",background:"#232831",outline:"none",color:"#D5D9E0",cursor:"pointer",colorScheme:"dark"}}
+    onFocus={e=>{ focused.current=true; e.target.style.borderColor="#E8501C"; }} onBlur={handleBlur}/>;
 }
 function LinkInp({value,onChange,placeholder}){
   return(
