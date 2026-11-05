@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { perfil, esAdmin } from "./perfil.js";
+import { perfil, esAdmin, esVisitante } from "./perfil.js";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -9,9 +9,11 @@ const cliente = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Tablas de la empresa: todos las ven, pero solo los admin pueden cambiarlas.
 // (La base de datos también lo bloquea: esto solo sirve para avisar en vez de fallar en silencio.)
+// Proyectos (projects, proyecto_roles) y finanzas (facturas, hojas_gasto) NO están aquí:
+// cualquier miembro puede gestionarlos. Los visitantes no escriben en ninguna tabla.
 export const TABLAS_SOLO_ADMIN = new Set([
-  "projects","facturas","hojas_gasto","groups_bp","groups_cv","crm","calendario","actas",
-  "presupuestos_2026","presupuestos_activos","estrategia","estrategia_activos","proyecto_roles",
+  "groups_bp","groups_cv","crm","calendario","actas",
+  "presupuestos_2026","presupuestos_activos","estrategia","estrategia_activos",
   "evaluaciones_members","evaluaciones_scores","member_colors","mta_progress","diamante","horas_proyecto",
 ]);
 const ESCRITURAS = new Set(["insert","upsert","update","delete"]);
@@ -50,9 +52,8 @@ export const sb = new Proxy(cliente, {
         get(qt, metodo){
           const real = Reflect.get(qt, metodo);
           if(!ESCRITURAS.has(metodo) || esAdmin() || typeof real!=="function") return typeof real==="function" ? real.bind(qt) : real;
-          // Proyectos: todos pueden AÑADIR; editar/borrar sigue siendo de admin
-          if(tabla==="projects" && metodo==="insert") return real.bind(qt);
-          // El equipo de un proyecto nuevo lo guarda la base de datos al crearlo (participantes)
+          // Visitantes: solo lectura en todo
+          if(esVisitante()) return ()=>bloqueado(tabla);
           if(TABLAS_SOLO_ADMIN.has(tabla)) return ()=>bloqueado(tabla);
           if(tabla==="audit_progress" && (metodo==="insert"||metodo==="upsert"))
             return (filas,...r)=> horasDeOtro(filas) ? bloqueado(tabla) : real.call(qt,filas,...r);

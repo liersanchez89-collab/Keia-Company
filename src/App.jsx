@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, Fragment } from "react";
 import { EMPRESA, EMPRESA_SUB, MIEMBROS, MIEMBROS_ANTIGUOS, EXTERNOS, PROYECTOS_INICIALES, CLAVE_EDICION, CLAVE_CHAT_PRIVADO } from "./config.js";
 import { sb } from "./supabase.js";
-import { perfil, puedoEditar } from "./perfil.js";
+import { perfil, puedoEditar, puedoGestionar } from "./perfil.js";
 
 // ── Clockify ──────────────────────────────────────────────────────────────────
 const CLOCKIFY_KEY = ""; // la clave de Clockify va en la variable CLOCKIFY_KEY de Vercel (api/clockify.js)
@@ -1768,7 +1768,7 @@ function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,custo
               onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
               onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
               {/* Actions - completely separate from card click */}
-              {perfil.rol==="admin"&&<div style={{position:"absolute",top:12,right:12,display:"flex",gap:4,zIndex:2}}>
+              {puedoGestionar()&&<div style={{position:"absolute",top:12,right:12,display:"flex",gap:4,zIndex:2}}>
                 <button
                   onPointerDown={e=>e.stopPropagation()}
                   onClick={e=>{e.preventDefault();e.stopPropagation();setRenameModal({proj:p,tmpName:p.name,tmpColor:p.color||"#ECEEF2",tmpLight:p.light||"#2A2F38",tmpEquipo:[...(equipos[p.name]||[])]});}}
