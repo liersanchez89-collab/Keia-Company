@@ -5,7 +5,7 @@
 // Nombre que sale arriba del todo, en los PDFs y en los informes
 export const EMPRESA = "KEIA";
 // Subtítulo (organización, universidad, ciudad…)
-export const EMPRESA_SUB = "Nombre de la organización";
+export const EMPRESA_SUB = "Junior empresa";
 
 // Contraseña para editar facturas, hojas de gasto, banco… (¡cámbiala!)
 export const CLAVE_EDICION = "1234";
