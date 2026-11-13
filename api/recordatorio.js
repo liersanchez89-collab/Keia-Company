@@ -56,6 +56,7 @@ export default async function handler(req, res) {
       if (req.headers["x-recordatorio-secret"] !== process.env.RECORDATORIO_SECRET) return res.status(401).json({ error: "No autorizado" });
       const m = madrid();
       if (req.query?.forzar !== "1" && (m.hour !== 18 || ["Sat", "Sun"].includes(m.weekday))) return res.status(200).json({ enviado: false, motivo: `En Madrid son las ${m.hour}h (${m.weekday})` });
+      if (req.query?.persona) soloPersona = String(req.query.persona); // envío manual a una sola persona
     }
 
     const subs = await sb(`push_suscripciones?select=endpoint,persona,sub${soloPersona ? `&persona=eq.${encodeURIComponent(soloPersona)}` : ""}`);
@@ -67,7 +68,7 @@ export default async function handler(req, res) {
     const filas = await sb(`audit_progress?select=val&key=like.horas%7C*&val->>inicio=gte.${encodeURIComponent(desde)}`);
     const horas = filas.map(r => r.val).filter(v => v && v.inicio && !v.borrado && (v.enCurso || madrid(new Date(v.inicio)).ymd === hoy));
 
-    let ok = 0, borradas = 0;
+    let ok = 0, borradas = 0; const errores = [];
     await Promise.all(subs.map(async s => {
       const payload = JSON.stringify({
         title: prueba ? "KEIA · Prueba del recordatorio" : "KEIA · ¿Has contado tus horas?",
@@ -75,15 +76,15 @@ export default async function handler(req, res) {
         url: "/?tab=clockify",
         tag: "recordatorio-horas",
       });
-      try { await webpush.sendNotification(s.sub, payload, { TTL: 3 * 3600, urgency: "high" }); ok++; }
+      try { const r = await webpush.sendNotification(s.sub, payload, { TTL: 3 * 3600, urgency: "high" }); ok++; console.log("push ok", s.persona, r.statusCode); }
       catch (e) {
         if (e.statusCode === 404 || e.statusCode === 410) { // dispositivo dado de baja
           await sb(`push_suscripciones?endpoint=eq.${encodeURIComponent(s.endpoint)}`, { method: "DELETE" }).catch(() => {});
           borradas++;
-        } else console.error("push", s.persona, e.statusCode, e.body);
+        } else { console.error("push error", s.persona, e.statusCode, e.body); errores.push({ persona: s.persona, status: e.statusCode, body: String(e.body || e.message).slice(0, 200) }); }
       }
     }));
-    return res.status(200).json({ enviado: ok, de: subs.length, borradas });
+    return res.status(200).json({ enviado: ok, de: subs.length, borradas, errores });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: e.message });
