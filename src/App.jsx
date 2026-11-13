@@ -9984,7 +9984,7 @@ function MiniBar({val,max,color}){
   );
 }
 
-function EquipoTab({bp,cv,ing,gas,hojas,projects}){
+function EquipoTab({bp,cv,ing,gas,hojas,projects,ultimaAct}){
   const [selectedMember,setSelectedMember] = useState(null);
   const [verTodasFacturas,setVerTodasFacturas] = useState(false);
   const [memberColors,setMemberColors] = useState(()=>{
@@ -10007,7 +10007,12 @@ function EquipoTab({bp,cv,ing,gas,hojas,projects}){
 
   // Todos (para que los totales del equipo cuadren) y visibles (sin los que ya no están en LEINN)
   const [otrosEq,setOtrosEq]=useState([]);
-  useEffect(()=>{ bancoLoad().then(m=>setOtrosEq(otrosDeBanco(m))).catch(()=>{}); },[]);
+  useEffect(()=>{
+    const cargar=()=>bancoLoad().then(m=>setOtrosEq(otrosDeBanco(m))).catch(()=>{});
+    cargar();
+    window.addEventListener("keia:refresco",cargar); // a la vez que el resto de datos (cada minuto)
+    return ()=>window.removeEventListener("keia:refresco",cargar);
+  },[]);
   const statsTodos = INIT_MEMBERS.map(m=>({...m,...statsMiembro(m.name,{bp,cv,ing,gas,hojas,otros:otrosEq}),color:getMemberColor(m.name)}));
   const stats = statsTodos.filter(m=>!MIEMBROS_OCULTOS.includes(m.name));
 
@@ -10015,12 +10020,14 @@ function EquipoTab({bp,cv,ing,gas,hojas,projects}){
   const maxCV=Math.max(...stats.map(s=>s.cvCount),1);
   const maxNeto=Math.max(...stats.map(s=>Math.abs(s.neto)),1);
   const maxFact=Math.max(...stats.map(s=>s.totIng),1);
+  const maxLV=Math.max(...stats.map(s=>s.lvCount),1);
 
   // Rankings
   const rankBP=[...stats].sort((a,b)=>b.pts-a.pts);
   const rankCV=[...stats].sort((a,b)=>b.cvCount-a.cvCount);
   const rankNeto=[...stats].sort((a,b)=>b.neto-a.neto);
   const rankFact=[...stats].sort((a,b)=>b.totIng-a.totIng);
+  const rankLV=[...stats].sort((a,b)=>b.lvCount-a.lvCount);
 
   // Team totals
   const teamPts=statsTodos.reduce((s,m)=>s+m.pts,0);
@@ -10136,13 +10143,17 @@ function EquipoTab({bp,cv,ing,gas,hojas,projects}){
         })}
       </div>
 
-      {/* Rankings + Gráfico */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr) 1.4fr",gap:10,marginBottom:10}} className="blesk-rankings">
+      {/* Rankings (se actualizan solos cada minuto) + Gráfico */}
+      <div style={{display:"flex",justifyContent:"flex-end",fontSize:10,color:"#7F7973",marginBottom:4}}>
+        🔄 Se actualiza solo cada minuto{ultimaAct?` · última: ${ultimaAct.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})}`:""}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:10}} className="blesk-rankings">
         {[
           {title:"🏆 Ranking Bookpoints",rank:rankBP,val:s=>`${s.pts} pts`,bar:s=>s.pts,max:maxPts,color:"#D94A32",bg:"#FBEAE5"},
           {title:"🤝 Ranking Customers",rank:rankCV,val:s=>`${s.cvCount} CV`,bar:s=>s.cvCount,max:maxCV,color:"#0EA5E9",bg:"#E6F3FB"},
           {title:"💶 Ranking Beneficio",rank:rankNeto,val:s=>`${s.neto>=0?"+":""}${s.neto.toFixed(0)}€`,bar:s=>Math.max(s.neto,0),max:maxNeto,color:"#10B981",bg:"#E6F5EC"},
           {title:"💰 Ranking Facturación",rank:rankFact,val:s=>`${s.totIng.toFixed(0)}€`,bar:s=>s.totIng,max:maxFact,color:"#F59E0B",bg:"#FEF6DC"},
+          {title:"🧭 Ranking Learning Visits",rank:rankLV,val:s=>`${s.lvCount} LV`,bar:s=>s.lvCount,max:maxLV,color:"#7C3AED",bg:"#F1EAFD"},
         ].map(r=>(
           <div key={r.title} style={{background:"#FFFFFF",borderRadius:12,overflow:"hidden",border:"1px solid #E5E2DD",boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}>
             <div style={{background:r.color,padding:"10px 14px"}}>
@@ -10167,6 +10178,7 @@ function EquipoTab({bp,cv,ing,gas,hojas,projects}){
           </div>
         ))}
         {/* Gráfico Ingresos vs Gastos en el tiempo */}
+        <div style={{gridColumn:"1 / -1"}}>
         {(()=>{
           // Build monthly data from ing + gas + hojas
           const parseM = f => { if(!f) return null; const p=f.split('/'); return p.length===3?`${p[2]}/${p[1].padStart(2,'0')}`:null; };
@@ -10242,7 +10254,7 @@ function EquipoTab({bp,cv,ing,gas,hojas,projects}){
               </div>
             </div>
           );
-        })()}
+        })()}</div>
       </div>
 
       {/* Member detail modal */}
@@ -11305,6 +11317,48 @@ export default function Dashboard(){
     return ()=>{ sb.removeChannel(chF); sb.removeChannel(chC); sb.removeChannel(chCV); document.removeEventListener("visibilitychange",onVisible); };
   },[]);
 
+  // ── Refresco automático cada minuto ─────────────────────────────────────────
+  // Recarga Bookpoints, Customers (CV/LV), facturas y hojas de gasto para que los rankings
+  // y el resto de la web cuadren con lo que han apuntado los demás. No refresca mientras
+  // estás escribiendo en un campo, para no pisarte una edición a medias.
+  const [ultimaAct,setUltimaAct]=useState(()=>new Date());
+  useEffect(()=>{
+    const REFRESCO_MS=60*1000;
+    let vivo=true, enCurso=false;
+    const pd=f=>{ if(!f) return 0; const [d,m,y]=f.split('/'); return new Date(y,m-1,d).getTime(); };
+    const parseF=r=>({...r,linkFactura:r.link_factura||"",pagado:r.pagado||false,frcSign:r.frc_sign||"+",reparto:typeof r.reparto==="string"?JSON.parse(r.reparto||"[]"):r.reparto||[]});
+    async function refrescar(){
+      if(enCurso||document.visibilityState!=="visible") return;
+      const a=document.activeElement;
+      if(a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT"||a.isContentEditable)) return;
+      enCurso=true;
+      try{
+        const [{data:bpD,error:e1},{data:cvD,error:e2},{data:facD,error:e3},{data:hojD,error:e4}]=await Promise.all([
+          sb.from("bookpoints").select("*"),
+          sb.from("customers").select("*"),
+          sb.from("facturas").select("*"),
+          sb.from("hojas_gasto").select("*"),
+        ]);
+        if(!vivo) return;
+        if(!e1&&bpD) setBPRaw(rowsToByMember(bpD));
+        if(!e2&&cvD) setCVRaw(rowsToByMember(cvD));
+        if(!e3&&facD){
+          const ok=facD.filter(r=>r.estado!=="pendiente").sort((x,y)=>pd(x.fecha)-pd(y.fecha)).map(parseF);
+          setIngRaw(ok.filter(r=>r.tipo==="ingreso"));
+          setGasRaw(ok.filter(r=>r.tipo==="gasto"));
+        }
+        if(!e4&&hojD) setHojasRaw(hojD.sort((x,y)=>pd(x.fecha)-pd(y.fecha)).map(r=>({...r,link:r.link||"",pagado:r.pagado||false,importe_proyecto:r.importe_proyecto||"",proyectos:typeof r.proyectos==="string"?JSON.parse(r.proyectos||"[]"):r.proyectos||[],reparto:typeof r.reparto==="string"?JSON.parse(r.reparto||"[]"):r.reparto||[]})));
+        setUltimaAct(new Date());
+        window.dispatchEvent(new CustomEvent("keia:refresco"));
+      }catch(e){ console.warn("refresco automático",e); }
+      finally{ enCurso=false; }
+    }
+    const t=setInterval(refrescar,REFRESCO_MS);
+    const vis=()=>{ if(document.visibilityState==="visible") refrescar(); };
+    document.addEventListener("visibilitychange",vis);
+    return ()=>{ vivo=false; clearInterval(t); document.removeEventListener("visibilitychange",vis); };
+  },[]);
+
   // ── DB-synced setters ───────────────────────────────────────────────────────
   // Generic: upsert changed rows, delete removed rows
   async function syncTable(table, oldState, newState, member){
@@ -11670,7 +11724,7 @@ export default function Dashboard(){
       {/* ── CONTENT ── */}
       <div className="blesk-content" style={{padding:"28px 32px 48px",maxWidth:1400,margin:"0 auto"}}>
         {tab==="inicio"     && <InicioTab bp={bp} cv={cv} ing={ing} gas={gas} hojas={hojas} projects={projects} tareas={tareas} setTareas={setTareas}/>}
-        {tab==="equipo"     && <EquipoTab     bp={bp} cv={cv} ing={ing} gas={gas} hojas={hojas} projects={projects}/>}
+        {tab==="equipo"     && <EquipoTab     bp={bp} cv={cv} ing={ing} gas={gas} hojas={hojas} projects={projects} ultimaAct={ultimaAct}/>}
         {tab==="proyectos"   && <ProyectosTab  projects={projects} setProjects={setProjects} setProjectsDirectly={setProjectsDirectly} crm={crm} setCRM={setCRM} customers={cv} ingresos={ing} gastos={gas} hojas={hojas} ing={ing} cv={cv} bp={bp}/>}
         {tab==="checkpoints" && <CheckpointsTab ing={ing} gas={gas} hojas={hojas} bp={bp} setBP={setBP} bpGroups={bpGroups} setBPGroups={setBPGroups} cv={cv} setCV={setCV} cvGroups={cvGroups} setCVGroups={setCVGroups} projects={projects}/>}
         {tab==="finanzas"   && <FinanzasTab ing={ing} setIng={setIng} gas={gas} setGas={setGas} hojas={hojas} setHojas={setHojas} projects={projects} diamante={diamante} setDiamante={setDiamante} sb={sb}/>}
