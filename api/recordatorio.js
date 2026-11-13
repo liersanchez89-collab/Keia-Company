@@ -1,6 +1,8 @@
-// Recordatorios de horas: notificación push de lunes a viernes a las 9:00 (entrada: activa el contador)
-// y a las 18:00 (salida: cuenta tus horas), hora de Madrid.
-// Lo lanza Supabase (pg_cron + pg_net) a las 7, 8, 16 y 17 UTC; aquí solo se envía si en Madrid son las 9 o las 18,
+// Recordatorios de horas: notificación push de lunes a viernes (hora de Madrid):
+//  · 9:00  (entrada: activa el contador)
+//  · 11:00, 13:00 y 16:00 (durante el día: SOLO a quien no tiene el contador en marcha)
+//  · 18:00 (salida: cuenta tus horas)
+// Lo lanza Supabase (pg_cron + pg_net) cada hora de 7 a 17 UTC; aquí solo se envía si en Madrid es una de esas horas,
 // así funciona igual en horario de verano y de invierno.
 // También sirve para "Enviarme una prueba" desde la app (?prueba=1 con la sesión de la persona).
 import webpush from "web-push";
@@ -40,6 +42,16 @@ function mensajeManana(persona, semana) {
     : `Buenos días, ${nombre}. Activa el contador al empezar ⏱ Llevas ${fmt(segs)} de ${OBJETIVO_H} h esta semana${falta ? ` (te faltan ${fmt(falta)})` : " ✅"}.`;
 }
 
+// Aviso de media jornada: solo para quien NO tiene el contador en marcha
+const HORAS_DIA = [11, 13, 16];
+function mensajeDia(persona, horas, hora) {
+  const nombre = String(persona || "").split(" ")[0];
+  const segs = horas.filter(e => e.persona === persona).reduce((a, e) => a + segsDe(e), 0);
+  return segs < 60
+    ? `${nombre}, son las ${hora}:00 y no tienes el contador activado. Si estás trabajando, actívalo ahora ⏱`
+    : `${nombre}, son las ${hora}:00 y el contador está parado (hoy llevas ${fmt(segs)}). Si estás trabajando, actívalo ⏱`;
+}
+
 function mensaje(persona, horas) {
   const mias = horas.filter(e => e.persona === persona);
   const enCurso = mias.find(e => e.enCurso);
@@ -68,13 +80,13 @@ export default async function handler(req, res) {
       const perf = await sb(`perfiles?select=nombre&email=eq.${encodeURIComponent(email)}`);
       soloPersona = perf?.[0]?.nombre;
       if (!soloPersona) return res.status(403).json({ error: "Sin perfil" });
-      turno = req.query?.turno === "manana" ? "manana" : "tarde";
+      turno = ["manana", "dia"].includes(req.query?.turno) ? req.query.turno : "tarde";
     } else {
       if (req.headers["x-recordatorio-secret"] !== process.env.RECORDATORIO_SECRET) return res.status(401).json({ error: "No autorizado" });
       if (req.query?.aviso === "informe") return avisoInforme(res);
       const m = madrid();
-      if (req.query?.forzar !== "1" && (![9, 18].includes(m.hour) || ["Sat", "Sun"].includes(m.weekday))) return res.status(200).json({ enviado: false, motivo: `En Madrid son las ${m.hour}h (${m.weekday})` });
-      turno = req.query?.turno || (m.hour < 12 ? "manana" : "tarde");
+      if (req.query?.forzar !== "1" && (![9, ...HORAS_DIA, 18].includes(m.hour) || ["Sat", "Sun"].includes(m.weekday))) return res.status(200).json({ enviado: false, motivo: `En Madrid son las ${m.hour}h (${m.weekday})` });
+      turno = req.query?.turno || (m.hour === 9 ? "manana" : HORAS_DIA.includes(m.hour) ? "dia" : "tarde");
       if (req.query?.persona) soloPersona = String(req.query.persona); // envío manual a una sola persona
     }
 
@@ -100,11 +112,16 @@ export default async function handler(req, res) {
       semana = filasSem.map(r => r.val).filter(v => v && v.inicio && !v.borrado && (v.enCurso || clave(v) >= `${viernes} 09`));
     }
 
+    // Durante el día solo se avisa a quien no tiene el contador en marcha (en la prueba se envía siempre)
+    const destinatarios = turno === "dia" && !prueba ? subs.filter(s => !horas.some(e => e.persona === s.persona && e.enCurso)) : subs;
+    if (!destinatarios.length) return res.status(200).json({ enviado: 0, motivo: "Todos tienen el contador en marcha" });
+    const horaDia = madrid().hour;
+
     let ok = 0, borradas = 0; const errores = [];
-    await Promise.all(subs.map(async s => {
+    await Promise.all(destinatarios.map(async s => {
       const payload = JSON.stringify({
-        title: prueba ? "KEIA · Prueba del recordatorio" : turno === "manana" ? "KEIA · ¡A por el día!" : "KEIA · ¿Has contado tus horas?",
-        body: turno === "manana" ? mensajeManana(s.persona, semana) : mensaje(s.persona, horas),
+        title: prueba ? "KEIA · Prueba del recordatorio" : turno === "manana" ? "KEIA · ¡A por el día!" : turno === "dia" ? "KEIA · ¿Estás contando tus horas?" : "KEIA · ¿Has contado tus horas?",
+        body: turno === "manana" ? mensajeManana(s.persona, semana) : turno === "dia" ? mensajeDia(s.persona, horas, horaDia) : mensaje(s.persona, horas),
         url: "/?tab=clockify",
         tag: "recordatorio-horas",
       });
@@ -116,7 +133,7 @@ export default async function handler(req, res) {
         } else { console.error("push error", s.persona, e.statusCode, e.body); errores.push({ persona: s.persona, status: e.statusCode, body: String(e.body || e.message).slice(0, 200) }); }
       }
     }));
-    return res.status(200).json({ enviado: ok, de: subs.length, borradas, errores });
+    return res.status(200).json({ enviado: ok, de: destinatarios.length, turno, borradas, errores });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: e.message });
