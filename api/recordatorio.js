@@ -71,6 +71,7 @@ export default async function handler(req, res) {
       turno = req.query?.turno === "manana" ? "manana" : "tarde";
     } else {
       if (req.headers["x-recordatorio-secret"] !== process.env.RECORDATORIO_SECRET) return res.status(401).json({ error: "No autorizado" });
+      if (req.query?.aviso === "informe") return avisoInforme(res);
       const m = madrid();
       if (req.query?.forzar !== "1" && (![9, 18].includes(m.hour) || ["Sat", "Sun"].includes(m.weekday))) return res.status(200).json({ enviado: false, motivo: `En Madrid son las ${m.hour}h (${m.weekday})` });
       turno = req.query?.turno || (m.hour < 12 ? "manana" : "tarde");
@@ -88,12 +89,15 @@ export default async function handler(req, res) {
     // Semana (lunes a domingo, Madrid) para el mensaje de la mañana
     let semana = [];
     if (turno === "manana") {
-      const dowIdx = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 }[madrid().weekday] ?? 0;
-      const desdeSem = new Date(Date.now() - (dowIdx + 1) * 864e5).toISOString();
+      // Semana de empresa: desde el último viernes a las 9:00 (hora de Madrid)
+      const m0 = madrid();
+      const diasDesdeViernes = ({ Fri: 0, Sat: 1, Sun: 2, Mon: 3, Tue: 4, Wed: 5, Thu: 6 }[m0.weekday] ?? 0) - (m0.weekday === "Fri" && m0.hour < 9 ? -7 : 0);
+      const desdeSem = new Date(Date.now() - (diasDesdeViernes + 1) * 864e5).toISOString();
       const filasSem = await sb(`audit_progress?select=val&key=like.horas%7C*&val->>inicio=gte.${encodeURIComponent(desdeSem)}`);
       const [y, mo, d] = hoy.split("-").map(Number);
-      const lunes = new Date(Date.UTC(y, mo - 1, d - dowIdx)).toISOString().slice(0, 10);
-      semana = filasSem.map(r => r.val).filter(v => v && v.inicio && !v.borrado && (v.enCurso || madrid(new Date(v.inicio)).ymd >= lunes));
+      const viernes = new Date(Date.UTC(y, mo - 1, d - diasDesdeViernes)).toISOString().slice(0, 10);
+      const clave = v => { const x = madrid(new Date(v.inicio)); return `${x.ymd} ${String(x.hour).padStart(2, "0")}`; };
+      semana = filasSem.map(r => r.val).filter(v => v && v.inicio && !v.borrado && (v.enCurso || clave(v) >= `${viernes} 09`));
     }
 
     let ok = 0, borradas = 0; const errores = [];
@@ -117,4 +121,24 @@ export default async function handler(req, res) {
     console.error(e);
     return res.status(500).json({ error: e.message });
   }
+}
+
+// Aviso a los admin: el informe semanal de horas (viernes 9:00 → viernes 8:59) ya está listo
+async function avisoInforme(res) {
+  const [inf] = await sb("informes_horas?select=semana_inicio,semana_fin,total_segs,datos&order=semana_inicio.desc&limit=1");
+  if (!inf) return res.status(200).json({ enviado: 0, motivo: "Sin informe" });
+  const admins = (await sb("perfiles?select=nombre&rol=eq.admin")).map(p => p.nombre);
+  if (!admins.length) return res.status(200).json({ enviado: 0, motivo: "Sin admin" });
+  const subs = await sb(`push_suscripciones?select=endpoint,persona,sub&persona=in.(${admins.map(n => `"${n.replace(/"/g, "")}"`).join(",")})`);
+  const personas = Object.entries(inf.datos || {});
+  const llegan = personas.filter(([, d]) => (d.segs || 0) >= OBJETIVO_H * 3600).length;
+  const top = personas.sort((a, b) => (b[1].segs || 0) - (a[1].segs || 0))[0];
+  const f = d => new Intl.DateTimeFormat("es-ES", { timeZone: "Europe/Madrid", day: "numeric", month: "short" }).format(new Date(d));
+  const body = `Semana ${f(inf.semana_inicio)} – ${f(inf.semana_fin)}: el equipo suma ${fmt(inf.total_segs || 0)}. ${llegan} ${llegan === 1 ? "persona llega" : "personas llegan"} a las ${OBJETIVO_H} h${top ? ` · más horas: ${String(top[0]).split(" ")[0]} (${fmt(top[1].segs || 0)})` : ""}.`;
+  let ok = 0;
+  await Promise.all(subs.map(async s => {
+    try { await webpush.sendNotification(s.sub, JSON.stringify({ title: "KEIA · Informe semanal de horas", body, url: "/?tab=clockify", tag: "informe-horas" }), { TTL: 24 * 3600 }); ok++; }
+    catch (e) { console.error("push informe", s.persona, e.statusCode, e.body); }
+  }));
+  return res.status(200).json({ enviado: ok, de: subs.length });
 }

@@ -3979,9 +3979,17 @@ function horasMatriz(entries,desde,hasta){
   return m;
 }
 // Semana (lunes-domingo), mes, año o personalizado → [desde, hasta] en ms (hora local)
+// Semana de empresa: de viernes a las 9:00 a viernes a las 8:59 de la semana siguiente
+function inicioSemanaEmpresa(d=new Date()){
+  const dias=(d.getDay()-5+7)%7; // días desde el último viernes
+  let ini=new Date(d.getFullYear(),d.getMonth(),d.getDate()-dias,9,0,0,0);
+  if(ini>d) ini=new Date(ini.getFullYear(),ini.getMonth(),ini.getDate()-7,9);
+  return ini;
+}
+const INICIO_CONTADOR_EMPRESA=new Date(2026,10,13,9,0,0); // viernes 13/11/2026 9:00: empieza el contador
 function rangoPeriodo(r,dateFrom,dateTo){
   const now=new Date();
-  if(r==="week"){ const dow=now.getDay()===0?7:now.getDay(); const mon=new Date(now.getFullYear(),now.getMonth(),now.getDate()-(dow-1)); return [mon.getTime(),new Date(mon.getFullYear(),mon.getMonth(),mon.getDate()+7).getTime()-1]; }
+  if(r==="week"){ const ini=inicioSemanaEmpresa(now); return [ini.getTime(),new Date(ini.getFullYear(),ini.getMonth(),ini.getDate()+7,9).getTime()-1]; }
   if(r==="month") return [new Date(now.getFullYear(),now.getMonth(),1).getTime(),new Date(now.getFullYear(),now.getMonth()+1,1).getTime()-1];
   if(r==="year") return [new Date(now.getFullYear(),0,1).getTime(),new Date(now.getFullYear()+1,0,1).getTime()-1];
   const p=s=>{ const [y,m,d]=String(s||"").split("-").map(Number); return y?new Date(y,m-1,d):null; };
@@ -4115,6 +4123,84 @@ function RecordatorioHoras(){
   );
 }
 
+// ── Informes semanales de horas (viernes 9:00 → viernes 8:59) ──
+// Los genera Supabase cada viernes a las 9:00 (tabla informes_horas). La semana en curso se calcula en vivo.
+function InformesSemanales({lista,getMemberColor,projColorMap}){
+  const [informes,setInformes]=useState(null);
+  const [abierto,setAbierto]=useState(false);
+  const [sel,setSel]=useState("actual");
+  useEffect(()=>{ sb.from("informes_horas").select("*").order("semana_inicio",{ascending:false}).then(({data,error})=>{ if(error) console.error("informes",error); setInformes(data||[]); }); },[]);
+  const ini=inicioSemanaEmpresa(), fin=new Date(ini.getFullYear(),ini.getMonth(),ini.getDate()+7,9);
+  // Semana en curso, en vivo
+  const actual={};
+  lista.forEach(e=>{ const t=new Date(e.inicio); if(t<ini||t>=fin) return; const p=e.persona||"Sin persona"; const d=actual[p]=actual[p]||{segs:0,facturable:0,registros:0,proyectos:{}}; const sg=horasSegs(e); d.segs+=sg; if(e.facturable) d.facturable+=sg; d.registros++; const pr=e.proyecto||"Sin proyecto"; d.proyectos[pr]=(d.proyectos[pr]||0)+sg; });
+  const semanas=[{id:"actual",ini,fin,datos:actual,vivo:true},...(informes||[]).filter(i=>new Date(i.semana_inicio).getTime()!==ini.getTime()).map(i=>({id:i.semana_inicio,ini:new Date(i.semana_inicio),fin:new Date(i.semana_fin),datos:i.datos||{}}))];
+  const cur=semanas.find(x=>x.id===sel)||semanas[0];
+  const totalDe=d=>Object.values(d).reduce((a,x)=>a+(+x.segs||0),0);
+  const acumulado=semanas.reduce((a,w)=>a+totalDe(w.datos),0);
+  const f=d=>d.toLocaleDateString("es-ES",{day:"numeric",month:"short"});
+  const etiqueta=w=>`${f(w.ini)} → ${f(new Date(w.fin.getTime()-60000))}`;
+  const objS=OBJETIVO_SEMANAL_H*3600;
+  const filas=[...MIEMBROS_VISIBLES.map(m=>m.name),...Object.keys(cur.datos).filter(n=>!MIEMBROS_VISIBLES.some(m=>m.name===n))]
+    .map(n=>({n,d:cur.datos[n]||{segs:0,facturable:0,registros:0,proyectos:{}}})).sort((a,b)=>(+b.d.segs||0)-(+a.d.segs||0));
+  const totalCur=totalDe(cur.datos);
+  function descargar(){
+    const cab=["Persona","Horas","Facturables","No facturables","% objetivo 40h","Registros","Proyectos"];
+    const lin=filas.map(({n,d})=>[n,(d.segs/3600).toFixed(2).replace(".",","),((+d.facturable||0)/3600).toFixed(2).replace(".",","),(((+d.segs||0)-(+d.facturable||0))/3600).toFixed(2).replace(".",","),Math.round((+d.segs||0)/objS*100)+"%",d.registros||0,Object.entries(d.proyectos||{}).map(([p,sg])=>`${p}: ${fmtHoras(sg)}`).join(" | ")]);
+    const csv=[["Informe de horas KEIA",etiqueta(cur)],[],cab,...lin,[],["TOTAL",(totalCur/3600).toFixed(2).replace(".",",")]].map(r=>r.map(c=>`"${String(c??"").replace(/"/g,'""')}"`).join(";")).join("\n");
+    const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"})); a.download=`informe-horas-${ymdLocal(cur.ini)}.csv`; a.click();
+  }
+  return(
+    <div style={{background:"#FFFFFF",border:"1px solid #E5E2DD",borderRadius:14,padding:"12px 16px",marginBottom:18}}>
+      <div onClick={()=>setAbierto(a=>!a)} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",flexWrap:"wrap"}}>
+        <span style={{fontWeight:700,fontSize:13,color:"#171717",fontFamily:FONT_TITULOS}}>📑 Informes semanales de horas</span>
+        <span style={{fontSize:11,color:"#6B665F"}}>Horas trabajadas en {EMPRESA} desde el {f(INICIO_CONTADOR_EMPRESA)}: <b style={{color:"#D94A32",fontFamily:FONT_TITULOS}}>{fmtHoras(acumulado)}</b></span>
+        <span style={{marginLeft:"auto",fontSize:11,color:"#7F7973"}}>{abierto?"▼":"▸"}</span>
+      </div>
+      {abierto&&(
+        <div style={{marginTop:12}}>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",marginBottom:12}}>
+            {semanas.map(w=>(
+              <button key={w.id} onClick={()=>setSel(w.id)} style={{background:cur.id===w.id?"#171717":"#F7F6F4",color:cur.id===w.id?"#FFF":"#3D3A36",border:`1px solid ${cur.id===w.id?"#171717":"#E5E2DD"}`,borderRadius:99,padding:"5px 12px",fontSize:11,fontWeight:cur.id===w.id?700:500,cursor:"pointer",fontFamily:"inherit"}}>
+                {w.vivo?"🟢 En curso · ":""}{etiqueta(w)}
+              </button>
+            ))}
+            {informes===null&&<span style={{fontSize:11,color:"#7F7973"}}>Cargando…</span>}
+            <button onClick={descargar} style={{marginLeft:"auto",background:"#F2F0ED",color:"#3D3A36",border:"1px solid #E5E2DD",borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>⬇ Descargar (Excel)</button>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8,marginBottom:12}}>
+            {[["Total equipo",fmtHoras(totalCur),"#171717"],["Facturables",fmtHoras(filas.reduce((a,x)=>a+(+x.d.facturable||0),0)),"#047857"],["Llegan a 40 h",`${filas.filter(x=>(+x.d.segs||0)>=objS).length} de ${filas.length}`,"#D94A32"],["Media por persona",fmtHoras(totalCur/Math.max(1,MIEMBROS_VISIBLES.length)),"#2B2926"]].map(([l,v,c])=>(
+              <div key={l} style={{background:"#F7F6F4",borderRadius:10,padding:"8px 12px"}}>
+                <div style={{fontSize:10,color:"#7F7973",fontWeight:600}}>{l}</div>
+                <div style={{fontSize:17,fontWeight:800,color:c,fontFamily:FONT_TITULOS}}>{v}</div>
+              </div>
+            ))}
+          </div>
+          {cur.vivo&&<div style={{fontSize:10.5,color:"#7F7973",marginBottom:8}}>Semana en curso: se cierra y se guarda el viernes {f(fin)} a las 9:00. Los informes cerrados ya no cambian aunque se toquen las horas después.</div>}
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:11.5}}>
+              <thead><tr style={{color:"#7F7973",fontSize:10,textAlign:"left"}}>
+                {["Persona","Horas","% de 40 h","Facturables","Proyectos"].map(h=><th key={h} style={{padding:"6px 8px",borderBottom:"1px solid #E5E2DD",fontWeight:600}}>{h}</th>)}
+              </tr></thead>
+              <tbody>
+                {filas.map(({n,d})=>{ const sg=+d.segs||0; return(
+                  <tr key={n} style={{borderBottom:"1px solid #F2F0ED"}}>
+                    <td style={{padding:"6px 8px",fontWeight:600,whiteSpace:"nowrap"}}><span style={{display:"inline-block",width:8,height:8,borderRadius:99,background:getMemberColor(n),marginRight:6}}/>{n}</td>
+                    <td style={{padding:"6px 8px",fontWeight:800,fontFamily:FONT_TITULOS,color:sg>=objS?"#047857":"#171717",whiteSpace:"nowrap"}}>{fmtHoras(sg)}{sg>=objS?" ✅":""}</td>
+                    <td style={{padding:"6px 8px",minWidth:110}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{flex:1}}><BarraObjetivo segs={sg} color={getMemberColor(n)} alto={6}/></div><span style={{fontSize:10.5,color:"#6B665F",width:34,textAlign:"right"}}>{Math.round(sg/objS*100)}%</span></div></td>
+                    <td style={{padding:"6px 8px",color:"#047857",whiteSpace:"nowrap"}}>{fmtHoras(+d.facturable||0)}</td>
+                    <td style={{padding:"6px 8px"}}><div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{Object.entries(d.proyectos||{}).sort((a,b)=>b[1]-a[1]).map(([p,ps])=><span key={p} style={{background:(projColorMap[p]||"#8A847C")+"18",color:projColorMap[p]||"#57534E",borderRadius:99,padding:"1px 8px",fontSize:10,fontWeight:600,whiteSpace:"nowrap"}}>{p} · {fmtHoras(ps)}</span>)}</div></td>
+                  </tr>
+                ); })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Objetivo semanal: 40 h por persona ──
 function BarraObjetivo({segs,color,alto=8}){
   const pct=Math.min(100,segs/(OBJETIVO_SEMANAL_H*3600)*100);
@@ -4134,12 +4220,13 @@ function ObjetivoSemanal({lista,getMemberColor,persona}){
   const filas=MIEMBROS_VISIBLES.map(m=>({...m,segs:porPersona[m.name]||0})).sort((a,b)=>b.segs-a.segs);
   const cumplen=filas.filter(f=>f.segs>=objS).length;
   const media=filas.reduce((a,f)=>a+f.segs,0)/Math.max(1,filas.length);
-  // Días laborables que quedan (incluido hoy) para saber cuánto toca al día
-  const dow=new Date().getDay(); const quedan=dow===0||dow===6?0:6-dow;
+  // Días laborables que quedan hasta el viernes 8:59 (incluido hoy) para saber cuánto toca al día
+  const dow=new Date().getDay(); const quedan={1:4,2:3,3:2,4:1,5:5}[dow]||0;
   return(
     <div style={{background:"#FFFFFF",border:"1px solid #E5E2DD",borderRadius:14,padding:"12px 16px",marginBottom:18}}>
       <div onClick={()=>setAbierto(a=>!a)} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",flexWrap:"wrap"}}>
         <span style={{fontWeight:700,fontSize:13,color:"#171717",fontFamily:FONT_TITULOS}}>🎯 Objetivo semanal: {OBJETIVO_SEMANAL_H} h</span>
+        <span style={{fontSize:10.5,color:"#7F7973"}}>vie {inicioSemanaEmpresa().toLocaleDateString("es-ES",{day:"numeric",month:"short"})} 9:00 → vie 8:59</span>
         <span style={{fontSize:11,color:"#6B665F"}}>{cumplen} de {filas.length} lo cumplen · media {fmtHoras(media)}</span>
         <span style={{marginLeft:"auto",fontSize:11,color:"#7F7973"}}>{abierto?"▼":"▸"}</span>
       </div>
@@ -4419,7 +4506,7 @@ function HorasTab({projects}){
   const sortedMembers=[...memberNames].sort((a,b)=>(memberTotals[b]||0)-(memberTotals[a]||0));
   const maxMemberSecs=Math.max(...sortedMembers.map(m=>memberTotals[m]||0),1);
   const getMemberColor=n=>INIT_MEMBERS.find(x=>x.name===n)?.color||"#2B2926";
-  const RANGE_LABELS={week:"Esta semana",month:"Este mes",year:"Este año",custom:"Personalizado"};
+  const RANGE_LABELS={week:"Esta semana (vie 9:00 → vie 8:59)",month:"Este mes",year:"Este año",custom:"Personalizado"};
   const factMatrix=horasMatriz(lista.filter(e=>e.facturable),desdeR,hastaR);
   const factPersona=n=>Object.values(factMatrix[n]||{}).reduce((a,v)=>a+v,0);
   const totalFact=Object.keys(factMatrix).reduce((a,n)=>a+factPersona(n),0);
@@ -4447,6 +4534,7 @@ function HorasTab({projects}){
         onParar={e=>{ if(window.confirm(`¿Parar el contador de ${e.persona}? Se guardará hasta ahora (${fmtReloj(horasSegs(e))}).`)) guardar(cerrar(e,new Date())); }}/>
 
       <ObjetivoSemanal lista={lista} getMemberColor={getMemberColor} persona={esTodos?null:persona}/>
+      <InformesSemanales lista={lista} getMemberColor={getMemberColor} projColorMap={projColorMap}/>
 
       {/* ── Registrar ── */}
       <div style={{background:"#FFFFFF",border:`1.5px solid ${enMarcha?pc+"88":"#E5E2DD"}`,borderRadius:14,padding:"14px 16px",marginBottom:18,boxShadow:"0 1px 3px rgba(0,0,0,0.05)"}}>
