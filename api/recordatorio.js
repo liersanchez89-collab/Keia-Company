@@ -1,5 +1,6 @@
-// Recordatorio de horas: notificación push de lunes a viernes a las 18:00 (hora de Madrid).
-// Lo lanza Supabase (pg_cron + pg_net) a las 16:00 y 17:00 UTC; aquí solo se envía si en Madrid son las 18,
+// Recordatorios de horas: notificación push de lunes a viernes a las 9:00 (entrada: activa el contador)
+// y a las 18:00 (salida: cuenta tus horas), hora de Madrid.
+// Lo lanza Supabase (pg_cron + pg_net) a las 7, 8, 16 y 17 UTC; aquí solo se envía si en Madrid son las 9 o las 18,
 // así funciona igual en horario de verano y de invierno.
 // También sirve para "Enviarme una prueba" desde la app (?prueba=1 con la sesión de la persona).
 import webpush from "web-push";
@@ -25,6 +26,20 @@ function madrid(d = new Date()) {
 
 const fmt = s => { const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h ? `${h} h${m ? ` ${m} min` : ""}` : `${m} min`; };
 
+const OBJETIVO_H = 40;
+const segsDe = e => e.enCurso ? (Date.now() - new Date(e.inicio).getTime()) / 1000 : (parseFloat(e.segundos) || 0);
+
+function mensajeManana(persona, semana) {
+  const nombre = String(persona || "").split(" ")[0];
+  const segs = semana.filter(e => e.persona === persona).reduce((a, e) => a + segsDe(e), 0);
+  const enCurso = semana.find(e => e.persona === persona && e.enCurso);
+  if (enCurso) return `Buenos días, ${nombre}. Ya tienes el contador en marcha 💪 Esta semana llevas ${fmt(segs)} de ${OBJETIVO_H} h.`;
+  const falta = Math.max(0, OBJETIVO_H * 3600 - segs);
+  return segs < 60
+    ? `Buenos días, ${nombre}. No te olvides de activar el contador al empezar ⏱ Objetivo: ${OBJETIVO_H} h esta semana.`
+    : `Buenos días, ${nombre}. Activa el contador al empezar ⏱ Llevas ${fmt(segs)} de ${OBJETIVO_H} h esta semana${falta ? ` (te faltan ${fmt(falta)})` : " ✅"}.`;
+}
+
 function mensaje(persona, horas) {
   const mias = horas.filter(e => e.persona === persona);
   const enCurso = mias.find(e => e.enCurso);
@@ -42,6 +57,7 @@ export default async function handler(req, res) {
 
     const prueba = req.query?.prueba === "1";
     let soloPersona = null;
+    let turno = "tarde";
 
     if (prueba) {
       // Prueba desde la app: solo a los dispositivos de quien la pide
@@ -52,10 +68,12 @@ export default async function handler(req, res) {
       const perf = await sb(`perfiles?select=nombre&email=eq.${encodeURIComponent(email)}`);
       soloPersona = perf?.[0]?.nombre;
       if (!soloPersona) return res.status(403).json({ error: "Sin perfil" });
+      turno = req.query?.turno === "manana" ? "manana" : "tarde";
     } else {
       if (req.headers["x-recordatorio-secret"] !== process.env.RECORDATORIO_SECRET) return res.status(401).json({ error: "No autorizado" });
       const m = madrid();
-      if (req.query?.forzar !== "1" && (m.hour !== 18 || ["Sat", "Sun"].includes(m.weekday))) return res.status(200).json({ enviado: false, motivo: `En Madrid son las ${m.hour}h (${m.weekday})` });
+      if (req.query?.forzar !== "1" && (![9, 18].includes(m.hour) || ["Sat", "Sun"].includes(m.weekday))) return res.status(200).json({ enviado: false, motivo: `En Madrid son las ${m.hour}h (${m.weekday})` });
+      turno = req.query?.turno || (m.hour < 12 ? "manana" : "tarde");
       if (req.query?.persona) soloPersona = String(req.query.persona); // envío manual a una sola persona
     }
 
@@ -67,12 +85,22 @@ export default async function handler(req, res) {
     const desde = new Date(Date.now() - 36 * 3600e3).toISOString();
     const filas = await sb(`audit_progress?select=val&key=like.horas%7C*&val->>inicio=gte.${encodeURIComponent(desde)}`);
     const horas = filas.map(r => r.val).filter(v => v && v.inicio && !v.borrado && (v.enCurso || madrid(new Date(v.inicio)).ymd === hoy));
+    // Semana (lunes a domingo, Madrid) para el mensaje de la mañana
+    let semana = [];
+    if (turno === "manana") {
+      const dowIdx = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 }[madrid().weekday] ?? 0;
+      const desdeSem = new Date(Date.now() - (dowIdx + 1) * 864e5).toISOString();
+      const filasSem = await sb(`audit_progress?select=val&key=like.horas%7C*&val->>inicio=gte.${encodeURIComponent(desdeSem)}`);
+      const [y, mo, d] = hoy.split("-").map(Number);
+      const lunes = new Date(Date.UTC(y, mo - 1, d - dowIdx)).toISOString().slice(0, 10);
+      semana = filasSem.map(r => r.val).filter(v => v && v.inicio && !v.borrado && (v.enCurso || madrid(new Date(v.inicio)).ymd >= lunes));
+    }
 
     let ok = 0, borradas = 0; const errores = [];
     await Promise.all(subs.map(async s => {
       const payload = JSON.stringify({
-        title: prueba ? "KEIA · Prueba del recordatorio" : "KEIA · ¿Has contado tus horas?",
-        body: mensaje(s.persona, horas),
+        title: prueba ? "KEIA · Prueba del recordatorio" : turno === "manana" ? "KEIA · ¡A por el día!" : "KEIA · ¿Has contado tus horas?",
+        body: turno === "manana" ? mensajeManana(s.persona, semana) : mensaje(s.persona, horas),
         url: "/?tab=clockify",
         tag: "recordatorio-horas",
       });
