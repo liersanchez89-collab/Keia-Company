@@ -3929,6 +3929,24 @@ function useHoras(){
   const [entries,setEntries]=useState(null);
   const recargar=useCallback(()=>horasLoad().then(setEntries).catch(e=>{ console.error("❌ horas load",e); setEntries(x=>x||[]); }),[]);
   useEffect(()=>{ recargar(); },[recargar]);
+  // Tiempo real: cuando alguien empieza/para un contador (o toca sus horas) se ve al momento, sin recargar
+  useEffect(()=>{
+    const ch=sb.channel("rt:horas_"+Math.random().toString(36).slice(2,7))
+      .on("postgres_changes",{event:"*",schema:"public",table:"audit_progress"},p=>{
+        const key=String((p.new&&p.new.key)||(p.old&&p.old.key)||"");
+        if(!key.startsWith(HORAS_PREF)) return;
+        const id=key.slice(HORAS_PREF.length);
+        if(p.eventType==="DELETE"){ setEntries(prev=>prev&&prev.filter(x=>x.id!==id)); return; }
+        const v=p.new&&p.new.val;
+        if(!v) return;
+        if(v.borrado||!v.inicio){ setEntries(prev=>prev&&prev.filter(x=>x.id!==id)); return; }
+        setEntries(prev=>[v,...(prev||[]).filter(x=>x.id!==v.id)]);
+      })
+      .subscribe();
+    const vis=()=>{ if(document.visibilityState==="visible") recargar(); };
+    document.addEventListener("visibilitychange",vis);
+    return ()=>{ document.removeEventListener("visibilitychange",vis); try{ sb.removeChannel(ch); }catch{} };
+  },[recargar]);
   return [entries,setEntries,recargar];
 }
 const fmtHoras=s=>{ const h=Math.floor(s/3600), m=Math.floor((s%3600)/60); return h+"h"+(m>0?" "+m+"m":""); };
@@ -3961,6 +3979,64 @@ function FactSwitch({value,onChange,compact}){
 const TODOS="__todos"; // "persona" especial: las horas se cuentan a todo el equipo a la vez
 const HORAS_ACT_DEFAULT=["Training Session","TLT","Finanzas","Reuniones de equipo","Formación"];
 const nuevoIdHoras=()=>`${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+
+// ── Panel "En directo": quién tiene el contador de horas activado ahora mismo ──
+function HorasEnDirecto({lista,cargando,projColorMap,getMemberColor,soyAdmin,onParar}){
+  const [abierto,setAbierto]=useState(true);
+  const ahora=Date.now();
+  // Si alguien tuviera dos contadores abiertos, cuenta el más reciente
+  const porPersona={};
+  lista.forEach(e=>{ if(e.enCurso&&(!porPersona[e.persona]||new Date(e.inicio)>new Date(porPersona[e.persona].inicio))) porPersona[e.persona]=e; });
+  const activos=MIEMBROS_VISIBLES.filter(m=>porPersona[m.name]).sort((a,b)=>new Date(porPersona[a.name].inicio)-new Date(porPersona[b.name].inicio));
+  const parados=MIEMBROS_VISIBLES.filter(m=>!porPersona[m.name]);
+  const MUCHO=8*3600; // más de 8 h seguidas → probablemente se les olvidó pararlo
+  return(
+    <div style={{background:"#1F232B",border:`1.5px solid ${activos.length?"#05966988":"#2E343E"}`,borderRadius:14,padding:"12px 16px",marginBottom:18}}>
+      <div onClick={()=>setAbierto(a=>!a)} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",flexWrap:"wrap"}}>
+        <span style={{width:9,height:9,borderRadius:"50%",background:activos.length?"#10B981":"#5C6370",boxShadow:activos.length?"0 0 0 3px #10B98133":"none",flexShrink:0}}/>
+        <span style={{fontWeight:700,fontSize:12.5,color:"#ECEEF2"}}>🟢 En directo</span>
+        <span style={{fontSize:11,color:"#9AA1AC"}}>
+          {cargando?"cargando…":activos.length===0?"Nadie tiene el contador activado ahora mismo":`${activos.length} de ${MIEMBROS_VISIBLES.length} con el contador activado`}
+        </span>
+        <span style={{marginLeft:"auto",fontSize:11,color:"#7F8692"}}>{abierto?"▼":"▸"}</span>
+      </div>
+      {abierto&&!cargando&&(
+        <div style={{marginTop:10}}>
+          {activos.length>0&&(
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(250px,1fr))",gap:8}}>
+              {activos.map(m=>{
+                const e=porPersona[m.name]; const segs=horasSegs(e); const largo=segs>MUCHO;
+                const col=projColorMap[e.proyecto]||"#9AA1AC";
+                return(
+                  <div key={m.name} style={{background:"#232831",border:`1px solid ${largo?"#D9770666":"#2E343E"}`,borderLeft:`4px solid ${m.color}`,borderRadius:10,padding:"8px 12px",display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <span style={{width:7,height:7,borderRadius:"50%",background:"#10B981",flexShrink:0}}/>
+                        <span style={{fontSize:12,fontWeight:700,color:"#ECEEF2",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{m.name}</span>
+                      </div>
+                      <div style={{fontSize:10.5,color:col,fontWeight:600,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{e.proyecto||"Sin proyecto"}{e.descripcion?` · ${e.descripcion}`:""}</div>
+                      <div style={{fontSize:10,color:largo?"#F59E0B":"#7F8692",marginTop:1}}>desde las {hhmm(e.inicio)}{largo?" · ⚠ ¿se le ha olvidado pararlo?":""}</div>
+                    </div>
+                    <div style={{fontSize:15,fontWeight:800,color:"#10B981",fontVariantNumeric:"tabular-nums"}}>{fmtReloj(segs)}</div>
+                    {soyAdmin&&<button onClick={()=>onParar(e)} title={`Parar el contador de ${m.name}`} style={{background:"none",border:"1px solid #3A414D",color:"#DC2626",borderRadius:6,fontSize:11,cursor:"pointer",padding:"3px 7px",fontFamily:"inherit"}}>■</button>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {parados.length>0&&(
+            <div style={{marginTop:activos.length?10:0,display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+              <span style={{fontSize:10,color:"#7F8692",fontWeight:600}}>Contador parado:</span>
+              {parados.map(m=>(
+                <span key={m.name} style={{fontSize:10.5,color:"#7F8692",background:"#232831",border:"1px solid #2E343E",borderRadius:99,padding:"2px 9px"}}>{m.name}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function HorasTab({projects}){
   const [entries,setEntries,recargar]=useHoras();
@@ -3995,8 +4071,8 @@ function HorasTab({projects}){
   const enMarcha=esTodos?lista.find(e=>e.enCurso&&e.grupo&&nombresEquipo.includes(e.persona)):lista.find(e=>e.enCurso&&e.persona===persona);
   const algunoEnMarcha=lista.some(e=>e.enCurso);
   useEffect(()=>{ if(!algunoEnMarcha) return; const t=setInterval(()=>setTick(x=>x+1),1000); return ()=>clearInterval(t); },[algunoEnMarcha]);
-  // Se recarga cada minuto para ver lo que meten los demás
-  useEffect(()=>{ const t=setInterval(()=>recargar(),60000); return ()=>clearInterval(t); },[recargar]);
+  // Respaldo por si falla el tiempo real: se recarga cada 15 s para ver lo que meten los demás
+  useEffect(()=>{ const t=setInterval(()=>recargar(),15000); return ()=>clearInterval(t); },[recargar]);
 
   const [ocultosH]=useProyectosOcultos();
   const proyNames=(projects||[]).map(p=>p.name).filter(n=>n&&!ocultosH.includes(n));
@@ -4175,6 +4251,11 @@ function HorasTab({projects}){
         </div>
         <button onClick={recargar} style={{background:"#262B34",color:"#C3C8D0",border:"1px solid #2E343E",borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>🔄 Actualizar</button>
       </div>
+
+      {/* ── En directo: quién tiene el contador activado ── */}
+      <HorasEnDirecto lista={lista} cargando={entries===null} projColorMap={projColorMap} getMemberColor={getMemberColor}
+        soyAdmin={perfil.rol==="admin"}
+        onParar={e=>{ if(window.confirm(`¿Parar el contador de ${e.persona}? Se guardará hasta ahora (${fmtReloj(horasSegs(e))}).`)) guardar(cerrar(e,new Date())); }}/>
 
       {/* ── Registrar ── */}
       <div style={{background:"#1F232B",border:`1.5px solid ${enMarcha?pc+"88":"#2E343E"}`,borderRadius:14,padding:"14px 16px",marginBottom:18,boxShadow:"0 1px 3px rgba(0,0,0,0.05)"}}>
