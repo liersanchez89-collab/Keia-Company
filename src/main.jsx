@@ -10,3 +10,8 @@ createRoot(document.getElementById('root')).render(
     </AuthGate>
   </StrictMode>,
 )
+
+// Service worker para las notificaciones (recordatorio de horas)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}) })
+}
