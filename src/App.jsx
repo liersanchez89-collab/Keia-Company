@@ -348,6 +348,30 @@ const initCRM = (projects) => projects.reduce((a,p)=>({
 }),{});
 
 // ── Micro UI ──────────────────────────────────────────────────────────────────
+// ¿Pantalla de móvil? (se actualiza al girar o cambiar el tamaño)
+function useEsMovil(bp=768){
+  const q=`(max-width: ${bp}px)`;
+  const [m,setM]=useState(()=>typeof window!=="undefined"&&window.matchMedia?.(q).matches);
+  useEffect(()=>{ const mq=window.matchMedia(q); const f=()=>setM(mq.matches); f(); mq.addEventListener?.("change",f); return ()=>mq.removeEventListener?.("change",f); },[q]);
+  return !!m;
+}
+// Tarjeta para editar una fila en móvil: cada campo con su etiqueta y a lo ancho
+function FilaMovil({color,campos,onDel,extra}){
+  return(
+    <div style={{background:"#FFFFFF",border:"1px solid #E5E2DD",borderLeft:`4px solid ${color||"#D94A32"}`,borderRadius:10,padding:"10px 12px",marginBottom:8,display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px 10px"}}>
+      {campos.filter(Boolean).map(([label,el,ancho])=>(
+        <label key={label} style={{gridColumn:ancho?"1 / -1":"auto",display:"flex",flexDirection:"column",gap:3,minWidth:0}}>
+          <span style={{fontSize:10,fontWeight:600,color:"#7F7973",letterSpacing:"0.2px"}}>{label}</span>
+          <div className="keia-campo-movil" style={{minWidth:0}}>{el}</div>
+        </label>
+      ))}
+      {(extra||onDel)&&<div style={{gridColumn:"1 / -1",display:"flex",justifyContent:"space-between",alignItems:"center",borderTop:"1px solid #F2F0ED",paddingTop:6}}>
+        <div>{extra}</div>
+        {onDel&&<button onClick={onDel} style={{background:"none",border:"1px solid #F5C2C2",color:"#B91C1C",borderRadius:7,padding:"5px 10px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>🗑 Borrar</button>}
+      </div>}
+    </div>
+  );
+}
 function Badge({label,colors}){
   if(!label)return null;
   return <span style={{background:colors?.bg||"#F2F0ED",color:colors?.text||"#3D3A36",padding:"2px 8px",borderRadius:99,fontSize:10,fontWeight:500,whiteSpace:"nowrap"}}>{label}</span>;
@@ -418,7 +442,7 @@ function DateInp({value,onChange,w,locked,onLock}){
     min="1900-01-01" max="2100-12-31"
     onKeyDown={e=>{ if(e.key==="Enter") e.target.blur(); }}
     style={{border:"1px solid #E5E2DD",borderRadius:5,padding:"4px 8px",fontSize:12,fontFamily:"inherit",
-    width:w||"130px",minWidth:"130px",background:"#F7F6F4",outline:"none",color:"#2B2926",cursor:"pointer",colorScheme:"dark"}}
+    width:w||"130px",minWidth:"130px",background:"#F7F6F4",outline:"none",color:"#2B2926",cursor:"pointer",colorScheme:"light"}}
     onFocus={e=>{ focused.current=true; e.target.style.borderColor="#D94A32"; }} onBlur={handleBlur}/>;
 }
 function LinkInp({value,onChange,placeholder}){
@@ -1961,6 +1985,23 @@ function BookpointsTab({data,setData,groups,setGroups}){
 function BPTable({rows,mname,mcolor,upd,del,groupOptions}){
   const parseD=f=>{if(!f)return 0;const[d,m,y]=f.split("/");return new Date(y,m-1,d).getTime();};
   const sorted=[...rows].sort((a,b)=>parseD(b.fecha)-parseD(a.fecha));
+  const movil=useEsMovil();
+  if(movil) return(
+    <div style={{marginBottom:6}}>
+      {sorted.map(r=>(
+        <FilaMovil key={r.id} color={mcolor} onDel={()=>del(mname,r.id)} campos={[
+          ["Libro (título)",<Inp value={r.libro} onChange={v=>upd(mname,r.id,"libro",v)} placeholder="Título del libro"/>,true],
+          ["Autor",<Inp value={r.autor} onChange={v=>upd(mname,r.id,"autor",v)} placeholder="Autor"/>,true],
+          ["Grupo",<Sel value={r.grupo} onChange={v=>upd(mname,r.id,"grupo",v)} options={groupOptions} placeholder="Sin grupo"/>],
+          ["Topic",<Sel value={r.topic} onChange={v=>upd(mname,r.id,"topic",v)} options={TOPICS}/>],
+          ["Puntos",<Inp value={r.puntos} onChange={v=>upd(mname,r.id,"puntos",v)} placeholder="0" bold color="#1D4ED8"/>],
+          ["Fecha",<DateInp value={r.fecha||""} onChange={v=>upd(mname,r.id,"fecha",v)} w="100%"/>],
+          ["Essay",<LinkInp value={r.essay} onChange={v=>upd(mname,r.id,"essay",v)} placeholder="Link del essay"/>,true],
+          ["CC",<Sel value={r.cc} onChange={v=>upd(mname,r.id,"cc",v)} options={CC_OPTS}/>],
+        ]}/>
+      ))}
+    </div>
+  );
   return(
     <div style={{overflowX:"auto",marginBottom:6}}>
       <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
@@ -2065,6 +2106,24 @@ function CompanerosPopup({selected, exclude, onChange}){
 function CVTable({rows,mname,mcolor,upd,del,projects,groupOptions}){
   const parseD=f=>{if(!f)return 0;const[d,m,y]=f.split("/");return new Date(y,m-1,d).getTime();};
   const sorted=[...rows].sort((a,b)=>parseD(b.fecha)-parseD(a.fecha));
+  const movil=useEsMovil();
+  if(movil) return(
+    <div style={{marginBottom:6}}>
+      {sorted.map(r=>(
+        <FilaMovil key={r.id} color={mcolor} onDel={()=>del(mname,r.id)}
+          extra={r.linkedFrom?<span style={{fontSize:11,color:"#7F7973",fontStyle:"italic"}}>↗ de {r.linkedOwner}</span>:<span style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:11,color:"#7F7973"}}>Compañeros <CompanerosPopup selected={r.companeros||[]} exclude={mname} onChange={v=>upd(mname,r.id,"companeros",v)}/></span>}
+          campos={[
+          ["Cliente",<Inp value={r.cliente} onChange={v=>upd(mname,r.id,"cliente",v)} placeholder="Empresa"/>,true],
+          ["Fecha",<DateInp value={r.fecha||""} onChange={v=>upd(mname,r.id,"fecha",v)} w="100%"/>],
+          ["CV / LV",<Sel value={r.cat} onChange={v=>upd(mname,r.id,"cat",v)} options={["CV","LV"]}/>],
+          ["Motorola",<Sel value={r.motorola} onChange={v=>upd(mname,r.id,"motorola",v)} options={["Sí","No"]}/>],
+          ["Grupo",<Sel value={r.grupo} onChange={v=>upd(mname,r.id,"grupo",v)} options={groupOptions} placeholder="Sin grupo"/>],
+          ["Link Motorola",<LinkInp value={r.linkMotorola} onChange={v=>upd(mname,r.id,"linkMotorola",v)} placeholder="Link motorola"/>,true],
+          ["Proyecto",<Sel value={r.proyecto} onChange={v=>upd(mname,r.id,"proyecto",v)} options={projects.map(p=>p.name)}/>,true],
+        ]}/>
+      ))}
+    </div>
+  );
   return(
     <div style={{overflowX:"auto",marginBottom:6}}>
       <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
@@ -2700,8 +2759,8 @@ function FacturasTab({facturas, setFacturas, tipo, projects, pagoInfo, rect, onR
         return(
           <div key={year} style={{marginBottom:12,borderRadius:12,overflow:"hidden",border:`1px solid ${ac}33`}}>
             <div onClick={()=>setCollapsed(c=>({...c,[year]:!c[year]}))}
-              style={{background:ac,padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}}>
-              <span style={{color:"#FFF",fontWeight:700,fontSize:13,fontFamily:FONT_TITULOS}}>{year} · {yrows.length} facturas{yrows.some(r=>est(r)==="no")&&<span style={{marginLeft:8,background:"#FEF6DC",color:"#A8341F",borderRadius:99,padding:"1px 8px",fontSize:10}}>⏳ {yrows.filter(r=>est(r)==="no").length} sin {tipo==="ingresos"?"cobrar":"pagar"} · {eurCob(yrows.filter(r=>est(r)==="no").reduce((s,r)=>s+totalConSigno(r),0))}€</span>}{yrows.some(r=>!r.linkFactura)&&<span style={{marginLeft:8,background:"#FFFFFF",color:"#B91C1C",borderRadius:99,padding:"1px 8px",fontSize:10}}>⚠️ {yrows.filter(r=>!r.linkFactura).length} sin PDF</span>}</span>
+              style={{background:ac,padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",flexWrap:"wrap",gap:"6px 12px"}}>
+              <span style={{color:"#FFF",fontWeight:700,fontSize:13,fontFamily:FONT_TITULOS}}>{year} · {yrows.length} facturas{yrows.some(r=>est(r)==="no")&&<span style={{marginLeft:8,background:"#FEF6DC",color:"#A8341F",borderRadius:99,padding:"1px 8px",fontSize:10,whiteSpace:"nowrap"}}>⏳ {yrows.filter(r=>est(r)==="no").length} sin {tipo==="ingresos"?"cobrar":"pagar"} · {eurCob(yrows.filter(r=>est(r)==="no").reduce((s,r)=>s+totalConSigno(r),0))}€</span>}{yrows.some(r=>!r.linkFactura)&&<span style={{marginLeft:8,background:"#FFFFFF",color:"#B91C1C",borderRadius:99,padding:"1px 8px",fontSize:10,whiteSpace:"nowrap"}}>⚠️ {yrows.filter(r=>!r.linkFactura).length} sin PDF</span>}</span>
               <div style={{display:"flex",gap:16,alignItems:"center"}}>
                 <span style={{color:"#FFFFFF99",fontSize:11,fontWeight:700}}>Base: {yBase.toFixed(0)}€ · Total: {yTotal.toFixed(0)}€</span>
                 <span style={{color:"#FFF",fontSize:14}}>{isOpen?"▲":"▼"}</span>
@@ -4037,7 +4096,7 @@ function RecordatorioHoras(){
         {on?"🔔 Recordatorio 18:00 activado":"🔕 Recordatorio 18:00"}
       </button>
       {abierto&&(
-        <div style={{position:"absolute",right:0,top:"calc(100% + 6px)",zIndex:50,width:300,background:"#FFFFFF",border:"1px solid #E5E2DD",borderRadius:12,padding:"12px 14px",boxShadow:"0 12px 32px -12px rgba(23,23,23,.3)",fontSize:12,color:"#2B2926"}}>
+        <div className="keia-popup" style={{position:"absolute",right:0,top:"calc(100% + 6px)",zIndex:200,width:300,background:"#FFFFFF",border:"1px solid #E5E2DD",borderRadius:12,padding:"12px 14px",boxShadow:"0 12px 32px -12px rgba(23,23,23,.3)",fontSize:12,color:"#2B2926"}}>
           <div style={{fontWeight:700,fontSize:13,fontFamily:FONT_TITULOS,marginBottom:4}}>⏰ Recordatorio de horas</div>
           <div style={{color:"#6B665F",fontSize:11.5,lineHeight:1.45,marginBottom:10}}>De lunes a viernes a las 18:00 te llega un aviso para que cuentes tus horas (y si tienes el contador en marcha, para que lo pares). Se activa en cada dispositivo.</div>
           {estado==="ios"&&<div style={{background:"#FEF6DC",color:"#92400E",borderRadius:8,padding:"8px 10px",fontSize:11.5,lineHeight:1.45}}>En iPhone primero añade KEIA a la pantalla de inicio (Safari → Compartir → <b>Añadir a pantalla de inicio</b>), ábrela desde ahí y activa el recordatorio.</div>}
@@ -6521,7 +6580,7 @@ function OtrosGastosTab({movs, guardar, projects, irBanco, ing}){
         return(
           <div key={year} style={{marginBottom:12,borderRadius:12,overflow:"hidden",border:`1px solid ${ac}33`}}>
             <div onClick={()=>setCollapsed(c=>({...c,[year]:isOpen}))}
-              style={{background:ac,padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}}>
+              style={{background:ac,padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",flexWrap:"wrap",gap:"6px 12px"}}>
               <span style={{color:"#FFF",fontWeight:700,fontSize:13,fontFamily:FONT_TITULOS}}>{year} · {yrows.length} movimientos</span>
               <div style={{display:"flex",gap:16,alignItems:"center"}}>
                 <span style={{color:"#FFFFFFCC",fontSize:11,fontWeight:700}}>Total: {yTot.toFixed(0)}€</span>
@@ -11352,6 +11411,27 @@ export default function Dashboard(){
           .blesk-rankings { grid-template-columns: 1fr !important; }
           .blesk-member-cards { grid-template-columns: 1fr !important; }
           .blesk-hide-mobile { display: none !important; }
+          /* Campos en tarjetas de móvil: a lo ancho y cómodos de tocar */
+          .keia-campo-movil input, .keia-campo-movil select { width:100% !important; min-width:0 !important; padding:8px 10px !important; border-radius:8px !important; box-sizing:border-box; }
+          /* Tablas editables: cada campo con un ancho mínimo para poder leer lo que escribes (la tabla se desliza) */
+          .blesk-content td input:not([type=checkbox]):not([type=radio]):not([type=date]), .blesk-content td textarea { min-width:150px; }
+          .blesk-content td select { min-width:110px; }
+          .blesk-content td input[type=date] { min-width:135px; }
+          .blesk-content table { font-size:12px; }
+          .blesk-content th { white-space:nowrap; }
+          /* Rejillas fijas de 3-5 columnas: en móvil se apilan */
+          .blesk-content [style*="grid-template-columns: repeat(3, 1fr)"],
+          .blesk-content [style*="grid-template-columns: 1fr 1fr 1fr;"],
+          .blesk-content [style*="grid-template-columns: auto 1fr 1fr"],
+          .blesk-content [style*="grid-template-columns: 200px 1fr"] { grid-template-columns: 1fr !important; }
+          .blesk-content [style*="grid-template-columns: repeat(5, 1fr)"],
+          .blesk-content [style*="grid-template-columns: 1fr 1fr 1fr 1fr"],
+          .blesk-content [style*="grid-template-columns: repeat(4, 1fr) 1.4fr"] { grid-template-columns: 1fr 1fr !important; }
+          .blesk-content [style*="grid-template-columns: repeat(auto-fill, minmax(320px"],
+          .blesk-content [style*="grid-template-columns: repeat(auto-fill, minmax(280px"],
+          .blesk-content [style*="grid-template-columns: repeat(auto-fit, minmax(280px"] { grid-template-columns: 1fr !important; }
+          /* Popups que se salen de la pantalla */
+          .keia-popup { position:fixed !important; left:12px !important; right:12px !important; top:auto !important; bottom:16px !important; width:auto !important; }
         }
         @media (max-width: 480px) {
           .blesk-grid-3 { grid-template-columns: 1fr !important; }
