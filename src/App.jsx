@@ -3984,6 +3984,77 @@ const TODOS="__todos"; // "persona" especial: las horas se cuentan a todo el equ
 const HORAS_ACT_DEFAULT=["Training Session","TLT","Finanzas","Reuniones de equipo","Formación"];
 const nuevoIdHoras=()=>`${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
 
+// ── Recordatorio de horas: notificación push de lunes a viernes a las 18:00 ──
+// Cada persona lo activa en su móvil / ordenador (el navegador pide permiso). Lo envía /api/recordatorio.
+const VAPID_PUBLIC="BOCWiFSTg7I8paXcsNoRU0xKZ6w3lk-u7hEDZeVrnH1DMHgRObvvSYy39-y2B54_MA8X7LdpCP_S4UGXw1l0xk8";
+const b64aBytes=b=>{ const p="=".repeat((4-b.length%4)%4); const r=atob((b+p).replace(/-/g,"+").replace(/_/g,"/")); return Uint8Array.from([...r].map(c=>c.charCodeAt(0))); };
+function RecordatorioHoras(){
+  const soporta=typeof window!=="undefined"&&"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window;
+  const esIOS=/iphone|ipad|ipod/i.test(navigator.userAgent||"");
+  const instalada=window.matchMedia?.("(display-mode: standalone)").matches||navigator.standalone===true;
+  const [estado,setEstado]=useState("cargando"); // cargando | off | on | bloqueado | ios | nosoporta
+  const [abierto,setAbierto]=useState(false);
+  const [msg,setMsg]=useState("");
+  useEffect(()=>{
+    if(!soporta){ setEstado(esIOS&&!instalada?"ios":"nosoporta"); return; }
+    if(Notification.permission==="denied"){ setEstado("bloqueado"); return; }
+    navigator.serviceWorker.ready.then(r=>r.pushManager.getSubscription()).then(sub=>setEstado(sub?"on":"off")).catch(()=>setEstado("off"));
+  },[]);
+  async function activar(){
+    setMsg("");
+    try{
+      const perm=await Notification.requestPermission();
+      if(perm!=="granted"){ setEstado(perm==="denied"?"bloqueado":"off"); return; }
+      const reg=await navigator.serviceWorker.register("/sw.js"); await navigator.serviceWorker.ready;
+      let sub=await reg.pushManager.getSubscription();
+      if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64aBytes(VAPID_PUBLIC)});
+      const {error}=await sb.rpc("guardar_suscripcion",{p_sub:sub.toJSON()});
+      if(error) throw error;
+      setEstado("on"); setMsg("✅ Activado: te llegará un aviso de lunes a viernes a las 18:00.");
+    }catch(e){ console.error("push",e); setMsg("No se ha podido activar: "+(e?.message||e)); }
+  }
+  async function desactivar(){
+    try{
+      const reg=await navigator.serviceWorker.ready; const sub=await reg.pushManager.getSubscription();
+      if(sub){ await sb.rpc("borrar_suscripcion",{p_endpoint:sub.endpoint}); await sub.unsubscribe(); }
+      setEstado("off"); setMsg("Recordatorio desactivado en este dispositivo.");
+    }catch(e){ setMsg("Error: "+(e?.message||e)); }
+  }
+  async function probar(){
+    setMsg("Enviando…");
+    try{
+      const {data}=await sb.auth.getSession();
+      const r=await fetch("/api/recordatorio?prueba=1",{method:"POST",headers:{Authorization:`Bearer ${data?.session?.access_token||""}`}});
+      const j=await r.json();
+      setMsg(r.ok?(j.enviado?"📨 Enviada. Debería llegarte en unos segundos.":"No hay ningún dispositivo tuyo activado."):("Error: "+(j.error||r.status)));
+    }catch(e){ setMsg("Error: "+(e?.message||e)); }
+  }
+  const on=estado==="on";
+  return(
+    <div style={{position:"relative"}}>
+      <button onClick={()=>setAbierto(a=>!a)} title="Recordatorio de lunes a viernes a las 18:00"
+        style={{background:on?"#FBEAE5":"#F2F0ED",color:on?"#A8341F":"#3D3A36",border:`1px solid ${on?"#F2C3B7":"#E5E2DD"}`,borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
+        {on?"🔔 Recordatorio 18:00 activado":"🔕 Recordatorio 18:00"}
+      </button>
+      {abierto&&(
+        <div style={{position:"absolute",right:0,top:"calc(100% + 6px)",zIndex:50,width:300,background:"#FFFFFF",border:"1px solid #E5E2DD",borderRadius:12,padding:"12px 14px",boxShadow:"0 12px 32px -12px rgba(23,23,23,.3)",fontSize:12,color:"#2B2926"}}>
+          <div style={{fontWeight:700,fontSize:13,fontFamily:FONT_TITULOS,marginBottom:4}}>⏰ Recordatorio de horas</div>
+          <div style={{color:"#6B665F",fontSize:11.5,lineHeight:1.45,marginBottom:10}}>De lunes a viernes a las 18:00 te llega un aviso para que cuentes tus horas (y si tienes el contador en marcha, para que lo pares). Se activa en cada dispositivo.</div>
+          {estado==="ios"&&<div style={{background:"#FEF6DC",color:"#92400E",borderRadius:8,padding:"8px 10px",fontSize:11.5,lineHeight:1.45}}>En iPhone primero añade KEIA a la pantalla de inicio (Safari → Compartir → <b>Añadir a pantalla de inicio</b>), ábrela desde ahí y activa el recordatorio.</div>}
+          {estado==="nosoporta"&&<div style={{color:"#B91C1C",fontSize:11.5}}>Este navegador no admite notificaciones.</div>}
+          {estado==="bloqueado"&&<div style={{background:"#FDECEC",color:"#B91C1C",borderRadius:8,padding:"8px 10px",fontSize:11.5,lineHeight:1.45}}>Las notificaciones están bloqueadas para esta web. Actívalas en los ajustes del navegador (o del móvil) y vuelve a intentarlo.</div>}
+          {(estado==="off"||estado==="cargando")&&<button onClick={activar} style={{background:"#D94A32",color:"#FFF",border:"none",borderRadius:8,padding:"8px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>🔔 Activar en este dispositivo</button>}
+          {on&&<div style={{display:"flex",gap:6}}>
+            <button onClick={probar} style={{flex:1,background:"#171717",color:"#FFF",border:"none",borderRadius:8,padding:"8px 10px",fontSize:11.5,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>📨 Enviarme una prueba</button>
+            <button onClick={desactivar} style={{background:"#F2F0ED",color:"#3D3A36",border:"1px solid #E5E2DD",borderRadius:8,padding:"8px 10px",fontSize:11.5,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Desactivar</button>
+          </div>}
+          {msg&&<div style={{marginTop:8,fontSize:11.5,color:"#3D3A36"}}>{msg}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Panel "En directo": quién tiene el contador de horas activado ahora mismo ──
 function HorasEnDirecto({lista,cargando,projColorMap,getMemberColor,soyAdmin,onParar}){
   const [abierto,setAbierto]=useState(true);
@@ -4253,7 +4324,10 @@ function HorasTab({projects}){
           <div style={{fontWeight:700,fontSize:15,color:"#171717",letterSpacing:"-0.4px",fontFamily:FONT_TITULOS}}>⏱ Horas</div>
           <div style={{fontSize:11,color:"#7F7973",marginTop:2}}>Registro de horas del equipo, guardado en el dashboard (ya no hace falta Clockify)</div>
         </div>
-        <button onClick={recargar} style={{background:"#F2F0ED",color:"#3D3A36",border:"1px solid #E5E2DD",borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>🔄 Actualizar</button>
+        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+          <RecordatorioHoras/>
+          <button onClick={recargar} style={{background:"#F2F0ED",color:"#3D3A36",border:"1px solid #E5E2DD",borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>🔄 Actualizar</button>
+        </div>
       </div>
 
       {/* ── En directo: quién tiene el contador activado ── */}
@@ -10719,7 +10793,7 @@ function ChatWidget(){
 }
 
 export default function Dashboard(){
-  const [tab,setTab]           = useState("inicio");
+  const [tab,setTab]           = useState(()=>{ try{ const t=new URLSearchParams(window.location.search).get("tab"); if(t){ window.history.replaceState(null,"",window.location.pathname); return t; } }catch{} return "inicio"; });
   const [loading,setLoading]   = useState(true);
   const [updateAvailable,setUpdateAvailable] = useState(false);
 
