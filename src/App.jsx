@@ -4052,7 +4052,7 @@ const TODOS="__todos"; // "persona" especial: las horas se cuentan a todo el equ
 const HORAS_ACT_DEFAULT=["Training Session","TLT","Finanzas","Reuniones de equipo","Formación"];
 const nuevoIdHoras=()=>`${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
 
-// ── Recordatorio de horas: notificación push de lunes a viernes a las 9:00 (entrada) y a las 18:00 (salida) ──
+// ── Recordatorio de horas: notificación push de lunes a viernes a las 9:00 (entrada), 11:00, 13:00 y 16:00 (si no tienes el contador en marcha) y 18:00 (salida) ──
 // Cada persona lo activa en su móvil / ordenador (el navegador pide permiso). Lo envía /api/recordatorio.
 const VAPID_PUBLIC="BOCWiFSTg7I8paXcsNoRU0xKZ6w3lk-u7hEDZeVrnH1DMHgRObvvSYy39-y2B54_MA8X7LdpCP_S4UGXw1l0xk8";
 const b64aBytes=b=>{ const p="=".repeat((4-b.length%4)%4); const r=atob((b+p).replace(/-/g,"+").replace(/_/g,"/")); return Uint8Array.from([...r].map(c=>c.charCodeAt(0))); };
@@ -4078,7 +4078,7 @@ function RecordatorioHoras(){
       if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64aBytes(VAPID_PUBLIC)});
       const {error}=await sb.rpc("guardar_suscripcion",{p_sub:sub.toJSON()});
       if(error) throw error;
-      setEstado("on"); setMsg("✅ Activado: te llegará un aviso de lunes a viernes a las 9:00 y a las 18:00.");
+      setEstado("on"); setMsg("✅ Activado: de lunes a viernes te avisaremos a las 9:00 y a las 18:00, y a las 11:00, 13:00 y 16:00 si no tienes el contador en marcha.");
     }catch(e){ console.error("push",e); setMsg("No se ha podido activar: "+(e?.message||e)); }
   }
   async function desactivar(){
@@ -4100,14 +4100,14 @@ function RecordatorioHoras(){
   const on=estado==="on";
   return(
     <div style={{position:"relative"}}>
-      <button onClick={()=>setAbierto(a=>!a)} title="Recordatorios de lunes a viernes a las 9:00 y a las 18:00"
+      <button onClick={()=>setAbierto(a=>!a)} title="Recordatorios de lunes a viernes: 9:00, 11:00, 13:00, 16:00 y 18:00"
         style={{background:on?"#FBEAE5":"#F2F0ED",color:on?"#A8341F":"#3D3A36",border:`1px solid ${on?"#F2C3B7":"#E5E2DD"}`,borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
-        {on?"🔔 Recordatorios activados":"🔕 Recordatorios 9:00 y 18:00"}
+        {on?"🔔 Recordatorios activados":"🔕 Recordatorios de horas"}
       </button>
       {abierto&&(
         <div className="keia-popup" style={{position:"absolute",right:0,top:"calc(100% + 6px)",zIndex:200,width:300,background:"#FFFFFF",border:"1px solid #E5E2DD",borderRadius:12,padding:"12px 14px",boxShadow:"0 12px 32px -12px rgba(23,23,23,.3)",fontSize:12,color:"#2B2926"}}>
           <div style={{fontWeight:700,fontSize:13,fontFamily:FONT_TITULOS,marginBottom:4}}>⏰ Recordatorio de horas</div>
-          <div style={{color:"#6B665F",fontSize:11.5,lineHeight:1.45,marginBottom:10}}>De lunes a viernes te llegan dos avisos: a las <b>9:00</b> para que actives el contador y a las <b>18:00</b> para que cuentes tus horas (y lo pares si sigue en marcha). Se activa en cada dispositivo.</div>
+          <div style={{color:"#6B665F",fontSize:11.5,lineHeight:1.45,marginBottom:10}}>De lunes a viernes: a las <b>9:00</b> para que actives el contador; a las <b>11:00</b>, <b>13:00</b> y <b>16:00</b> solo si no lo tienes en marcha; y a las <b>18:00</b> para que cuentes tus horas (y lo pares si sigue en marcha). Se activa en cada dispositivo.</div>
           {estado==="ios"&&<div style={{background:"#FEF6DC",color:"#92400E",borderRadius:8,padding:"8px 10px",fontSize:11.5,lineHeight:1.45}}>En iPhone primero añade KEIA a la pantalla de inicio (Safari → Compartir → <b>Añadir a pantalla de inicio</b>), ábrela desde ahí y activa el recordatorio.</div>}
           {estado==="nosoporta"&&<div style={{color:"#B91C1C",fontSize:11.5}}>Este navegador no admite notificaciones.</div>}
           {estado==="bloqueado"&&<div style={{background:"#FDECEC",color:"#B91C1C",borderRadius:8,padding:"8px 10px",fontSize:11.5,lineHeight:1.45}}>Las notificaciones están bloqueadas para esta web. Actívalas en los ajustes del navegador (o del móvil) y vuelve a intentarlo.</div>}
