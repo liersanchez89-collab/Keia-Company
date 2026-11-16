@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef, Fragment } from "react";
 import { EMPRESA, EMPRESA_SUB, MIEMBROS, MIEMBROS_ANTIGUOS, EXTERNOS, PROYECTOS_INICIALES, CLAVE_EDICION, CLAVE_CHAT_PRIVADO } from "./config.js";
 import { sb } from "./supabase.js";
 import { perfil, puedoEditar, puedoGestionar } from "./perfil.js";
+import { Avatar, BotonPerfil, iniciarFotos } from "./Fotos.jsx";
+import Novedades from "./Novedades.jsx";
 
 // Tipografías de marca (manual KEIA): Manrope para titulares y cifras, Inter para el texto
 const FONT_TITULOS="'Manrope','Inter',system-ui,-apple-system,'Segoe UI',sans-serif";
@@ -777,7 +779,7 @@ function ProyectoEquipoTab({pname, color}){
             {asignados.map(m=>(
               <div key={m.name} style={{background:m.light||"#F2F0ED",border:`1.5px solid ${m.color}44`,borderRadius:10,padding:"10px 12px"}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                  <div style={{width:28,height:28,borderRadius:99,background:m.color,color:"#FFF",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{m.name[0]}</div>
+                  <Avatar nombre={m.name} color={m.color} size={28} fontSize={11}/>
                   <span style={{fontWeight:700,fontSize:12,color:m.color}}>{m.name}</span>
                 </div>
                 <select value={roles[m.name]||""} onChange={e=>setRol(m.name,e.target.value)}
@@ -799,7 +801,7 @@ function ProyectoEquipoTab({pname, color}){
             {sinAsignar.map(m=>(
               <div key={m.name} style={{background:"#F7F6F4",border:"1px solid #E5E2DD",borderRadius:10,padding:"10px 12px",opacity:.7}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                  <div style={{width:28,height:28,borderRadius:99,background:"#B5AFA8",color:"#FFF",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{m.name[0]}</div>
+                  <Avatar nombre={m.name} color="#B5AFA8" size={28} fontSize={11}/>
                   <span style={{fontWeight:600,fontSize:12,color:"#3D3A36"}}>{m.name}</span>
                 </div>
                 <select value="" onChange={e=>setRol(m.name,e.target.value)}
@@ -947,7 +949,7 @@ function EstrategiaProyectosTab({projects,ing,cv,bp,hojas}){
             return(
               <div key={m.name} style={{background:"#FFFFFF",border:"1px solid #E5E2DD",borderRadius:12,overflow:"hidden"}}>
                 <div style={{background:m.color,padding:"10px 14px",display:"flex",alignItems:"center",gap:10}}>
-                  <div style={{width:30,height:30,borderRadius:99,background:"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:"#FFF",fontSize:12}}>{m.name[0]}</div>
+                  <Avatar nombre={m.name} color="rgba(255,255,255,0.2)" size={30} fontSize={12}/>
                   <span style={{fontWeight:700,fontSize:13,color:"#FFF",fontFamily:FONT_TITULOS}}>{m.name}</span>
                 </div>
                 <div style={{padding:"12px 14px"}}>
@@ -1002,7 +1004,7 @@ function EstrategiaProyectosTab({projects,ing,cv,bp,hojas}){
                     : <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
                         {personas.map(m=>(
                           <div key={m.name} style={{display:"flex",alignItems:"center",gap:5,background:m.light||"#F2F0ED",border:`1px solid ${m.color}44`,borderRadius:99,padding:"3px 9px"}}>
-                            <div style={{width:16,height:16,borderRadius:99,background:m.color,color:"#FFF",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:700}}>{m.name[0]}</div>
+                            <Avatar nombre={m.name} color={m.color} size={16} fontSize={8}/>
                             <span style={{fontSize:10,fontWeight:600,color:m.color}}>{m.name}</span>
                           </div>
                         ))}
@@ -2082,11 +2084,7 @@ function CompanerosPopup({selected, exclude, onChange}){
                 }} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderRadius:7,
                   cursor:"pointer",background:sel?m.light:"transparent",marginBottom:2,
                   border:`1px solid ${sel?m.color+"44":"transparent"}`}}>
-                  <div style={{width:24,height:24,borderRadius:99,background:m.color,
-                    display:"flex",alignItems:"center",justifyContent:"center",
-                    color:"#FFF",fontSize:10,fontWeight:700,flexShrink:0}}>
-                    {m.name[0]}
-                  </div>
+                  <Avatar nombre={m.name} color={m.color} size={24} fontSize={10}/>
                   <span style={{fontSize:12,fontWeight:sel?700:500,color:sel?m.color:"#57534E"}}>{m.name}</span>
                   {sel&&<span style={{marginLeft:"auto",color:m.color,fontSize:12}}>✓</span>}
                 </div>
@@ -10101,9 +10099,7 @@ function EquipoTab({bp,cv,ing,gas,hojas,projects,ultimaAct}){
               {/* Header */}
               <div style={{marginBottom:14}}>
                 <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
-                  <div style={{background:m.color,width:36,height:36,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:600,color:"#FFF",fontSize:14,flexShrink:0}}>
-                    {m.name[0]}
-                  </div>
+                  <Avatar nombre={m.name} color={m.color} size={36} radius={10} fontSize={14}/>
                   <div>
                     <div style={{fontSize:14,fontWeight:600,color:m.color,letterSpacing:"-0.3px"}}>{m.name}</div>
                     <div style={{display:"flex",gap:4,marginTop:2}}>
@@ -10165,6 +10161,7 @@ function EquipoTab({bp,cv,ing,gas,hojas,projects,ultimaAct}){
                   <div style={{width:20,height:20,borderRadius:99,background:i===0?"#E9C46A":i===1?"#C0C0C0":i===2?"#CD7F32":r.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:900,color:i<3?"#FFF":r.color,flexShrink:0}}>
                     {i+1}
                   </div>
+                  <Avatar nombre={m.name} color={m.color} size={24} fontSize={10}/>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
                       <span style={{fontSize:11,fontWeight:700,color:m.color}}>{m.name}</span>
@@ -10274,7 +10271,7 @@ function EquipoTab({bp,cv,ing,gas,hojas,projects,ultimaAct}){
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
                 <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16}}>
-                  <div style={{background:m.color,width:48,height:48,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"#FFF",fontWeight:500}}>{m.name[0]}</div>
+                  <Avatar nombre={m.name} color={m.color} size={48} radius={14} fontSize={20}/>
                   <div>
                     <div style={{fontSize:20,fontWeight:500,color:m.color,letterSpacing:"-0.5px"}}>{m.name}</div>
                     <div style={{fontSize:11,color:m.color,opacity:0.6}}>{EMPRESA}</div>
@@ -11014,6 +11011,7 @@ export default function Dashboard(){
   const [tab,setTab]           = useState(()=>{ try{ const t=new URLSearchParams(window.location.search).get("tab"); if(t){ window.history.replaceState(null,"",window.location.pathname); return t; } }catch{} return "inicio"; });
   const [loading,setLoading]   = useState(true);
   const [updateAvailable,setUpdateAvailable] = useState(false);
+  useEffect(()=>{ iniciarFotos(); },[]);
 
   // ── Detector de nueva versión desplegada en Vercel ──────────────────────────
   useEffect(()=>{
@@ -11686,10 +11684,13 @@ export default function Dashboard(){
               </div>
             ))}
           </div>
+          <div style={{display:"flex",alignItems:"center"}}>
           <button className="keia-salir" onClick={()=>sb.auth.signOut()} title="Cerrar sesión"
             style={{marginLeft:12,background:"rgba(255,255,255,.07)",color:"#E6E8EC",border:"1px solid rgba(255,255,255,.1)",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
             {perfil.nombre?`${perfil.nombre} · Salir`:"Salir"}
           </button>
+          <BotonPerfil color={(MIEMBROS.find(x=>x.name===perfil.nombre)||{}).color||"#D94A32"} font={FONT_TEXTO}/>
+          </div>
         </div>
         {/* Banner actualización */}
         {updateAvailable&&(
@@ -11720,6 +11721,9 @@ export default function Dashboard(){
           ))}
         </div>
       </div>
+
+      {/* Aviso de novedades tras actualizar (5 s, dentro de la app) */}
+      <Novedades font={FONT_TEXTO}/>
 
       {/* ── CONTENT ── */}
       <div className="blesk-content" style={{padding:"28px 32px 48px",maxWidth:1400,margin:"0 auto"}}>

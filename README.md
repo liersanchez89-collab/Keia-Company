@@ -50,6 +50,8 @@ npm run dev
 ```
 
 ## A tener en cuenta
+- **Novedades:** cada vez que cambies algo, añade una entrada arriba del todo en `src/novedades.js`. Al abrir la versión nueva, a cada uno le sale un aviso dentro de la app con esos cambios durante 5 segundos.
+- **Fotos de perfil:** cada persona pone la suya tocando su círculo arriba a la derecha (tabla `fotos_perfil` y bucket `avatares`, ver `supabase/fotos_perfil.sql`).
 - Solo pueden entrar los miembros: hace falta iniciar sesión y que el correo esté en la tabla `miembros_permitidos` (ver `supabase/acceso_miembros.sql`). Las partes de dinero se editan además con la contraseña de `src/config.js`.
 - La pestaña de previsiones tiene un periodo extra (“Corea”) y unos objetivos de ahorro (“NY + Corea”) que se usaban para un viaje: se pueden renombrar en `src/App.jsx` (`PERIODOS_PREV` y `ObjetivosCard`).
 - Las pestañas Documentos, Auditoría, MTA Model y Evaluaciones están ocultas: para enseñarlas, añádelas a la lista `TABS` de `src/App.jsx`.
