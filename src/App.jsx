@@ -4435,9 +4435,20 @@ function HorasTab({projects}){
       guardar({...e,inicio:ini.toISOString(),fin:fin.toISOString(),segundos:Math.round((fin-ini)/1000),enCurso:false});
       return;
     }
+    if(e.enCurso&&/^\d{1,2}:\d{2}$/.test(r.trim())){ cambiarInicioEnMarcha(e,r.trim()); return; }
     const s=parseDuracion(r);
     if(s>0) guardar({...e,fin:new Date(d0.getTime()+s*1000).toISOString(),segundos:s,enCurso:false});
     else alert("No entiendo ese formato");
+  }
+  // Cambiar la hora de inicio de un contador que sigue en marcha (por si se olvidó darle al empezar)
+  function cambiarInicioEnMarcha(e,v){
+    const x=String(v||"").match(/^(\d{1,2}):(\d{2})$/); if(!x) return;
+    const ahora=new Date(), d0=new Date(e.inicio);
+    let ini=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate(),+x[1],+x[2]);
+    if(ini>ahora) ini=new Date(ahora.getFullYear(),ahora.getMonth(),ahora.getDate(),+x[1],+x[2]);
+    if(ini>ahora){ alert("La hora de inicio no puede ser posterior a ahora"); return; }
+    if(esTodos&&e.grupo) guardarVarios(lista.filter(y=>y.enCurso&&y.grupo===e.grupo).map(y=>({...y,inicio:ini.toISOString()})));
+    else guardar({...e,inicio:ini.toISOString()});
   }
   function cambiarFecha(e,v){
     const [y,mo,d]=v.split("-").map(Number); if(!y) return;
@@ -4564,7 +4575,12 @@ function HorasTab({projects}){
           <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
             <div style={{flex:1,minWidth:200}}>
               <div style={{fontSize:13,fontWeight:700,color:"#171717",fontFamily:FONT_TITULOS}}>{enMarcha.descripcion||"(sin descripción)"}</div>
-              <div style={{fontSize:11,color:projColorMap[enMarcha.proyecto]||"#6B665F",fontWeight:600}}>{enMarcha.proyecto||"Sin proyecto"} · desde las {hhmm(enMarcha.inicio)}</div>
+              <div style={{fontSize:11,color:projColorMap[enMarcha.proyecto]||"#6B665F",fontWeight:600}}>{enMarcha.proyecto||"Sin proyecto"}</div>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6,fontSize:11,color:"#6B665F"}}>
+                <span>Empezó a las</span>
+                <input key={enMarcha.inicio} type="time" defaultValue={hhmm(enMarcha.inicio)} onBlur={ev=>{ if(ev.target.value&&ev.target.value!==hhmm(enMarcha.inicio)) cambiarInicioEnMarcha(enMarcha,ev.target.value); }} onKeyDown={ev=>{ if(ev.key==="Enter") ev.target.blur(); }} title="Si se te olvidó darle al empezar, cambia aquí la hora de inicio" style={{...inp,width:92,padding:"3px 6px",fontSize:12}}/>
+                <span style={{fontSize:10,color:"#9A948C"}}>✏️ cámbiala si empezaste antes</span>
+              </div>
               <div style={{marginTop:8}}>
                 <FactSwitch value={!!enMarcha.facturable} onChange={v=>{
                   if(esTodos&&enMarcha.grupo) guardarVarios(lista.filter(x=>x.enCurso&&x.grupo===enMarcha.grupo).map(x=>({...x,facturable:v})));

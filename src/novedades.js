@@ -12,6 +12,16 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-19-1",
+    fecha: "19/11/2026",
+    titulo: "Cambiar la hora de inicio en directo",
+    cambios: [
+      "Con el temporizador en marcha ya puedes cambiar la hora a la que empezaste (\"Empezó a las\").",
+      "Si se te olvidó darle al empezar, pon la hora real y el contador se corrige sin pararlo.",
+      "En modo Todos, el cambio se aplica a todo el equipo a la vez.",
+    ],
+  },
+  {
     id: "2026-11-16-1",
     fecha: "16/11/2026",
     titulo: "Fotos de perfil",
