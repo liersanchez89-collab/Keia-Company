@@ -3479,7 +3479,8 @@ ${form.tickets&&form.tickets.length>0?`
 
 
   async function cambiarEstado(id, estado){
-    await sb.from("solicitudes_hoja_gasto").update({estado}).eq("id",id);
+    const {data:cambiadas,error}=await sb.from("solicitudes_hoja_gasto").update({estado}).eq("id",id).select("id");
+    if(error||!cambiadas?.length){ console.error("❌ cambiar estado solicitud",error); if(error?.code!=="42501") alert("No se ha podido guardar el cambio. Recarga la página e inténtalo otra vez."); return; }
     setSolicitudes(prev=>prev.map(s=>s.id===id?{...s,estado}:s));
     // Al aprobarla, se añade sola al listado de hojas de gasto del dashboard
     if(estado==="aprobada"){ const s=solicitudes.find(x=>x.id===id); if(s&&!datosSolicitud(s).hoja_id){ procesadas.current.add(s.id); const igual=hojaParecida(s); if(igual) guardarEnlace(s,igual.id); else añadirAHojas(s); } }
@@ -3525,9 +3526,12 @@ ${form.tickets&&form.tickets.length>0?`
     // Eliminar Excel y tickets
     const paths=[path];
     try{ const d=JSON.parse(datos||"{}"); (d.tickets||[]).forEach(t=>paths.push(t.path)); }catch(e){}
-    await sb.storage.from("hoja_gasto").remove(paths);
-    await sb.from("solicitudes_hoja_gasto").delete().eq("id",id);
+    const {data:borradas,error}=await sb.from("solicitudes_hoja_gasto").delete().eq("id",id).select("id");
+    if(error||!borradas?.length){ console.error("❌ eliminar solicitud",error); if(error?.code!=="42501") alert("No se ha podido eliminar la solicitud. Recarga la página e inténtalo otra vez."); return; }
     setSolicitudes(prev=>prev.filter(s=>s.id!==id));
+    // Borrar también los archivos (tickets); si falla no pasa nada, la solicitud ya está borrada
+    const archivos=paths.filter(Boolean);
+    if(archivos.length) sb.storage.from("hoja_gasto").remove(archivos).catch(()=>{});
   }
 
   const pendientes=solicitudes.filter(s=>s.estado==="pendiente");

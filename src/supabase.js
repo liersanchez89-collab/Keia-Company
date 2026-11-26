@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { perfil, esAdmin, esVisitante } from "./perfil.js";
+import { perfil, esAdmin, esVisitante, esFinanzas } from "./perfil.js";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -54,12 +54,13 @@ export const sb = new Proxy(cliente, {
           if(!ESCRITURAS.has(metodo) || esAdmin() || typeof real!=="function") return typeof real==="function" ? real.bind(qt) : real;
           // Visitantes: solo lectura en todo
           if(esVisitante()) return ()=>bloqueado(tabla);
-          if(TABLAS_SOLO_ADMIN.has(tabla)) return ()=>bloqueado(tabla);
+          // Líder financiera: también gestiona el Diamante de Finanzas
+          if(TABLAS_SOLO_ADMIN.has(tabla) && !(tabla==="diamante" && esFinanzas())) return ()=>bloqueado(tabla);
           if(tabla==="audit_progress" && (metodo==="insert"||metodo==="upsert"))
             return (filas,...r)=> horasDeOtro(filas) ? bloqueado(tabla) : real.call(qt,filas,...r);
           if(tabla==="audit_progress" && metodo==="update") return ()=>bloqueado(tabla);
-          // Hojas de gasto: cualquiera envía la suya, pero aprobar/editar/borrar es de admin
-          if(tabla==="solicitudes_hoja_gasto" && metodo!=="insert") return ()=>bloqueado(tabla);
+          // Hojas de gasto: cualquiera envía la suya, pero aprobar/rechazar/borrar es de admin o finanzas (Naroa)
+          if(tabla==="solicitudes_hoja_gasto" && metodo!=="insert" && !esFinanzas()) return ()=>bloqueado(tabla);
           return real.bind(qt);
         },
       });

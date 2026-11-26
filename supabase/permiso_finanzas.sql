@@ -28,3 +28,8 @@ create policy "hoja_gasto cambiar" on storage.objects for update to authenticate
   using (bucket_id = 'hoja_gasto' and public.es_finanzas());
 create policy "hoja_gasto borrar" on storage.objects for delete to authenticated
   using (bucket_id = 'hoja_gasto' and public.es_finanzas());
+
+-- Diamante (pestaña de Finanzas): también lo gestiona la líder financiera
+drop policy if exists "solo admin" on public.diamante;
+create policy "solo admin" on public.diamante for all to authenticated
+  using (public.es_finanzas()) with check (public.es_finanzas());

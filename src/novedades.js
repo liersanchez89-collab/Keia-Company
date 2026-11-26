@@ -12,6 +12,15 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-26-10",
+    fecha: "26/11/2026",
+    titulo: "🛠 Arreglo en hojas de gasto",
+    cambios: [
+      "Naroa ya puede aprobar, rechazar y eliminar solicitudes de hoja de gasto sin que salga el aviso de permisos, y los cambios se quedan guardados.",
+      "Si algo no se guarda, ahora la app avisa en vez de hacer como que se ha borrado.",
+    ],
+  },
+  {
     id: "2026-11-26-9",
     fecha: "26/11/2026",
     titulo: "💰 Naroa, líder financiera",
