@@ -12,6 +12,14 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-26-14",
+    fecha: "26/11/2026",
+    titulo: "📱 Barra de apartados en el móvil",
+    cambios: [
+      "En el móvil, la barra de arriba (Inicio, Equipo, Horas, Checkpoints…) ya solo se mueve de izquierda a derecha: no sube ni baja.",
+    ],
+  },
+  {
     id: "2026-11-26-13",
     fecha: "26/11/2026",
     titulo: "🤍 Menos colores, todo en cristal",
