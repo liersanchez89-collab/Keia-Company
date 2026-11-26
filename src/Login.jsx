@@ -65,10 +65,10 @@ export default function AuthGate({children}){
   useEffect(()=>{
     if(!session){ setMiembro(undefined); return; }
     // Carga el perfil (nombre + rol) ligado a este correo. Sin perfil no se entra.
-    sb.from("perfiles").select("nombre,rol").eq("email",(session.user.email||"").toLowerCase()).maybeSingle()
+    sb.from("perfiles").select("nombre,rol,finanzas").eq("email",(session.user.email||"").toLowerCase()).maybeSingle()
       .then(({data,error})=>{
-        if(error||!data){ perfil.nombre=null; perfil.rol=null; setMiembro(false); return; }
-        perfil.nombre=data.nombre; perfil.rol=data.rol; setMiembro(true);
+        if(error||!data){ perfil.nombre=null; perfil.rol=null; perfil.finanzas=false; setMiembro(false); return; }
+        perfil.nombre=data.nombre; perfil.rol=data.rol; perfil.finanzas=!!data.finanzas; setMiembro(true);
       });
   },[session?.user?.id]);
 

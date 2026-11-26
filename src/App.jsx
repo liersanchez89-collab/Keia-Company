@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, Fragment } from "react";
 import { EMPRESA, EMPRESA_SUB, MIEMBROS, MIEMBROS_ANTIGUOS, EXTERNOS, PROYECTOS_INICIALES, CLAVE_EDICION, CLAVE_CHAT_PRIVADO } from "./config.js";
 import { sb } from "./supabase.js";
-import { perfil, puedoEditar, puedoGestionar, esVisitante } from "./perfil.js";
+import { perfil, puedoEditar, puedoGestionar, esVisitante, esFinanzas } from "./perfil.js";
 import { Avatar, BotonPerfil, iniciarFotos, FotoAmpliada } from "./Fotos.jsx";
 import Novedades from "./Novedades.jsx";
 
@@ -2358,7 +2358,7 @@ function FacturasTab({facturas, setFacturas, tipo, projects, pagoInfo, rect, onR
   const acBg=tipo==="ingresos"?"#E6F5EC":"#FDECEC";
   const [repartoModal, setRepartoModal] = useState(null);
   const [collapsed, setCollapsed] = useState({});
-  const [unlocked, setUnlocked] = useState(false);
+  const [unlocked, setUnlocked] = useState(()=>esFinanzas());
   const [showLock, setShowLock] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const [escaneando, setEscaneando] = useState(0);
@@ -2669,7 +2669,7 @@ function FacturasTab({facturas, setFacturas, tipo, projects, pagoInfo, rect, onR
                 </div>
                 <div style={{display:"flex",gap:6,alignItems:"center"}}>
                   {!unlocked&&(
-                    <span style={{fontSize:10,color:"#D97706",fontWeight:600}}>🔒 Solo administrador</span>
+                    <span style={{fontSize:10,color:"#D97706",fontWeight:600}}>🔒 Solo admin / finanzas</span>
                   )}
                   {unlocked&&(
                     <>
@@ -3603,7 +3603,7 @@ ${form.tickets&&form.tickets.length>0?`
 function HojasGastoTab({hojas, setHojas, gastos, projects, pagoInfo, onSaldada}){
   const [repartoModal, setRepartoModal] = useState(null);
   const [collapsed, setCollapsed] = useState({});
-  const [unlocked, setUnlocked] = useState(false);
+  const [unlocked, setUnlocked] = useState(()=>esFinanzas());
   const [showLock, setShowLock] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
 
@@ -6064,7 +6064,7 @@ function planCuadre(movs,itemByKey){
 
 function BancoTab({ing,setIng,gas,setGas,hojas,onPendientes,onMovs,irOtros,rect,saldadas}){
   const [leyendoPdf,setLeyendoPdf]=useState(false);
-  const [unlocked,setUnlocked]=useState(false);
+  const [unlocked,setUnlocked]=useState(()=>esFinanzas());
   const [showLock,setShowLock]=useState(false);
   const [pendingAction,setPendingAction]=useState(null);
   const [filtro,setFiltro]=useState("pendientes");
@@ -6508,7 +6508,7 @@ function BancoTab({ing,setIng,gas,setGas,hojas,onPendientes,onMovs,irOtros,rect,
 // Movimientos del banco sin factura (comisiones, impuestos, nóminas, traspasos…).
 // Se marcan en 🏦 Banco y aquí se clasifican: categoría, proyecto y motivo.
 function OtrosGastosTab({movs, guardar, projects, irBanco, ing}){
-  const [unlocked,setUnlocked]=useState(false);
+  const [unlocked,setUnlocked]=useState(()=>esFinanzas());
   const [showLock,setShowLock]=useState(false);
   const [pendingAction,setPendingAction]=useState(null);
   const [collapsed,setCollapsed]=useState({});

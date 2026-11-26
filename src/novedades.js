@@ -12,6 +12,15 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-26-9",
+    fecha: "26/11/2026",
+    titulo: "💰 Naroa, líder financiera",
+    cambios: [
+      "Naroa puede aprobar, rechazar, mover y borrar en Finanzas lo de todos (hojas de gasto, facturas, banco…).",
+      "A ella y al admin ya no les pide la contraseña de edición en Finanzas.",
+    ],
+  },
+  {
     id: "2026-11-26-8",
     fecha: "26/11/2026",
     titulo: "📋 Nueva plantilla de hoja de gastos",

@@ -1,6 +1,6 @@
 // Perfil de la persona que ha iniciado sesión (lo rellena Login.jsx antes de abrir la app).
 // nombre = el mismo que en src/config.js → MIEMBROS. rol = "miembro" | "admin" | "visitante".
-export const perfil = { nombre: null, rol: null };
+export const perfil = { nombre: null, rol: null, finanzas: false };
 
 export const esAdmin = () => perfil.rol === "admin";
 
@@ -12,3 +12,7 @@ export const puedoGestionar = () => perfil.rol === "admin" || perfil.rol === "mi
 
 // ¿Puede la persona actual tocar los datos de `miembro`?
 export const puedoEditar = (miembro) => esAdmin() || (!!perfil.nombre && miembro === perfil.nombre);
+
+// Líder financiera (p. ej. Naroa) o admin: en Finanzas puede aprobar, mover y borrar lo de todos
+// sin pedir la contraseña de edición. Se marca en Supabase: perfiles.finanzas = true.
+export const esFinanzas = () => perfil.rol === "admin" || !!perfil.finanzas;
