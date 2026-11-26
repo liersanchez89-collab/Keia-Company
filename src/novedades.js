@@ -12,6 +12,16 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-26-13",
+    fecha: "26/11/2026",
+    titulo: "🤍 Menos colores, todo en cristal",
+    cambios: [
+      "Se acabaron los colores por persona y por proyecto: ahora todo va en tonos neutros, como el resto del nuevo diseño.",
+      "Las fichas de números (bookpoints, CV, facturación…) son tarjetas de cristal blancas; solo el dinero sigue en verde (positivo) o rojo (negativo).",
+      "El calendario y los botones principales también van en blanco y negro con el naranja de KEIA.",
+    ],
+  },
+  {
     id: "2026-11-26-12",
     fecha: "26/11/2026",
     titulo: "⏳ Avisos de novedades más largos",

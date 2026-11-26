@@ -212,7 +212,10 @@ function aClaro(hex){
   [r,g,b]=[r,g,b].map(c=>c+(1-c)*t);
   return "#"+[r,g,b].map(c=>Math.round(c*255).toString(16).padStart(2,"0")).join("").toUpperCase();
 }
-const conTinte=x=>({...x,color:aClaro(x.color),light:aClaro(x.color)+"24"});
+// Diseño glass: sin un color por persona ni por proyecto, todo en el mismo tono neutro
+const NEUTRO="#3D3A36", NEUTRO_LIGHT="#3D3A3612";
+const conTinte=x=>({...x,color:NEUTRO,light:NEUTRO_LIGHT});
+const neutroP=p=>p?({...p,color:NEUTRO,light:NEUTRO_LIGHT}):p;
 const INIT_MEMBERS = MIEMBROS.map(conTinte);   // se edita en src/config.js
 
 // Personas que ya no están: se ocultan en el panel de Inicio,
@@ -326,18 +329,18 @@ function EditLockModal({onUnlock, onClose}){
 }
 
 const ESTADO_COLORS = {
-  "Contactado":         {bg:"#E8F0FB",text:"#2B2926"},
+  "Contactado":         {bg:"#FFFFFF",text:"#2B2926"},
   "Propuesta":          {bg:"#FEF9DD",text:"#A8341F"},
-  "CV cerrada":         {bg:"#FBEFE3",text:"#A8341F"},
-  "Venta cerrada":      {bg:"#E6F5EC",text:"#14532D"},
-  "Volver a contactar": {bg:"#FDECEC",text:"#991B1B"},
-  "NO":                 {bg:"#FDECEC",text:"#991B1B"},
+  "CV cerrada":         {bg:"#FFFFFF",text:"#A8341F"},
+  "Venta cerrada":      {bg:"#FFFFFF",text:"#14532D"},
+  "Volver a contactar": {bg:"#FFFFFF",text:"#991B1B"},
+  "NO":                 {bg:"#FFFFFF",text:"#991B1B"},
 };
 const CC_COLORS = {
-  "✅ Aprobado":  {bg:"#E6F5EC",text:"#14532D"},
+  "✅ Aprobado":  {bg:"#FFFFFF",text:"#14532D"},
   "🔄 Revisión":  {bg:"#FEF9DD",text:"#A8341F"},
-  "❌ Rechazado": {bg:"#FDECEC",text:"#991B1B"},
-  "⏳ Pendiente": {bg:"#FEF6DC",text:"#A8341F"},
+  "❌ Rechazado": {bg:"#FFFFFF",text:"#991B1B"},
+  "⏳ Pendiente": {bg:"#FFFFFF",text:"#A8341F"},
 };
 
 const META_BP = 80;
@@ -483,7 +486,7 @@ function PdfCell({value,onChange,locked,onLock}){
     <div style={{display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap"}}>
       <input ref={ref} type="file" accept="application/pdf,.pdf" style={{display:"none"}} onChange={onFile}/>
       {value?(<>
-        <a href={value} target="_blank" rel="noreferrer" style={{background:"#FBEAE5",color:"#4F46E5",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:700,textDecoration:"none"}} title="Abrir PDF">📄 PDF ↗</a>
+        <a href={value} target="_blank" rel="noreferrer" style={{background:"#F7F6F4",color:"#3D3A36",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:700,textDecoration:"none"}} title="Abrir PDF">📄 PDF ↗</a>
         <button onClick={pick} disabled={subiendo} title="Reemplazar PDF" style={{background:"none",border:"none",color:"#7F7973",cursor:"pointer",fontSize:11,padding:0,fontFamily:"inherit"}}>{subiendo?"…":"↻"}</button>
       </>):(
         <button onClick={pick} disabled={subiendo} style={{background:"#FDECEC",color:"#B91C1C",border:"1px solid #F5C2C2",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
@@ -546,7 +549,7 @@ function THead({cols,color}){
 }
 function ProgressBar({val,max,color}){
   const pct=Math.min(Math.round(val/max*100),100);
-  const c=val>=max?"#22C55E":val>=max*0.5?color||"#F59E0B":"#7F7973";
+  const c=val>=max?"#22C55E":val>=max*0.5?color||"#3D3A36":"#7F7973";
   return(
     <div>
       <div style={{background:"#E5E2DD",borderRadius:99,height:7,overflow:"hidden"}}>
@@ -710,7 +713,7 @@ function ProjectModal({p, pCVs, pIng, pGas, pHojas, totIng, totGas, sortRef, onC
                       <span style={{fontWeight:600,color:"#171717",flex:1,minWidth:120}}>{r.cliente||"—"}</span>
                       <span style={{color:"#6B665F",width:80,flexShrink:0}}>{r.ubicacion||"—"}</span>
                       <span style={{fontSize:9,fontWeight:700,padding:"2px 8px",borderRadius:99,background:
-                        r.estado==="Venta cerrada"?"#E6F5EC":r.estado==="NO"?"#FDECEC":r.estado==="CV cerrada"?"#FBEAE5":"#EDEBE8",
+                        r.estado==="Venta cerrada"?"#F7F6F4":r.estado==="NO"?"#FDECEC":r.estado==="CV cerrada"?"#F7F6F4":"#EDEBE8",
                         color:r.estado==="Venta cerrada"?"#059669":r.estado==="NO"?"#B91C1C":r.estado==="CV cerrada"?"#D4CCF4":"#8A847C"
                       }}>{r.estado||"—"}</span>
                       {r.tlf&&<a href={`tel:${r.tlf}`} style={{color:"#6B665F",fontSize:10,textDecoration:"none"}}>{r.tlf}</a>}
@@ -769,7 +772,7 @@ function ProyectoEquipoTab({pname, color}){
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
         <div style={{fontSize:11,color:"#6B665F"}}>Asigna un rol a cada miembro del equipo en este proyecto</div>
-        {saving&&<span style={{fontSize:10,color:"#F59E0B",fontWeight:600}}>💾 Guardando...</span>}
+        {saving&&<span style={{fontSize:10,color:"#A8341F",fontWeight:600}}>💾 Guardando...</span>}
       </div>
 
       {/* Miembros asignados */}
@@ -821,9 +824,9 @@ function ProyectoEquipoTab({pname, color}){
 
 // ── ESTRATEGIA PROYECTOS ─────────────────────────────────────────────────────
 const ETIQUETAS_PROY = [
-  {id:"investigacion", label:"🔬 Investigación", color:"#7C3AED", bg:"#F1EEFC"},
-  {id:"por_arrancar",  label:"🚀 Por arrancar",  color:"#D97706", bg:"#FEF6DC"},
-  {id:"activo",        label:"✅ Activo",         color:"#059669", bg:"#E6F5EC"},
+  {id:"investigacion", label:"🔬 Investigación", color:"#3D3A36", bg:"#FFFFFF"},
+  {id:"por_arrancar",  label:"🚀 Por arrancar",  color:"#A8341F", bg:"#FFFFFF"},
+  {id:"activo",        label:"✅ Activo",         color:"#059669", bg:"#FFFFFF"},
   {id:"pausado",       label:"⏸ Pausado",         color:"#6B665F", bg:"#F2F0ED"},
 ];
 
@@ -1070,22 +1073,22 @@ function EstrategiaProyectosTab({projects,ing,cv,bp,hojas}){
                       <div style={{fontWeight:700,fontSize:13,color:"#171717",marginBottom:4,fontFamily:FONT_TITULOS}}>{pn}</div>
                       <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
                         {etiq&&<span style={{background:etiq.bg,color:etiq.color,fontSize:9,fontWeight:600,padding:"2px 7px",borderRadius:99}}>{etiq.label}</span>}
-                        {hasOKR&&<span style={{background:"#FBEAE5",color:"#D94A32",fontSize:9,fontWeight:600,padding:"2px 7px",borderRadius:99}}>OKRs ✓</span>}
+                        {hasOKR&&<span style={{background:"#F7F6F4",color:"#D94A32",fontSize:9,fontWeight:600,padding:"2px 7px",borderRadius:99}}>OKRs ✓</span>}
                       </div>
                     </div>
                     <button onClick={e=>{e.stopPropagation();removeProyecto(pn);}}
                       style={{background:"none",border:"none",color:"#A19B93",cursor:"pointer",fontSize:14,padding:"0 0 0 8px"}}>✕</button>
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
-                    <div style={{background:"#E6F3FB",borderRadius:9,padding:"8px 10px",display:"flex",alignItems:"center",gap:8}}>
-                      {ring(pCV,objCV,"#0EA5E9")}
+                    <div style={{background:"#F7F6F4",borderRadius:9,padding:"8px 10px",display:"flex",alignItems:"center",gap:8}}>
+                      {ring(pCV,objCV,"#3D3A36")}
                       <div>
-                        <div style={{fontSize:9,color:"#0369A1",fontWeight:600}}>CV</div>
-                        <div style={{fontSize:16,fontWeight:700,color:"#0369A1",lineHeight:1,fontFamily:FONT_TITULOS}}>{pCV}</div>
+                        <div style={{fontSize:9,color:"#3D3A36",fontWeight:600}}>CV</div>
+                        <div style={{fontSize:16,fontWeight:700,color:"#3D3A36",lineHeight:1,fontFamily:FONT_TITULOS}}>{pCV}</div>
                         <div style={{fontSize:9,color:"#7DD3FC"}}>obj: {objCV||"—"}</div>
                       </div>
                     </div>
-                    <div style={{background:"#EAF7EE",borderRadius:9,padding:"8px 10px",display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{background:"#F7F6F4",borderRadius:9,padding:"8px 10px",display:"flex",alignItems:"center",gap:8}}>
                       {ring(pIng,objIng,"#059669")}
                       <div style={{minWidth:0}}>
                         <div style={{fontSize:9,color:"#065F46",fontWeight:600}}>Ingresos</div>
@@ -1120,24 +1123,24 @@ function EstrategiaProyectosTab({projects,ing,cv,bp,hojas}){
               </div>
               <div style={{padding:"20px 22px"}}>
                 <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:20}}>
-                  <div style={{background:"#E6F3FB",border:"1.5px solid #BAE0F3",borderRadius:10,padding:"10px 12px",flex:1,minWidth:0}}>
-                    <div style={{fontSize:9,fontWeight:700,color:"#0EA5E9",letterSpacing:"0",marginBottom:3}}>CV (verano)</div>
-                    <div style={{fontSize:18,fontWeight:800,color:"#0EA5E9",lineHeight:1,letterSpacing:"-1px",fontFamily:FONT_TITULOS}}>{pCV}</div>
+                  <div style={{background:"#F7F6F4",border:"1.5px solid #E5E2DD",borderRadius:10,padding:"10px 12px",flex:1,minWidth:0}}>
+                    <div style={{fontSize:9,fontWeight:700,color:"#3D3A36",letterSpacing:"0",marginBottom:3}}>CV (verano)</div>
+                    <div style={{fontSize:18,fontWeight:800,color:"#3D3A36",lineHeight:1,letterSpacing:"-1px",fontFamily:FONT_TITULOS}}>{pCV}</div>
                     <div style={{fontSize:9,color:"#7F7973",marginTop:2}}>obj: {estrategia[`p_${selected}_cv`]||"—"}</div>
                   </div>
-                  <div style={{background:"#EAF7EE",border:"1.5px solid #A9DDBF",borderRadius:10,padding:"10px 12px",flex:1,minWidth:0}}>
+                  <div style={{background:"#F7F6F4",border:"1.5px solid #E5E2DD",borderRadius:10,padding:"10px 12px",flex:1,minWidth:0}}>
                     <div style={{fontSize:9,fontWeight:700,color:"#059669",letterSpacing:"0",marginBottom:3}}>Ingresos (verano)</div>
                     <div style={{fontSize:18,fontWeight:800,color:"#059669",lineHeight:1,letterSpacing:"-1px",fontFamily:FONT_TITULOS}}>{pIng.toFixed(0)}€</div>
                     <div style={{fontSize:9,color:"#7F7973",marginTop:2}}>obj: {estrategia[`p_${selected}_ing`]||"—"}€</div>
                   </div>
-                  <div style={{background:"#FBEAE5",border:"1.5px solid #F2C3B7",borderRadius:10,padding:"10px 12px",flex:1,minWidth:0}}>
+                  <div style={{background:"#F7F6F4",border:"1.5px solid #E5E2DD",borderRadius:10,padding:"10px 12px",flex:1,minWidth:0}}>
                     <div style={{fontSize:9,fontWeight:700,color:"#D94A32",letterSpacing:"0",marginBottom:3}}>Bookpoints</div>
                     <div style={{fontSize:18,fontWeight:800,color:"#D94A32",lineHeight:1,letterSpacing:"-1px",fontFamily:FONT_TITULOS}}>{pBP}</div>
                     <div style={{fontSize:9,color:"#7F7973",marginTop:2}}>total acumulado</div>
                   </div>
-                  <div style={{background:"#FEF6DC",border:"1.5px solid #F1DE9C",borderRadius:10,padding:"10px 12px",flex:1,minWidth:0}}>
-                    <div style={{fontSize:9,fontWeight:700,color:"#F59E0B",letterSpacing:"0",marginBottom:3}}>Facturas</div>
-                    <div style={{fontSize:18,fontWeight:800,color:"#F59E0B",lineHeight:1,letterSpacing:"-1px",fontFamily:FONT_TITULOS}}>{(ing||[]).filter(r=>r.proyecto===selected&&inVerano(r.fecha)).length}</div>
+                  <div style={{background:"#F7F6F4",border:"1.5px solid #E5E2DD",borderRadius:10,padding:"10px 12px",flex:1,minWidth:0}}>
+                    <div style={{fontSize:9,fontWeight:700,color:"#A8341F",letterSpacing:"0",marginBottom:3}}>Facturas</div>
+                    <div style={{fontSize:18,fontWeight:800,color:"#A8341F",lineHeight:1,letterSpacing:"-1px",fontFamily:FONT_TITULOS}}>{(ing||[]).filter(r=>r.proyecto===selected&&inVerano(r.fecha)).length}</div>
                     <div style={{fontSize:9,color:"#7F7973",marginTop:2}}>en verano</div>
                   </div>
                 </div>
@@ -1150,19 +1153,19 @@ function EstrategiaProyectosTab({projects,ing,cv,bp,hojas}){
                       {ETIQUETAS_PROY.map(e=><option key={e.id} value={e.id}>{e.label}</option>)}
                     </select>
                   </div>
-                  <div style={{background:"#E6F3FB",borderRadius:10,padding:"12px"}}>
-                    <div style={{fontSize:10,fontWeight:600,color:"#0369A1",marginBottom:6}}>🤝 Objetivo CV</div>
+                  <div style={{background:"#F7F6F4",borderRadius:10,padding:"12px"}}>
+                    <div style={{fontSize:10,fontWeight:600,color:"#3D3A36",marginBottom:6}}>🤝 Objetivo CV</div>
                     <div style={{display:"flex",alignItems:"center",gap:6}}>
                       <input type="number" value={estrategia[`p_${selected}_cv`]||""} onChange={e=>save(`p_${selected}_cv`,e.target.value)}
-                        style={{width:70,border:"2px solid #BAE0F3",borderRadius:8,padding:"5px 8px",fontSize:15,fontWeight:700,fontFamily:"inherit",color:"#0369A1",textAlign:"center",outline:"none",background:"#FFFFFF"}}/>
-                      <span style={{fontSize:11,color:"#0369A1"}}>CV</span>
+                        style={{width:70,border:"2px solid #E5E2DD",borderRadius:8,padding:"5px 8px",fontSize:15,fontWeight:700,fontFamily:"inherit",color:"#3D3A36",textAlign:"center",outline:"none",background:"#FFFFFF"}}/>
+                      <span style={{fontSize:11,color:"#3D3A36"}}>CV</span>
                     </div>
                   </div>
-                  <div style={{background:"#EAF7EE",borderRadius:10,padding:"12px"}}>
+                  <div style={{background:"#F7F6F4",borderRadius:10,padding:"12px"}}>
                     <div style={{fontSize:10,fontWeight:600,color:"#065F46",marginBottom:6}}>💰 Objetivo ingresos</div>
                     <div style={{display:"flex",alignItems:"center",gap:6}}>
                       <input type="number" value={estrategia[`p_${selected}_ing`]||""} onChange={e=>save(`p_${selected}_ing`,e.target.value)}
-                        style={{width:90,border:"2px solid #A9DDBF",borderRadius:8,padding:"5px 8px",fontSize:15,fontWeight:700,fontFamily:"inherit",color:"#065F46",textAlign:"center",outline:"none",background:"#FFFFFF"}}/>
+                        style={{width:90,border:"2px solid #E5E2DD",borderRadius:8,padding:"5px 8px",fontSize:15,fontWeight:700,fontFamily:"inherit",color:"#065F46",textAlign:"center",outline:"none",background:"#FFFFFF"}}/>
                       <span style={{fontSize:11,color:"#047857"}}>€</span>
                     </div>
                   </div>
@@ -1171,7 +1174,7 @@ function EstrategiaProyectosTab({projects,ing,cv,bp,hojas}){
                   <div style={{fontWeight:700,fontSize:11,color:"#3D3A36",letterSpacing:"0",marginBottom:8}}>🎯 OKRs del proyecto</div>
                   <textarea value={estrategia[`p_${selected}_okrs`]||""} onChange={e=>save(`p_${selected}_okrs`,e.target.value)}
                     placeholder="Objetivo 1: ... | KR1: ... | KR2: ..."
-                    style={{width:"100%",border:"1.5px solid #1F337A",borderRadius:9,padding:"10px 12px",fontSize:11,fontFamily:"inherit",resize:"vertical",minHeight:80,color:"#3D3A36",lineHeight:1.7,boxSizing:"border-box",outline:"none",background:"#F7F6F4"}}/>
+                    style={{width:"100%",border:"1.5px solid #3D3A36",borderRadius:9,padding:"10px 12px",fontSize:11,fontFamily:"inherit",resize:"vertical",minHeight:80,color:"#3D3A36",lineHeight:1.7,boxSizing:"border-box",outline:"none",background:"#F7F6F4"}}/>
                 </div>
                 <div style={{fontWeight:700,fontSize:11,color:"#3D3A36",letterSpacing:"0",marginBottom:10}}>📅 Tracking semanal (verano)</div>
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -1196,7 +1199,7 @@ function EstrategiaProyectosTab({projects,ing,cv,bp,hojas}){
                       <div key={wk} style={{borderRadius:12,overflow:"hidden",border:`2px solid ${isCurrent?"#F2F0ED":hasActivity?"#A9DDBF":"#E5E2DD"}`,opacity:isPast&&!hasActivity&&!wkEvi?0.45:1}}>
                         <div style={{background:isCurrent?"#171717":hasActivity?"#065F46":"#F2F0ED",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:6}}>
                           <div style={{display:"flex",alignItems:"center",gap:10}}>
-                            {isCurrent&&<span style={{fontSize:10,background:"#FEF6DC",color:"#A8341F",fontWeight:700,padding:"2px 8px",borderRadius:99}}>Esta semana</span>}
+                            {isCurrent&&<span style={{fontSize:10,background:"#F7F6F4",color:"#A8341F",fontWeight:700,padding:"2px 8px",borderRadius:99}}>Esta semana</span>}
                             <span style={{fontWeight:700,fontSize:12,color:isCurrent||hasActivity?"white":"#3D3A36"}}>{fmtD(d)} — {fmtD(de)}</span>
                           </div>
                           <div style={{display:"flex",gap:8}}>
@@ -1216,7 +1219,7 @@ function EstrategiaProyectosTab({projects,ing,cv,bp,hojas}){
                               <div style={{fontSize:10,fontWeight:700,color:"#059669",letterSpacing:"0",marginBottom:6}}>💰 Facturas</div>
                               <div style={{display:"flex",flexDirection:"column",gap:4}}>
                                 {wkFacts.map((f,fi)=>(
-                                  <div key={fi} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#EAF7EE",borderRadius:8,padding:"8px 12px",border:"1px solid #A9DDBF"}}>
+                                  <div key={fi} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#F7F6F4",borderRadius:8,padding:"8px 12px",border:"1px solid #E5E2DD"}}>
                                     <div>
                                       <div style={{fontWeight:600,fontSize:12,color:"#065F46"}}>{f.ref||"Sin ref"}</div>
                                       <div style={{fontSize:10,color:"#6B665F"}}>{f.descripcion||"—"}</div>
@@ -1229,15 +1232,15 @@ function EstrategiaProyectosTab({projects,ing,cv,bp,hojas}){
                           )}
                           {wkCVs.length>0&&(
                             <div style={{marginBottom:10}}>
-                              <div style={{fontSize:10,fontWeight:700,color:"#0EA5E9",letterSpacing:"0",marginBottom:6}}>🤝 Visitas de venta</div>
+                              <div style={{fontSize:10,fontWeight:700,color:"#3D3A36",letterSpacing:"0",marginBottom:6}}>🤝 Visitas de venta</div>
                               <div style={{display:"flex",flexDirection:"column",gap:4}}>
                                 {wkCVs.map((cv,ci)=>(
-                                  <div key={ci} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#E6F3FB",borderRadius:8,padding:"8px 12px",border:"1px solid #BAE0F3"}}>
+                                  <div key={ci} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#F7F6F4",borderRadius:8,padding:"8px 12px",border:"1px solid #E5E2DD"}}>
                                     <div>
-                                      <div style={{fontWeight:600,fontSize:12,color:"#0369A1"}}>{cv.cliente||"—"}</div>
+                                      <div style={{fontWeight:600,fontSize:12,color:"#3D3A36"}}>{cv.cliente||"—"}</div>
                                       <div style={{fontSize:10,color:"#6B665F"}}>{cv.member}{cv.proyecto?` · ${cv.proyecto}`:""}</div>
                                     </div>
-                                    <span style={{background:"#0EA5E9",color:"white",fontSize:9,fontWeight:700,padding:"2px 8px",borderRadius:99}}>CV</span>
+                                    <span style={{background:"#3D3A36",color:"white",fontSize:9,fontWeight:700,padding:"2px 8px",borderRadius:99}}>CV</span>
                                   </div>
                                 ))}
                               </div>
@@ -1367,7 +1370,7 @@ function EstrategiaTab({projects, ing, cv}){
           <div style={{fontWeight:800,fontSize:17,color:"#171717",fontFamily:FONT_TITULOS}}>🎯 Estrategia {EMPRESA}</div>
           <div style={{fontSize:11,color:"#6B665F",marginTop:2}}>Define objetivos del equipo y de cada proyecto. El progreso se calcula automáticamente.</div>
         </div>
-        {saving&&<span style={{fontSize:10,color:"#F59E0B",fontWeight:600}}>💾 Guardando...</span>}
+        {saving&&<span style={{fontSize:10,color:"#A8341F",fontWeight:600}}>💾 Guardando...</span>}
       </div>
 
       {/* Sub-tabs */}
@@ -1411,9 +1414,9 @@ function EstrategiaTab({projects, ing, cv}){
           <div style={{fontWeight:700,fontSize:13,color:"#171717",marginBottom:12,fontFamily:FONT_TITULOS}}>📊 Objetivos del equipo 2026</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:20}}>
             {[
-              {key:"eq_obj_cv",  label:"🤝 Objetivo CV",        real:realCV,  color:"#0EA5E9", unit:"CV",   desc:"Visitas de ventas cerradas"},
+              {key:"eq_obj_cv",  label:"🤝 Objetivo CV",        real:realCV,  color:"#3D3A36", unit:"CV",   desc:"Visitas de ventas cerradas"},
               {key:"eq_obj_ing", label:"💰 Objetivo ingresos",   real:realIng, color:"#059669", unit:"€",    desc:"Facturación total del equipo"},
-              {key:"eq_obj_proy",label:"📁 Objetivo proyectos",  real:realProy,color:"#7C3AED", unit:"proy", desc:"Proyectos activos con facturación"},
+              {key:"eq_obj_proy",label:"📁 Objetivo proyectos",  real:realProy,color:"#3D3A36", unit:"proy", desc:"Proyectos activos con facturación"},
             ].map(k=>(
               <div key={k.key} style={{background:"#FFFFFF",border:"1px solid #E5E2DD",borderRadius:12,padding:"14px 16px"}}>
                 <div style={{fontWeight:700,fontSize:11,color:"#3D3A36",marginBottom:10}}>{k.label}</div>
@@ -1503,7 +1506,7 @@ function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,custo
   const toggleParticipante=n=>setParticipantes(ps=>ps.includes(n)?ps.filter(x=>x!==n):[...ps,n]);
   const [newName,setNewName]=useState("");
   const [newColor,setNewColor]=useState("#0F3460");
-  const [newLight,setNewLight]=useState("#E8F0FB");
+  const [newLight,setNewLight]=useState("#F7F6F4");
   const [err,setErr]=useState("");
   const [selectedProject,setSelectedProject]=useState(null);
   const [renameModal,setRenameModal]=useState(null); // {proj, tmpName, tmpColor, tmpLight}
@@ -1651,18 +1654,18 @@ function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,custo
               autoFocus
               style={{width:"100%",border:"1.5px solid #E5E2DD",borderRadius:8,padding:"10px 12px",fontSize:13,fontFamily:"inherit",outline:"none",boxSizing:"border-box",marginBottom:20,color:"#171717"}}/>
 
-            <div style={{fontSize:11,fontWeight:600,color:"#6B665F",letterSpacing:"0",marginBottom:10}}>Color de la tarjeta</div>
-            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
-              {["#2B2926","#0F4C75","#1A1A2E","#2D6A4F","#1B4332","#4A1942","#7B2D00","#1D3557","#003049","#370617","#3D405B","#2C3E50"].map(c=>(
+            <div style={{display:"none"}}>Color de la tarjeta</div>
+            <div style={{display:"none",gap:6,flexWrap:"wrap",marginBottom:6}}>
+              {["#2B2926","#3D3A36","#1A1A2E","#2D6A4F","#1B4332","#4A1942","#7B2D00","#1D3557","#003049","#370617","#3D405B","#2C3E50"].map(c=>(
                 <button key={c} onClick={()=>setRenameModal(r=>({...r,tmpColor:c,tmpLight:c+"18"}))}
                   style={{width:26,height:26,borderRadius:6,background:c,border:renameModal.tmpColor===c?"3px solid #111":"2px solid #E5E2DD",cursor:"pointer",transition:"transform .1s",transform:renameModal.tmpColor===c?"scale(1.15)":"scale(1)"}}/>
               ))}
-              {["#D94A32","#8B5CF6","#EC4899","#EF4444","#F97316","#EAB308","#22C55E","#14B8A6","#0EA5E9","#6B665F"].map(c=>(
+              {["#D94A32","#3D3A36","#3D3A36","#EF4444","#3D3A36","#3D3A36","#22C55E","#3D3A36","#3D3A36","#6B665F"].map(c=>(
                 <button key={c} onClick={()=>setRenameModal(r=>({...r,tmpColor:c,tmpLight:c+"22"}))}
                   style={{width:26,height:26,borderRadius:6,background:c,border:renameModal.tmpColor===c?"3px solid #111":"2px solid #E5E2DD",cursor:"pointer",transition:"transform .1s",transform:renameModal.tmpColor===c?"scale(1.15)":"scale(1)"}}/>
               ))}
             </div>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
+            <div style={{display:"none",alignItems:"center",gap:8,marginBottom:20}}>
               <div style={{fontSize:10,color:"#7F7973"}}>Personalizado:</div>
               <input type="color" value={renameModal.tmpColor} onChange={e=>setRenameModal(r=>({...r,tmpColor:e.target.value,tmpLight:e.target.value+"22"}))}
                 style={{width:32,height:26,border:"1.5px solid #E5E2DD",borderRadius:6,padding:2,cursor:"pointer",background:"none"}}/>
@@ -1755,11 +1758,11 @@ function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,custo
             <div style={{fontSize:10,color:"#6B665F",marginBottom:4}}>Nombre</div>
             <Inp value={newName} onChange={v=>{setNewName(v);setErr("");}} placeholder="Nombre del proyecto"/>
           </div>
-          <div>
+          <div style={{display:"none"}}>
             <div style={{fontSize:10,color:"#6B665F",marginBottom:4}}>Color principal</div>
             <input type="color" value={newColor} onChange={e=>setNewColor(e.target.value)} style={{width:44,height:32,border:"1px solid #E5E2DD",borderRadius:5,cursor:"pointer",padding:2}}/>
           </div>
-          <div>
+          <div style={{display:"none"}}>
             <div style={{fontSize:10,color:"#6B665F",marginBottom:4}}>Color fondo</div>
             <input type="color" value={newLight} onChange={e=>setNewLight(e.target.value)} style={{width:44,height:32,border:"1px solid #E5E2DD",borderRadius:5,cursor:"pointer",padding:2}}/>
           </div>
@@ -1963,7 +1966,7 @@ function BookpointsTab({data,setData,groups,setGroups}){
             {byGroup.map(({g,rows:grows})=>(
               <div key={g.id} style={{marginBottom:10}}>
                 <div style={{fontSize:10,fontWeight:700,color:"#D94A32",marginBottom:5,display:"flex",alignItems:"center",gap:6}}>
-                  <span style={{background:"#FBEAE5",borderRadius:5,padding:"2px 9px"}}>{g.name}</span>
+                  <span style={{background:"#F7F6F4",borderRadius:5,padding:"2px 9px"}}>{g.name}</span>
                   <span style={{color:"#7F7973",fontWeight:400}}>({grows.length} libros · {grows.reduce((s,r)=>s+(parseFloat(r.puntos)||0),0)} pts)</span>
                 </div>
                 {grows.length>0&&<BPTable rows={grows} mname={m.name} mcolor={m.color} upd={upd} del={del} groupOptions={groupOptions}/>}
@@ -1997,7 +2000,7 @@ function BPTable({rows,mname,mcolor,upd,del,groupOptions}){
           ["Autor",<Inp value={r.autor} onChange={v=>upd(mname,r.id,"autor",v)} placeholder="Autor"/>,true],
           ["Grupo",<Sel value={r.grupo} onChange={v=>upd(mname,r.id,"grupo",v)} options={groupOptions} placeholder="Sin grupo"/>],
           ["Topic",<Sel value={r.topic} onChange={v=>upd(mname,r.id,"topic",v)} options={TOPICS}/>],
-          ["Puntos",<Inp value={r.puntos} onChange={v=>upd(mname,r.id,"puntos",v)} placeholder="0" bold color="#1D4ED8"/>],
+          ["Puntos",<Inp value={r.puntos} onChange={v=>upd(mname,r.id,"puntos",v)} placeholder="0" bold color="#3D3A36"/>],
           ["Fecha",<DateInp value={r.fecha||""} onChange={v=>upd(mname,r.id,"fecha",v)} w="100%"/>],
           ["Essay",<LinkInp value={r.essay} onChange={v=>upd(mname,r.id,"essay",v)} placeholder="Link del essay"/>,true],
           ["CC",<Sel value={r.cc} onChange={v=>upd(mname,r.id,"cc",v)} options={CC_OPTS}/>],
@@ -2016,7 +2019,7 @@ function BPTable({rows,mname,mcolor,upd,del,groupOptions}){
               <td style={{padding:"3px 5px"}}><Inp value={r.autor}       onChange={v=>upd(mname,r.id,"autor",v)}       placeholder="Autor"/></td>
               <td style={{padding:"3px 5px"}}><Inp value={r.libro}       onChange={v=>upd(mname,r.id,"libro",v)}       placeholder="Título"/></td>
               <td style={{padding:"3px 5px"}}><Sel value={r.topic}       onChange={v=>upd(mname,r.id,"topic",v)}       options={TOPICS}/></td>
-              <td style={{padding:"3px 5px"}}><Inp value={r.puntos}      onChange={v=>upd(mname,r.id,"puntos",v)}      placeholder="0" w="50px" bold color="#1D4ED8"/></td>
+              <td style={{padding:"3px 5px"}}><Inp value={r.puntos}      onChange={v=>upd(mname,r.id,"puntos",v)}      placeholder="0" w="50px" bold color="#3D3A36"/></td>
               <td style={{padding:"3px 5px"}}><DateInp value={r.fecha||""} onChange={v=>upd(mname,r.id,"fecha",v)} w="110px"/></td>
               <td style={{padding:"3px 5px"}}><LinkInp value={r.essay}   onChange={v=>upd(mname,r.id,"essay",v)}       placeholder="Essay link"/></td>
               <td style={{padding:"3px 5px"}}><Sel value={r.cc}          onChange={v=>upd(mname,r.id,"cc",v)}          options={CC_OPTS}/></td>
@@ -2048,7 +2051,7 @@ function CompanerosPopup({selected, exclude, onChange}){
   return(
     <div style={{position:"relative",display:"inline-block"}}>
       <button ref={btnRef} onClick={handleOpen}
-        style={{background:count>0?"#FBEAE5":"#F7F6F4",border:`1.5px solid ${count>0?"#D94A32":"#E5E2DD"}`,
+        style={{background:count>0?"#F7F6F4":"#F7F6F4",border:`1.5px solid ${count>0?"#D94A32":"#E5E2DD"}`,
           borderRadius:8,padding:"4px 9px",cursor:"pointer",fontFamily:"inherit",
           display:"flex",alignItems:"center",gap:5,fontSize:11,fontWeight:700,
           color:count>0?"#D94A32":"#7F7973"}}>
@@ -2164,7 +2167,7 @@ function CustomersTab({data,setData,projects,groups,setGroups}){
   const groupOptions=groups.map(g=>g.name);
   return(
     <div>
-      <GroupManager groups={groups} setGroups={setGroups} color="#0EA5E9"/>
+      <GroupManager groups={groups} setGroups={setGroups} color="#3D3A36"/>
       {MIEMBROS_VISIBLES.map(m=>{
         const rows=data[m.name]||[];
         const cv=rows.filter(r=>r.cat==="CV").length,lv=rows.filter(r=>r.cat==="LV").length,tot=cv+lv;
@@ -2172,11 +2175,11 @@ function CustomersTab({data,setData,projects,groups,setGroups}){
         const byGroup=groups.map(g=>({g,rows:rows.filter(r=>r.grupo===g.name)}));
         return(
           <Block key={m.name} name={m.name} color={m.color} light={m.light} badge={`CV:${cv} · LV:${lv} · ${cv}/${META_CV}`}>
-            <div style={{marginBottom:10}}><ProgressBar val={cv} max={META_CV} color="#0EA5E9"/></div>
+            <div style={{marginBottom:10}}><ProgressBar val={cv} max={META_CV} color="#3D3A36"/></div>
             {byGroup.map(({g,rows:grows})=>(
               <div key={g.id} style={{marginBottom:10}}>
-                <div style={{fontSize:10,fontWeight:700,color:"#0EA5E9",marginBottom:5,display:"flex",alignItems:"center",gap:6}}>
-                  <span style={{background:"#E6F3FB",borderRadius:5,padding:"2px 9px"}}>{g.name}</span>
+                <div style={{fontSize:10,fontWeight:700,color:"#3D3A36",marginBottom:5,display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{background:"#F7F6F4",borderRadius:5,padding:"2px 9px"}}>{g.name}</span>
                   <span style={{color:"#7F7973",fontWeight:400}}>({grows.filter(r=>r.cat==="CV").length} CV · {grows.filter(r=>r.cat==="LV").length} LV)</span>
                 </div>
                 {grows.length>0&&<CVTable rows={grows} mname={m.name} mcolor={m.color} upd={upd} del={del} projects={projects} groupOptions={groupOptions}/>}
@@ -2306,7 +2309,7 @@ function RepartoModal({factura, onSave, onClose}){
         <div style={{fontSize:11,color:"#6B665F",marginBottom:14}}>
           {factura.ref||factura.concepto||"Sin ref"} · Base: <strong>{base.toFixed(2)}€</strong>
         </div>
-        <button onClick={repartirIgual} style={{background:"#FBEAE5",color:"#D94A32",border:"none",borderRadius:7,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",marginBottom:12}}>
+        <button onClick={repartirIgual} style={{background:"#F7F6F4",color:"#D94A32",border:"none",borderRadius:7,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",marginBottom:12}}>
           ⚖️ Repartir a partes iguales
         </button>
         <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,marginBottom:12}}>
@@ -2342,7 +2345,7 @@ function RepartoModal({factura, onSave, onClose}){
             })}
           </tbody>
         </table>
-        <div style={{background:diff<0.1?"#E6F5EC":"#FDECEC",borderRadius:7,padding:"6px 10px",fontSize:11,marginBottom:14,fontWeight:700,color:diff<0.1?"#059669":"#B91C1C"}}>
+        <div style={{background:diff<0.1?"#F7F6F4":"#FDECEC",borderRadius:7,padding:"6px 10px",fontSize:11,marginBottom:14,fontWeight:700,color:diff<0.1?"#059669":"#B91C1C"}}>
           Total repartido: {totalRep.toFixed(2)}€ {diff<0.1?"✅":`⚠ Diferencia: ${diff.toFixed(2)}€`}
         </div>
         <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
@@ -2356,7 +2359,7 @@ function RepartoModal({factura, onSave, onClose}){
 
 function FacturasTab({facturas, setFacturas, tipo, projects, pagoInfo, rect, onRect, onSaldada}){
   const ac=tipo==="ingresos"?"#059669":"#B91C1C";
-  const acBg=tipo==="ingresos"?"#E6F5EC":"#FDECEC";
+  const acBg=tipo==="ingresos"?"#F7F6F4":"#FDECEC";
   const [repartoModal, setRepartoModal] = useState(null);
   const [collapsed, setCollapsed] = useState({});
   const [unlocked, setUnlocked] = useState(()=>esFinanzas());
@@ -2592,7 +2595,7 @@ function FacturasTab({facturas, setFacturas, tipo, projects, pagoInfo, rect, onR
         </div>
       )}
       {unlocked&&(
-        <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"#E6F5EC",border:"1px solid #A9DDBF",borderRadius:8,padding:"5px 12px",marginBottom:12,fontSize:10,color:"#059669"}}>
+        <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"#F7F6F4",border:"1px solid #E5E2DD",borderRadius:8,padding:"5px 12px",marginBottom:12,fontSize:10,color:"#059669"}}>
           🔓 Modo edición activo
         </div>
       )}
@@ -2609,9 +2612,9 @@ function FacturasTab({facturas, setFacturas, tipo, projects, pagoInfo, rect, onR
         {[
           {label:tipo==="ingresos"?"💰 Total ingresos":"💸 Total gastos", val:`${totBase.toFixed(0)}€`, sub:"Base s/IVA", color:ac, bg:acBg},
           {label:"🧾 Con IVA", val:`${totTotal.toFixed(0)}€`, color:ac, bg:acBg},
-          {label:"📄 Facturas", val:rows.length, color:"#D94A32", bg:"#FBEAE5"},
-          {label:tipo==="ingresos"?"✅ Cobradas":"✅ Pagadas", val:`${eurCob(totCobrado)}€`, sub:`${nPagadas} conciliadas en el banco`, color:"#059669", bg:"#E6F5EC"},
-          {label:tipo==="ingresos"?"⏳ Por cobrar":"⏳ Por pagar", val:`${eurCob(totPorCobrar)}€`, sub:`${nPendientes} sin conciliar · con IVA`, color:"#B45309", bg:"#FEF3E2"},
+          {label:"📄 Facturas", val:rows.length, color:"#D94A32", bg:"#FFFFFF"},
+          {label:tipo==="ingresos"?"✅ Cobradas":"✅ Pagadas", val:`${eurCob(totCobrado)}€`, sub:`${nPagadas} conciliadas en el banco`, color:"#059669", bg:"#FFFFFF"},
+          {label:tipo==="ingresos"?"⏳ Por cobrar":"⏳ Por pagar", val:`${eurCob(totPorCobrar)}€`, sub:`${nPendientes} sin conciliar · con IVA`, color:"#A8341F", bg:"#FEF3E2"},
         ].map(k=>(
           <div key={k.label} style={{background:k.bg,borderRadius:10,padding:"10px 12px",border:`1.5px solid ${k.color}22`}}>
             <div style={{fontSize:9,color:"#6B665F",marginBottom:2}}>{k.label}</div>
@@ -2628,7 +2631,7 @@ function FacturasTab({facturas, setFacturas, tipo, projects, pagoInfo, rect, onR
             <input type="file" accept=".xlsx,.xls" onChange={importarA3} style={{display:"none"}}/>
           </label>
         )}
-        <label style={{background:"#7C3AED",color:"#FFF",border:"none",borderRadius:7,padding:"6px 14px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}
+        <label style={{background:"#171717",color:"#FFF",border:"none",borderRadius:7,padding:"6px 14px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}
           title="Sube una foto o PDF de una factura y Claude extrae los datos automáticamente">
           🤖 Escanear factura
           <input type="file" accept="image/*,.pdf" multiple onChange={escanearFactura} style={{display:"none"}}/>
@@ -2637,25 +2640,25 @@ function FacturasTab({facturas, setFacturas, tipo, projects, pagoInfo, rect, onR
         <button onClick={addFactura} style={{background:ac,color:"#FFF",border:"none",borderRadius:7,padding:"6px 16px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>+ Nueva factura</button>
       </div>
       {escaneando>0&&(
-        <div style={{background:"#F1EEFC",border:"1px solid #D4CCF4",borderRadius:10,padding:"12px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}>
-          <div style={{width:18,height:18,border:"2px solid #7C3AED",borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.8s linear infinite",flexShrink:0}}/>
+        <div style={{background:"#F7F6F4",border:"1px solid #E5E2DD",borderRadius:10,padding:"12px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:18,height:18,border:"2px solid #3D3A36",borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.8s linear infinite",flexShrink:0}}/>
           <div>
-            <div style={{fontSize:11,fontWeight:700,color:"#6D28D9"}}>🤖 Claude está analizando {escaneando} factura{escaneando>1?"s":""}...</div>
-            <div style={{fontSize:10,color:"#7C3AED",marginTop:2}}>Extrayendo fecha, referencia, importe y cliente</div>
+            <div style={{fontSize:11,fontWeight:700,color:"#3D3A36"}}>🤖 Claude está analizando {escaneando} factura{escaneando>1?"s":""}...</div>
+            <div style={{fontSize:10,color:"#3D3A36",marginTop:2}}>Extrayendo fecha, referencia, importe y cliente</div>
           </div>
         </div>
       )}
 
       {/* Facturas pendientes de aprobar */}
       {facturasPendientes.length>0&&(
-        <div style={{marginBottom:16,border:"2px solid #F59E0B",borderRadius:12,overflow:"hidden"}}>
-          <div style={{background:"#F59E0B",padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div style={{marginBottom:16,border:"2px solid #3D3A36",borderRadius:12,overflow:"hidden"}}>
+          <div style={{background:"#171717",padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <span style={{color:"#FFF",fontWeight:700,fontSize:13,fontFamily:FONT_TITULOS}}>⏳ Pendientes de aprobar ({facturasPendientes.length})</span>
             <span style={{color:"#FFF",fontSize:10,opacity:.8}}>Escaneadas — requieren revisión</span>
           </div>
-          <div style={{background:"#FEF6DC",padding:"8px"}}>
+          <div style={{background:"#F7F6F4",padding:"8px"}}>
             {facturasPendientes.map((r,i)=>(
-              <div key={r.id} style={{background:"#FFFFFF",borderRadius:9,padding:"10px 14px",marginBottom:6,border:"1px solid #F1DE9C",display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}>
+              <div key={r.id} style={{background:"#FFFFFF",borderRadius:9,padding:"10px 14px",marginBottom:6,border:"1px solid #E5E2DD",display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}>
                 <div style={{flex:1,minWidth:200}}>
                   <div style={{fontWeight:700,fontSize:12,color:"#171717",marginBottom:4}}>{r.ref||"Sin referencia"} — {r.descripcion||"Sin descripción"}</div>
                   <div style={{display:"flex",gap:10,fontSize:11,color:"#6B665F",flexWrap:"wrap"}}>
@@ -2664,18 +2667,18 @@ function FacturasTab({facturas, setFacturas, tipo, projects, pagoInfo, rect, onR
                     <span>IVA: {r.iva||"—"}</span>
                     <span>Total: <b>{r.total||"—"}€</b></span>
                     {r.linkFactura
-                      ?<a href={r.linkFactura} target="_blank" rel="noreferrer" style={{color:"#4F46E5",fontWeight:700,textDecoration:"none"}}>📄 Archivo guardado ↗</a>
+                      ?<a href={r.linkFactura} target="_blank" rel="noreferrer" style={{color:"#3D3A36",fontWeight:700,textDecoration:"none"}}>📄 Archivo guardado ↗</a>
                       :<span style={{color:"#B91C1C",fontWeight:700}}>⚠️ Sin archivo</span>}
                   </div>
                 </div>
                 <div style={{display:"flex",gap:6,alignItems:"center"}}>
                   {!unlocked&&(
-                    <span style={{fontSize:10,color:"#D97706",fontWeight:600}}>🔒 Solo admin / finanzas</span>
+                    <span style={{fontSize:10,color:"#A8341F",fontWeight:600}}>🔒 Solo admin / finanzas</span>
                   )}
                   {unlocked&&(
                     <>
                       <button onClick={()=>setAprobarModal(r)}
-                        style={{background:"#E6F5EC",border:"1px solid #A9DDBF",borderRadius:7,padding:"6px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",color:"#059669"}}>
+                        style={{background:"#F7F6F4",border:"1px solid #E5E2DD",borderRadius:7,padding:"6px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",color:"#059669"}}>
                         ✅ Aprobar
                       </button>
                       <button onClick={()=>{
@@ -2707,7 +2710,7 @@ function FacturasTab({facturas, setFacturas, tipo, projects, pagoInfo, rect, onR
           <div key={year} style={{marginBottom:12,borderRadius:12,overflow:"hidden",border:`1px solid ${ac}33`}}>
             <div onClick={()=>setCollapsed(c=>({...c,[year]:!c[year]}))}
               style={{background:ac,padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",flexWrap:"wrap",gap:"6px 12px"}}>
-              <span style={{color:"#FFF",fontWeight:700,fontSize:13,fontFamily:FONT_TITULOS}}>{year} · {yrows.length} facturas{yrows.some(r=>est(r)==="no")&&<span style={{marginLeft:8,background:"#FEF6DC",color:"#A8341F",borderRadius:99,padding:"1px 8px",fontSize:10,whiteSpace:"nowrap"}}>⏳ {yrows.filter(r=>est(r)==="no").length} sin {tipo==="ingresos"?"cobrar":"pagar"} · {eurCob(yrows.filter(r=>est(r)==="no").reduce((s,r)=>s+totalConSigno(r),0))}€</span>}{yrows.some(r=>!r.linkFactura)&&<span style={{marginLeft:8,background:"#FFFFFF",color:"#B91C1C",borderRadius:99,padding:"1px 8px",fontSize:10,whiteSpace:"nowrap"}}>⚠️ {yrows.filter(r=>!r.linkFactura).length} sin PDF</span>}</span>
+              <span style={{color:"#FFF",fontWeight:700,fontSize:13,fontFamily:FONT_TITULOS}}>{year} · {yrows.length} facturas{yrows.some(r=>est(r)==="no")&&<span style={{marginLeft:8,background:"#F7F6F4",color:"#A8341F",borderRadius:99,padding:"1px 8px",fontSize:10,whiteSpace:"nowrap"}}>⏳ {yrows.filter(r=>est(r)==="no").length} sin {tipo==="ingresos"?"cobrar":"pagar"} · {eurCob(yrows.filter(r=>est(r)==="no").reduce((s,r)=>s+totalConSigno(r),0))}€</span>}{yrows.some(r=>!r.linkFactura)&&<span style={{marginLeft:8,background:"#FFFFFF",color:"#B91C1C",borderRadius:99,padding:"1px 8px",fontSize:10,whiteSpace:"nowrap"}}>⚠️ {yrows.filter(r=>!r.linkFactura).length} sin PDF</span>}</span>
               <div style={{display:"flex",gap:16,alignItems:"center"}}>
                 <span style={{color:"#FFFFFF99",fontSize:11,fontWeight:700}}>Base: {yBase.toFixed(0)}€ · Total: {yTotal.toFixed(0)}€</span>
                 <span style={{color:"#FFF",fontSize:14}}>{isOpen?"▲":"▼"}</span>
@@ -2746,13 +2749,13 @@ function FacturasTab({facturas, setFacturas, tipo, projects, pagoInfo, rect, onR
                                     <div style={{display:"flex",alignItems:"center",gap:4}}>
                                       {(r.ref||"").startsWith("FRC")&&(
                                         <button onClick={()=>upd(r.id,"frcSign",r.frcSign==="-"?"+":"-")} style={{
-                                          background:r.frcSign==="-"?"#FDECEC":"#E6F5EC",
+                                          background:r.frcSign==="-"?"#FDECEC":"#F7F6F4",
                                           color:r.frcSign==="-"?"#B91C1C":"#059669",
                                           border:"none",borderRadius:4,padding:"1px 6px",fontSize:11,fontWeight:700,
                                           cursor:"pointer",fontFamily:"inherit",flexShrink:0,
                                         }}>{r.frcSign==="-"?"−":"+"}</button>
                                       )}
-                                      <Inp value={r.base} onChange={v=>upd(r.id,"base",v)} placeholder="0.00" w="75px" color={(r.ref||"").startsWith("FRC")&&r.frcSign==="-"?"#B91C1C":"#1D4ED8"} bold/>
+                                      <Inp value={r.base} onChange={v=>upd(r.id,"base",v)} placeholder="0.00" w="75px" color={(r.ref||"").startsWith("FRC")&&r.frcSign==="-"?"#B91C1C":"#3D3A36"} bold/>
                                     </div>
                                   </td>
                                   <td style={{padding:"3px 5px"}}><Sel value={r.iva} onChange={v=>upd(r.id,"iva",v)} options={["0%","4%","10%","21%"]}/></td>
@@ -2766,14 +2769,14 @@ function FacturasTab({facturas, setFacturas, tipo, projects, pagoInfo, rect, onR
                                         <select value={sel} onChange={e=>{ const v=e.target.value; requireUnlock(()=>onRect(r.id,v)); }}
                                           title="Factura que anula o corrige esta rectificativa (no pasa por el banco)"
                                           style={{display:"block",marginTop:3,maxWidth:170,fontSize:9.5,fontFamily:"inherit",borderRadius:5,padding:"2px 4px",
-                                            border:`1px solid ${sel?"#D4CCF4":"#F5C2C2"}`,background:sel?"#F1EEFC":"#FDECEC",color:sel?"#6D28D9":"#B91C1C",fontWeight:600}}>
+                                            border:`1px solid ${sel?"#D4CCF4":"#F5C2C2"}`,background:sel?"#F7F6F4":"#FDECEC",color:sel?"#3D3A36":"#B91C1C",fontWeight:600}}>
                                           <option value="">⚠️ ¿A qué factura rectifica?</option>
                                           {opciones.map(f=><option key={f.id} value={String(f.id)}>↩️ {f.ref||"s/ref"} · {f.descripcion||""} · {f.total||f.base||0}€ · {f.fecha||"s/f"}</option>)}
                                         </select>
                                       );
                                     })()}
                                     {pagoInfo?.rectPor?.[`${tipo==="ingresos"?"ing":"gas"}:${r.id}`]&&(
-                                      <div style={{fontSize:9,color:"#6D28D9",fontWeight:600,marginTop:2}}>↩️ rectificada por {pagoInfo.rectPor[`${tipo==="ingresos"?"ing":"gas"}:${r.id}`].join(", ")}</div>
+                                      <div style={{fontSize:9,color:"#3D3A36",fontWeight:600,marginTop:2}}>↩️ rectificada por {pagoInfo.rectPor[`${tipo==="ingresos"?"ing":"gas"}:${r.id}`].join(", ")}</div>
                                     )}
                                   </td>
                                   <td style={{padding:"3px 5px"}}><InpBlur value={r.descripcion||""} onChange={v=>upd(r.id,"descripcion",v)} placeholder="Ej: Proyecto · concepto" w="160px" locked={!unlocked} onLock={()=>setShowLock(true)}/></td>
@@ -2783,7 +2786,7 @@ function FacturasTab({facturas, setFacturas, tipo, projects, pagoInfo, rect, onR
                                     onClick={onSaldada?()=>requireUnlock(()=>onSaldada(`${tipo==="ingresos"?"ing":"gas"}:${r.id}`,r.ref||"esta factura")):undefined}/></td>
                                   <td style={{padding:"3px 5px"}}>
                                     <button onClick={()=>requireUnlock(()=>setRepartoModal(r))}
-                                      style={{background:repartoCompleto?"#E6F5EC":faltaReparto?"#FEF6DC":"#FBEAE5",color:repartoCompleto?"#059669":faltaReparto?"#D97706":"#D94A32",border:faltaReparto?"1px solid #F1DE9C":"none",borderRadius:6,padding:"3px 9px",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
+                                      style={{background:repartoCompleto?"#F7F6F4":faltaReparto?"#F7F6F4":"#F7F6F4",color:repartoCompleto?"#059669":faltaReparto?"#3D3A36":"#D94A32",border:faltaReparto?"1px solid #F1DE9C":"none",borderRadius:6,padding:"3px 9px",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
                                       {repartoCompleto?"✅ Repartido":faltaReparto?`⚠️ Falta ${falta.toFixed(0)}€`:"🔀 Repartir"}
                                     </button>
                                   </td>
@@ -2795,7 +2798,7 @@ function FacturasTab({facturas, setFacturas, tipo, projects, pagoInfo, rect, onR
                           <tfoot>
                             <tr style={{background:acBg}}>
                               <td colSpan={2} style={{padding:"5px 8px",fontWeight:700,fontSize:11,color:ac}}>TOTAL {type} {year}</td>
-                              <td style={{padding:"5px 8px",fontWeight:700,color:"#1D4ED8"}}>{tBase.toFixed(2)}€</td>
+                              <td style={{padding:"5px 8px",fontWeight:700,color:"#3D3A36"}}>{tBase.toFixed(2)}€</td>
                               <td/><td colSpan={5}/>
                             </tr>
                           </tfoot>
@@ -2950,32 +2953,32 @@ function FormularioHojaGasto({form,updForm,updDia,addDia,delDia,updGasto,addTick
                             style={{width:"100%",border:"1px solid #E5E2DD",borderRadius:6,padding:"4px 6px",fontSize:11,fontFamily:"inherit",textAlign:"right",outline:"none"}}/>
                         </td>
                       ))}
-                      <td style={{padding:"6px 10px",textAlign:"right",fontWeight:700,color:"#171717",background:"#E8F0FB",borderLeft:"2px solid #BBD3F0"}}>
+                      <td style={{padding:"6px 10px",textAlign:"right",fontWeight:700,color:"#171717",background:"#F7F6F4",borderLeft:"2px solid #E5E2DD"}}>
                         {totalCat(cat.id)>0?totalCat(cat.id).toFixed(2):"—"}
                       </td>
                     </tr>
                     {isTransSub&&(
-                      <tr style={{background:"#EAF7EE"}}>
+                      <tr style={{background:"#F7F6F4"}}>
                         <td style={{padding:"5px 10px",fontWeight:700,color:"#059669",fontSize:10,borderRight:"2px solid #E5E2DD"}}>→ Total transportes</td>
                         {form.dias.map((_,di)=>(
                           <td key={di} style={{padding:"5px 6px",textAlign:"right",fontSize:10,fontWeight:600,color:"#059669",borderLeft:"1px solid #E5E2DD"}}>
                             {["km","peaje","taxi","otros_t","billetes"].reduce((s,id)=>s+(parseFloat(form.gastos[di]?.[id])||0),0)||""}
                           </td>
                         ))}
-                        <td style={{padding:"5px 10px",textAlign:"right",fontWeight:700,color:"#059669",background:"#EAF7EE",borderLeft:"2px solid #BBD3F0"}}>
+                        <td style={{padding:"5px 10px",textAlign:"right",fontWeight:700,color:"#059669",background:"#F7F6F4",borderLeft:"2px solid #E5E2DD"}}>
                           {["km","peaje","taxi","otros_t","billetes"].reduce((s,id)=>s+totalCat(id),0).toFixed(2)}
                         </td>
                       </tr>
                     )}
                     {isAlojSub&&(
-                      <tr style={{background:"#EAF7EE"}}>
+                      <tr style={{background:"#F7F6F4"}}>
                         <td style={{padding:"5px 10px",fontWeight:700,color:"#059669",fontSize:10,borderRight:"2px solid #E5E2DD"}}>→ Total dietas</td>
                         {form.dias.map((_,di)=>(
                           <td key={di} style={{padding:"5px 6px",textAlign:"right",fontSize:10,fontWeight:600,color:"#059669",borderLeft:"1px solid #E5E2DD"}}>
                             {["aloj","desayuno","almuerzo","cena"].reduce((s,id)=>s+(parseFloat(form.gastos[di]?.[id])||0),0)||""}
                           </td>
                         ))}
-                        <td style={{padding:"5px 10px",textAlign:"right",fontWeight:700,color:"#059669",background:"#EAF7EE",borderLeft:"2px solid #BBD3F0"}}>
+                        <td style={{padding:"5px 10px",textAlign:"right",fontWeight:700,color:"#059669",background:"#F7F6F4",borderLeft:"2px solid #E5E2DD"}}>
                           {["aloj","desayuno","almuerzo","cena"].reduce((s,id)=>s+totalCat(id),0).toFixed(2)}
                         </td>
                       </tr>
@@ -3056,7 +3059,7 @@ function FormularioHojaGasto({form,updForm,updDia,addDia,delDia,updGasto,addTick
 
         {/* Resumen y enviar */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
-          <div style={{background:"#EAF7EE",border:"1px solid #A9DDBF",borderRadius:10,padding:"10px 16px"}}>
+          <div style={{background:"#F7F6F4",border:"1px solid #E5E2DD",borderRadius:10,padding:"10px 16px"}}>
             <div style={{fontSize:10,color:"#059669",fontWeight:600}}>TOTAL A JUSTIFICAR</div>
             <div style={{fontSize:22,fontWeight:800,color:"#059669",letterSpacing:"-1px",fontFamily:FONT_TITULOS}}>{totalGeneral().toFixed(2)}€</div>
           </div>
@@ -3094,8 +3097,8 @@ function TarjetaSolicitudCard({s, unlocked, cambiarEstado, eliminar, renderEstad
           {unlocked&&<button onClick={e=>{e.stopPropagation();if(window.confirm("Ya hay una hoja de esta persona con el mismo importe ese mes. ¿Añadirla igualmente?"))onAñadir();}} style={{background:"none",border:"none",color:"#D94A32",cursor:"pointer",fontSize:10,textDecoration:"underline",fontFamily:"inherit",padding:0}}>añadir igualmente</button>}
         </span>}
         {enListado==="no"&&(unlocked
-          ?<button onClick={e=>{e.stopPropagation();onAñadir();}} style={{background:"#FEF6DC",border:"1px solid #F1DE9C",color:"#A8341F",borderRadius:7,padding:"4px 10px",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>➕ Añadir a hojas de gasto</button>
-          :<span style={{fontSize:10,color:"#B45309",fontWeight:600}}>⚠️ Falta añadirla al listado</span>)}
+          ?<button onClick={e=>{e.stopPropagation();onAñadir();}} style={{background:"#F7F6F4",border:"1px solid #E5E2DD",color:"#A8341F",borderRadius:7,padding:"4px 10px",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>➕ Añadir a hojas de gasto</button>
+          :<span style={{fontSize:10,color:"#A8341F",fontWeight:600}}>⚠️ Falta añadirla al listado</span>)}
         {renderEstadoBadge(s.estado)}
         <span style={{fontSize:12,color:"#7F7973"}}>{open?"▲":"▼"}</span>
       </div>
@@ -3159,7 +3162,7 @@ function TarjetaSolicitudCard({s, unlocked, cambiarEstado, eliminar, renderEstad
             {unlocked&&s.estado==="pendiente"&&(
               <>
                 <button onClick={()=>cambiarEstado(s.id,"aprobada")}
-                  style={{background:"#E6F5EC",border:"1px solid #A9DDBF",borderRadius:7,padding:"5px 10px",fontSize:11,cursor:"pointer",fontFamily:"inherit",color:"#059669",fontWeight:700}}>
+                  style={{background:"#F7F6F4",border:"1px solid #E5E2DD",borderRadius:7,padding:"5px 10px",fontSize:11,cursor:"pointer",fontFamily:"inherit",color:"#059669",fontWeight:700}}>
                   ✅ Aprobar
                 </button>
                 <button onClick={()=>cambiarEstado(s.id,"rechazada")}
@@ -3541,9 +3544,9 @@ ${form.tickets&&form.tickets.length>0?`
 
   function renderEstadoBadge(estado){
     const cfg={
-      pendiente:{bg:"#FEF6DC",color:"#D97706",label:"⏳ Pendiente"},
-      aprobada: {bg:"#E6F5EC",color:"#059669",label:"✅ Aprobada"},
-      rechazada:{bg:"#FDECEC",color:"#B91C1C",label:"❌ Rechazada"},
+      pendiente:{bg:"#FFFFFF",color:"#A8341F",label:"⏳ Pendiente"},
+      aprobada: {bg:"#FFFFFF",color:"#059669",label:"✅ Aprobada"},
+      rechazada:{bg:"#FFFFFF",color:"#B91C1C",label:"❌ Rechazada"},
     }[estado]||{bg:"#F2F0ED",color:"#6B665F",label:estado};
     return <span style={{background:cfg.bg,color:cfg.color,fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:99}}>{cfg.label}</span>;
   }
@@ -3584,7 +3587,7 @@ ${form.tickets&&form.tickets.length>0?`
 
       {pendientes.length>0&&(
         <div style={{marginBottom:16}}>
-          <div style={{fontWeight:700,fontSize:10,color:"#D97706",letterSpacing:"0",marginBottom:8}}>⏳ Pendientes ({pendientes.length})</div>
+          <div style={{fontWeight:700,fontSize:10,color:"#A8341F",letterSpacing:"0",marginBottom:8}}>⏳ Pendientes ({pendientes.length})</div>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>{pendientes.map(s=><Fragment key={s.id}>{renderTarjetaSolicitud(s)}</Fragment>)}</div>
         </div>
       )}
@@ -3647,7 +3650,7 @@ function HojasGastoTab({hojas, setHojas, gastos, projects, pagoInfo, onSaldada})
         </div>
       )}
       {unlocked&&(
-        <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"#E6F5EC",border:"1px solid #A9DDBF",borderRadius:8,padding:"5px 12px",marginBottom:12,fontSize:10,color:"#059669"}}>
+        <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"#F7F6F4",border:"1px solid #E5E2DD",borderRadius:8,padding:"5px 12px",marginBottom:12,fontSize:10,color:"#059669"}}>
           🔓 Modo edición activo
         </div>
       )}
@@ -3660,10 +3663,10 @@ function HojasGastoTab({hojas, setHojas, gastos, projects, pagoInfo, onSaldada})
       )}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8,marginBottom:14}}>
         {[
-          {label:"🧾 Hojas de gasto", val:`${totHojas.toFixed(0)}€`, color:"#B91C1C", bg:"#FDECEC"},
-          {label:"💸 Facturas gasto",  val:`${totFact.toFixed(0)}€`,  color:"#B91C1C", bg:"#FDECEC"},
-          {label:"📊 Total gastos",    val:`${totTotal.toFixed(0)}€`,  color:"#7C3AED", bg:"#F5EDFD"},
-          {label:"📋 Nº registros",    val:rows.length,                color:"#0369A1", bg:"#E6F3FB"},
+          {label:"🧾 Hojas de gasto", val:`${totHojas.toFixed(0)}€`, color:"#B91C1C", bg:"#FFFFFF"},
+          {label:"💸 Facturas gasto",  val:`${totFact.toFixed(0)}€`,  color:"#B91C1C", bg:"#FFFFFF"},
+          {label:"📊 Total gastos",    val:`${totTotal.toFixed(0)}€`,  color:"#3D3A36", bg:"#F5EDFD"},
+          {label:"📋 Nº registros",    val:rows.length,                color:"#3D3A36", bg:"#FFFFFF"},
         ].map(k=>(
           <div key={k.label} style={{background:k.bg,borderRadius:10,padding:"10px 12px",border:`1.5px solid ${k.color}22`}}>
             <div style={{fontSize:9,color:"#6B665F",marginBottom:2}}>{k.label}</div>
@@ -3746,7 +3749,7 @@ function HojasGastoTab({hojas, setHojas, gastos, projects, pagoInfo, onSaldada})
                             onClick={onSaldada?()=>requireUnlock(()=>onSaldada(`hoja:${r.id}`,`la hoja de ${r.responsable||"—"} (${r.fecha||"s/f"})`)):undefined}/></td>
                           <td style={{padding:"3px 5px"}}>
                             <button onClick={()=>requireUnlock(()=>setRepartoModal(r))}
-                              style={{background:repartoCompleto?"#E6F5EC":faltaReparto?"#FEF6DC":"#FBEAE5",color:repartoCompleto?"#059669":faltaReparto?"#D97706":"#D94A32",border:faltaReparto?"1px solid #F1DE9C":"none",borderRadius:6,padding:"3px 9px",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
+                              style={{background:repartoCompleto?"#F7F6F4":faltaReparto?"#F7F6F4":"#F7F6F4",color:repartoCompleto?"#059669":faltaReparto?"#3D3A36":"#D94A32",border:faltaReparto?"1px solid #F1DE9C":"none",borderRadius:6,padding:"3px 9px",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
                               {repartoCompleto?"✅ Repartido":faltaReparto?`⚠️ Falta ${falta.toFixed(0)}€`:"🔀 Repartir"}
                             </button>
                           </td>
@@ -3878,9 +3881,9 @@ function LibroBoton({lista, label, onDescargar}){
 
 // ── CLOCKIFY HORAS TAB ────────────────────────────────────────────────────────
 const PROJ_COLORS = [
-  "#3B82F6","#10B981","#F59E0B","#EF4444","#8B5CF6",
-  "#06B6D4","#EC4899","#84CC16","#F97316","#D94A32",
-  "#14B8A6","#E11D48","#FBBF24","#22C55E","#A855F7",
+  "#3D3A36","#10B981","#3D3A36","#EF4444","#3D3A36",
+  "#3D3A36","#3D3A36","#3D3A36","#3D3A36","#D94A32",
+  "#3D3A36","#3D3A36","#3D3A36","#22C55E","#3D3A36",
 ];
 
 // ── HORAS: registro interno del dashboard (sustituye a Clockify) ──────────────
@@ -4047,14 +4050,14 @@ function RecordatorioHoras(){
   return(
     <div style={{position:"relative"}}>
       <button onClick={()=>setAbierto(a=>!a)} title="Recordatorios de lunes a viernes: 9:00, 11:00, 13:00, 16:00 y 18:00"
-        style={{background:on?"#FBEAE5":"#F2F0ED",color:on?"#A8341F":"#3D3A36",border:`1px solid ${on?"#F2C3B7":"#E5E2DD"}`,borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
+        style={{background:on?"#F7F6F4":"#F2F0ED",color:on?"#A8341F":"#3D3A36",border:`1px solid ${on?"#F2C3B7":"#E5E2DD"}`,borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
         {on?"🔔 Recordatorios activados":"🔕 Recordatorios de horas"}
       </button>
       {abierto&&(
         <div className="keia-popup" style={{position:"absolute",right:0,top:"calc(100% + 6px)",zIndex:200,width:300,background:"#FFFFFF",border:"1px solid #E5E2DD",borderRadius:12,padding:"12px 14px",boxShadow:"0 12px 32px -12px rgba(23,23,23,.3)",fontSize:12,color:"#2B2926"}}>
           <div style={{fontWeight:700,fontSize:13,fontFamily:FONT_TITULOS,marginBottom:4}}>⏰ Recordatorio de horas</div>
           <div style={{color:"#6B665F",fontSize:11.5,lineHeight:1.45,marginBottom:10}}>De lunes a viernes: a las <b>9:00</b> para que actives el contador; a las <b>11:00</b>, <b>13:00</b> y <b>16:00</b> solo si no lo tienes en marcha; y a las <b>18:00</b> para que cuentes tus horas (y lo pares si sigue en marcha). Se activa en cada dispositivo.</div>
-          {estado==="ios"&&<div style={{background:"#FEF6DC",color:"#92400E",borderRadius:8,padding:"8px 10px",fontSize:11.5,lineHeight:1.45}}>En iPhone primero añade KEIA a la pantalla de inicio (Safari → Compartir → <b>Añadir a pantalla de inicio</b>), ábrela desde ahí y activa el recordatorio.</div>}
+          {estado==="ios"&&<div style={{background:"#F7F6F4",color:"#92400E",borderRadius:8,padding:"8px 10px",fontSize:11.5,lineHeight:1.45}}>En iPhone primero añade KEIA a la pantalla de inicio (Safari → Compartir → <b>Añadir a pantalla de inicio</b>), ábrela desde ahí y activa el recordatorio.</div>}
           {estado==="nosoporta"&&<div style={{color:"#B91C1C",fontSize:11.5}}>Este navegador no admite notificaciones.</div>}
           {estado==="bloqueado"&&<div style={{background:"#FDECEC",color:"#B91C1C",borderRadius:8,padding:"8px 10px",fontSize:11.5,lineHeight:1.45}}>Las notificaciones están bloqueadas para esta web. Actívalas en los ajustes del navegador (o del móvil) y vuelve a intentarlo.</div>}
           {(estado==="off"||estado==="cargando")&&<button onClick={activar} style={{background:"#D94A32",color:"#FFF",border:"none",borderRadius:8,padding:"8px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>🔔 Activar en este dispositivo</button>}
@@ -4181,7 +4184,7 @@ function ObjetivoSemanal({lista,getMemberColor,persona}){
           {filas.map(f=>{
             const falta=Math.max(0,objS-f.segs); const yo=f.name===persona;
             return(
-              <div key={f.name} style={{padding:yo?"6px 8px":"2px 0",background:yo?"#FBEAE5":"transparent",borderRadius:8}}>
+              <div key={f.name} style={{padding:yo?"6px 8px":"2px 0",background:yo?"#F7F6F4":"transparent",borderRadius:8}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",fontSize:11.5,marginBottom:4,gap:6}}>
                   <span style={{fontWeight:600,color:"#2B2926",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{f.name}</span>
                   <span style={{whiteSpace:"nowrap",fontVariantNumeric:"tabular-nums",color:f.segs>=objS?"#047857":"#6B665F"}}>
@@ -4234,7 +4237,7 @@ function HorasEnDirecto({lista,cargando,projColorMap,getMemberColor,soyAdmin,onP
                         <span style={{fontSize:12,fontWeight:700,color:"#171717",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{m.name}</span>
                       </div>
                       <div style={{fontSize:10.5,color:col,fontWeight:600,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{e.proyecto||"Sin proyecto"}{e.descripcion?` · ${e.descripcion}`:""}</div>
-                      <div style={{fontSize:10,color:largo?"#F59E0B":"#7F7973",marginTop:1}}>desde las {hhmm(e.inicio)}{largo?" · ⚠ ¿se le ha olvidado pararlo?":""}</div>
+                      <div style={{fontSize:10,color:largo?"#3D3A36":"#7F7973",marginTop:1}}>desde las {hhmm(e.inicio)}{largo?" · ⚠ ¿se le ha olvidado pararlo?":""}</div>
                     </div>
                     <div style={{fontSize:15,fontWeight:800,color:"#10B981",fontVariantNumeric:"tabular-nums",fontFamily:FONT_TITULOS}}>{fmtReloj(segs)}</div>
                     {soyAdmin&&<button onClick={()=>onParar(e)} title={`Parar el contador de ${m.name}`} style={{background:"none",border:"1px solid #D3CFC9",color:"#DC2626",borderRadius:6,fontSize:11,cursor:"pointer",padding:"3px 7px",fontFamily:"inherit"}}>■</button>}
@@ -4531,7 +4534,7 @@ function HorasTab({projects}){
               <input value={desc} onChange={e=>setDesc(e.target.value)} onKeyDown={e=>{ if(e.key==="Enter") modo==="timer"?empezar():añadirManual(); }} placeholder="Descripción (opcional)" style={{...inp,width:"100%"}}/>
             </div>
             <div style={{flex:"1 1 170px"}}>
-              <div style={{...lbl,display:"flex",justifyContent:"space-between"}}><span>Proyecto o actividad</span><span onClick={()=>setGestionAct(g=>!g)} style={{cursor:"pointer",color:"#3B82F6",textTransform:"none",letterSpacing:0}}>{gestionAct?"cerrar":"gestionar actividades"}</span></div>
+              <div style={{...lbl,display:"flex",justifyContent:"space-between"}}><span>Proyecto o actividad</span><span onClick={()=>setGestionAct(g=>!g)} style={{cursor:"pointer",color:"#3D3A36",textTransform:"none",letterSpacing:0}}>{gestionAct?"cerrar":"gestionar actividades"}</span></div>
               <select value={proyecto} onChange={e=>{ const v=e.target.value; if(v==="__nueva"){ const n=nuevaActividad(); if(n) setProyecto(n); } else setProyecto(v); }} style={{...inp,width:"100%"}}>
                 <option value="">Sin proyecto</option>
                 {opcionesProyecto(proyecto)}
@@ -4547,7 +4550,7 @@ function HorasTab({projects}){
               ))}
             </div>
             {modo==="timer"?(
-              <button onClick={()=>empezar()} style={{background:"#059669",color:"#FFF",border:"none",borderRadius:10,padding:"9px 22px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>▶ Empezar</button>
+              <button onClick={()=>empezar()} style={{background:"#171717",color:"#FFF",border:"none",borderRadius:10,padding:"9px 22px",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>▶ Empezar</button>
             ):(<>
               {esTodos&&<button onClick={()=>{ setProyecto("Training Session"); setMIni("09:00"); setMFin("13:00"); setMDur(""); }} title="Rellena Training Session de 9:00 a 13:00" style={{background:"#F7F6F4",color:"#D94A32",border:"1.5px solid #D94A32",borderRadius:8,padding:"7px 11px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>🎯 TS 9–13</button>}
               <div><div style={lbl}>Fecha</div><input type="date" value={mFecha} onChange={e=>setMFecha(e.target.value)} style={inp}/></div>
@@ -4612,7 +4615,7 @@ function HorasTab({projects}){
             ))}
           </div>
         ))}
-        {visibles.length>nLista&&<button onClick={()=>setNLista(n=>n+60)} style={{marginTop:10,background:"none",border:"none",color:"#3B82F6",cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"inherit"}}>Ver más ({visibles.length-nLista})</button>}
+        {visibles.length>nLista&&<button onClick={()=>setNLista(n=>n+60)} style={{marginTop:10,background:"none",border:"none",color:"#3D3A36",cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"inherit"}}>Ver más ({visibles.length-nLista})</button>}
       </div>
 
       {/* ── Informe ── */}
@@ -4642,12 +4645,12 @@ function HorasTab({projects}){
 
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:8,marginBottom:16}}>
         {[
-          {label:"Total horas",val:fmtHoras(grandTotal),color:"#3B82F6"},
+          {label:"Total horas",val:fmtHoras(grandTotal),color:"#3D3A36"},
           {label:"Facturables",val:fmtHoras(totalFact),color:"#059669"},
           {label:"No facturables",val:fmtHoras(Math.max(0,grandTotal-totalFact)),color:"#7F7973"},
-          {label:"Personas",val:sortedMembers.length,color:"#8B5CF6"},
+          {label:"Personas",val:sortedMembers.length,color:"#3D3A36"},
           {label:"Proyectos",val:projNames.length,color:"#10B981"},
-          {label:"Media/persona",val:sortedMembers.length>0?fmtHoras(grandTotal/sortedMembers.length):"—",color:"#F59E0B"},
+          {label:"Media/persona",val:sortedMembers.length>0?fmtHoras(grandTotal/sortedMembers.length):"—",color:"#A8341F"},
         ].map(k=>(
           <div key={k.label} style={{background:"#FFFFFF",borderRadius:10,padding:"12px 14px",border:"1px solid #E5E2DD"}}>
             <div style={lbl}>{k.label}</div>
@@ -4840,7 +4843,7 @@ function BancoSoloCard({banco}){
   if(banco===null||banco===undefined) return <div style={{background:"#F7F6F4",border:"1px solid #E5E2DD",borderRadius:12,padding:"12px 16px",marginBottom:14,fontSize:11,color:"#7F7973"}}>🏦 Cargando saldo del banco…</div>;
   if(!sb_) return <div style={{background:"#F7F6F4",border:"1px dashed #D3CFC9",borderRadius:12,padding:"12px 16px",marginBottom:14,fontSize:11,color:"#6B665F"}}>🏦 <b>Dinero en el banco:</b> todavía no hay saldo. Sube un extracto en <b>🏦 Banco</b> (con la columna de saldo).</div>;
   return(
-    <div style={{display:"inline-block",background:"#E8F0FB",borderRadius:12,padding:"12px 18px",marginBottom:14,border:"1.5px solid #1E3A5F55",minWidth:240}}>
+    <div style={{display:"inline-block",background:"#F7F6F4",borderRadius:12,padding:"12px 18px",marginBottom:14,border:"1.5px solid #3D3A3655",minWidth:240}}>
       <div style={{fontSize:9,color:"#2B2926",fontWeight:700,letterSpacing:"0",marginBottom:3}}>🏦 Dinero en el banco</div>
       <div style={{fontSize:24,fontWeight:800,color:sb_.saldo>=0?"#2B2926":"#B91C1C",letterSpacing:"-1px",fontFamily:FONT_TITULOS}}>{sb_.saldo.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})}€</div>
       <div style={{fontSize:9.5,color:"#6B665F",marginTop:2}}>A {sb_.fecha}{sb_.dias>7?` · ⚠️ extracto de hace ${sb_.dias} días`:" · último extracto"}</div>
@@ -4957,7 +4960,7 @@ function ObjetivosCard({presup:presupP, activeProy:activeP, banco:bancoP, ing, g
   const valEditable=(k,color)=>edit===k?(
     <input autoFocus value={val} onChange={e=>setVal(e.target.value)} onBlur={()=>guardar(k)}
       onKeyDown={e=>{ if(e.key==="Enter") guardar(k); if(e.key==="Escape") setEdit(null); }}
-      style={{width:110,fontSize:18,fontWeight:800,border:"1px solid #F59E0B",borderRadius:6,padding:"1px 6px",fontFamily:"inherit",background:"#FEF6DC",color}}/>
+      style={{width:110,fontSize:18,fontWeight:800,border:"1px solid #3D3A36",borderRadius:6,padding:"1px 6px",fontFamily:"inherit",background:"#F7F6F4",color}}/>
   ):(
     <span onDoubleClick={()=>{ setEdit(k); setVal(String(obj[k])); }} title="Doble clic para cambiar" style={{cursor:"pointer"}}>{eurObj(obj[k])}</span>
   );
@@ -4979,7 +4982,7 @@ function ObjetivosCard({presup:presupP, activeProy:activeP, banco:bancoP, ing, g
       {/* Lo que falta para el objetivo: entre todos y por persona */}
       <div style={{background:"linear-gradient(135deg,#2B2926,#171717)",borderRadius:12,padding:"14px 18px",marginBottom:10,color:"#FFF",display:"flex",flexWrap:"wrap",gap:"12px 28px",alignItems:"center"}}>
         <div style={{flex:"1 1 240px"}}>
-          <div style={{fontSize:10,fontWeight:700,letterSpacing:"0",color:"#1D4ED8"}}>🏁 Para pagar NY + Corea nos faltan entre todos</div>
+          <div style={{fontSize:10,fontWeight:700,letterSpacing:"0",color:"#3D3A36"}}>🏁 Para pagar NY + Corea nos faltan entre todos</div>
           <div style={{fontSize:32,fontWeight:900,letterSpacing:"-1.5px",marginTop:2,fontFamily:FONT_TITULOS}}>{cargando&&!sbI?"…":falta<=0?"✅ 0€":eurObj(falta)}</div>
           <div style={{fontSize:10.5,color:"#A19B93"}}>{eurObj(presupuesto)} de presupuesto − {sbI?eurObj(saldo):"—"} que hay en el banco · plazo {etiquetaLarga(COREA_FIN_IDX)}</div>
         </div>
@@ -4989,12 +4992,12 @@ function ObjetivosCard({presup:presupP, activeProy:activeP, banco:bancoP, ing, g
             <div style={{fontSize:28,fontWeight:900,letterSpacing:"-1px",fontFamily:FONT_TITULOS}}>{eurObj(objetivoIndiv)}</div>
             <div style={{fontSize:9.5,color:"#A19B93",lineHeight:1.45}}>
               de beneficio neto (como en Equipo) · media ahora {eurObj(mediaNeto)}<br/>
-              <b style={{color:"#FDE68A"}}>+{eurObj(masCadaUno)} cada uno</b> · {N} × {eurObj(masCadaUno)} = {eurObj(masCadaUno*N)}
+              <b style={{color:"#E5E2DD"}}>+{eurObj(masCadaUno)} cada uno</b> · {N} × {eurObj(masCadaUno)} = {eurObj(masCadaUno*N)}
             </div>
           </div>
         )}
         <div>
-          <div style={{fontSize:9,color:"#1D4ED8",fontWeight:700,letterSpacing:"0"}}>Con lo previsto</div>
+          <div style={{fontSize:9,color:"#3D3A36",fontWeight:700,letterSpacing:"0"}}>Con lo previsto</div>
           <div style={{fontSize:18,fontWeight:800,fontFamily:FONT_TITULOS}}>{cargando?"…":eurObj(prevision)}</div>
           <div style={{fontSize:9.5,color:diferencia>=0?"#15803D":"#B91C1C",fontWeight:700}}>{cargando?"":diferencia>=0?`✅ sobran ${eurObj(diferencia)}`:`⚠️ faltarían ${eurObj(-diferencia)}`}</div>
         </div>
@@ -5010,7 +5013,7 @@ function ObjetivosCard({presup:presupP, activeProy:activeP, banco:bancoP, ing, g
               const le=objetivoIndiv-p.neto, ok=le<=0.5;
               const pc=objetivoIndiv>0?Math.min(100,Math.max(0,p.neto/objetivoIndiv*100)):100;
               return(
-                <div key={p.name} style={{border:`1px solid ${ok?"#A9DDBF":"#E5E2DD"}`,background:ok?"#EAF7EE":"#FFFFFF",borderRadius:9,padding:"7px 10px"}}>
+                <div key={p.name} style={{border:`1px solid ${ok?"#A9DDBF":"#E5E2DD"}`,background:ok?"#F7F6F4":"#FFFFFF",borderRadius:9,padding:"7px 10px"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:4}}>
                     <span style={{fontWeight:700,fontSize:11,color:p.color}}>{p.name}</span>
                     <span style={{fontSize:11,fontWeight:800,color:"#171717"}}>{eurObj(p.neto)}</span>
@@ -5018,7 +5021,7 @@ function ObjetivosCard({presup:presupP, activeProy:activeP, banco:bancoP, ing, g
                   <div style={{height:5,background:"#F2F0ED",borderRadius:99,overflow:"hidden",margin:"4px 0 3px"}}>
                     <div style={{height:"100%",width:`${pc}%`,background:ok?"#059669":p.color,borderRadius:99}}/>
                   </div>
-                  <div style={{fontSize:9.5,fontWeight:700,color:ok?"#059669":"#B45309"}}>{ok?"✅ ya llega":`le faltan ${eurObj(le)}`}</div>
+                  <div style={{fontSize:9.5,fontWeight:700,color:ok?"#059669":"#3D3A36"}}>{ok?"✅ ya llega":`le faltan ${eurObj(le)}`}</div>
                 </div>
               );
             })}
@@ -5027,33 +5030,33 @@ function ObjetivosCard({presup:presupP, activeProy:activeP, banco:bancoP, ing, g
       )}
 
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:8,marginBottom:10}}>
-        {card("🏦 Dinero en el banco",cargando&&!sbI?"…":sbI?eurObj(saldo):"—",saldo>=0?"#2B2926":"#B91C1C","#E8F0FB",
+        {card("🏦 Dinero en el banco",cargando&&!sbI?"…":sbI?eurObj(saldo):"—",saldo>=0?"#2B2926":"#B91C1C","#F7F6F4",
           sbI?`A ${sbI.fecha}${sbI.dias>7?` · ⚠️ extracto de hace ${sbI.dias} días`:" · último extracto"}`:"Sube un extracto en 🏦 Banco",true)}
-        {card("🗽 NY · falta por pagar",valEditable("NY","#7C3AED"),"#7C3AED","#F1EEFC","Se paga primero")}
+        {card("🗽 NY · falta por pagar",valEditable("NY","#3D3A36"),"#3D3A36","#F7F6F4","Se paga primero")}
         {card("🇰🇷 Corea · presupuesto",valEditable("COREA","#B91C1C"),"#B91C1C","#FDECEC",`9 personas · 63 días · mínimo imprescindible ${eurObj(COREA_EXCEL.minimo)} (casa + seguro)`)}
       </div>
 
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:8,marginBottom:10}}>
         {card("💼 Presupuesto (NY + Corea)",eurObj(presupuesto),"#171717","#F7F6F4",`${eurObj(obj.NY)} NY + ${eurObj(obj.COREA)} Corea`)}
-        {card("🔮 Previsión",cargando?"…":eurObj(prevision),"#2B2926","#E8F0FB",`Banco + margen estimado de ${restantes.length?`${etiqueta(restantes[0])} a ${etiqueta(restantes[restantes.length-1])}`:"—"} (${margenPrev>=0?"+":""}${eurObj(margenPrev)})`)}
-        {card("⚖️ Diferencia previsión − presupuesto",cargando?"…":`${diferencia>=0?"+":""}${eurObj(diferencia)}`,diferencia>=0?"#059669":"#B91C1C",diferencia>=0?"#E6F5EC":"#FDECEC",
+        {card("🔮 Previsión",cargando?"…":eurObj(prevision),"#2B2926","#F7F6F4",`Banco + margen estimado de ${restantes.length?`${etiqueta(restantes[0])} a ${etiqueta(restantes[restantes.length-1])}`:"—"} (${margenPrev>=0?"+":""}${eurObj(margenPrev)})`)}
+        {card("⚖️ Diferencia previsión − presupuesto",cargando?"…":`${diferencia>=0?"+":""}${eurObj(diferencia)}`,diferencia>=0?"#059669":"#B91C1C",diferencia>=0?"#F7F6F4":"#FDECEC",
           cargando?"":diferencia>=0?"Con lo previsto llega para pagar todo":`Con lo previsto faltan ${eurObj(-diferencia)}`,true)}
       </div>
 
       {/* Barra de progreso: banco sobre presupuesto, con la marca de NY */}
       <div style={{position:"relative",height:12,background:"#F2F0ED",borderRadius:99,overflow:"hidden",marginBottom:4}}>
         <div style={{position:"absolute",left:0,top:0,bottom:0,width:`${pct}%`,background:"linear-gradient(90deg,#171717,#3B82F6)",borderRadius:99}}/>
-        <div title="NY cubierto" style={{position:"absolute",left:`${pctNY}%`,top:0,bottom:0,width:2,background:"#7C3AED"}}/>
+        <div title="NY cubierto" style={{position:"absolute",left:`${pctNY}%`,top:0,bottom:0,width:2,background:"#171717"}}/>
       </div>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:9.5,color:"#6B665F",marginBottom:6}}>
         <span>{pct.toFixed(0)}% del presupuesto en el banco</span>
-        <span style={{color:"#7C3AED"}}>▲ NY ({eurObj(obj.NY)}) {saldo>=obj.NY?"✅ cubierto":`faltan ${eurObj(obj.NY-saldo)}`}</span>
+        <span style={{color:"#3D3A36"}}>▲ NY ({eurObj(obj.NY)}) {saldo>=obj.NY?"✅ cubierto":`faltan ${eurObj(obj.NY-saldo)}`}</span>
         <span>{eurObj(presupuesto)}</span>
       </div>
 
       {restantes.length>0&&falta>0&&(
         <div>
-          <button onClick={()=>setVerMeses(v=>!v)} style={{background:"none",border:"none",color:"#4F46E5",fontSize:10.5,fontWeight:600,cursor:"pointer",padding:0,fontFamily:"inherit"}}>
+          <button onClick={()=>setVerMeses(v=>!v)} style={{background:"none",border:"none",color:"#3D3A36",fontSize:10.5,fontWeight:600,cursor:"pointer",padding:0,fontFamily:"inherit"}}>
             {verMeses?"▼":"▸"} Lo que deberíamos tener en el banco a fin de cada mes
           </button>
           {verMeses&&(
@@ -5076,7 +5079,7 @@ function ObjetivosCard({presup:presupP, activeProy:activeP, banco:bancoP, ing, g
                         <td style={{padding:"4px 8px",textAlign:"right",fontWeight:800,color:"#2B2926"}}>{eurObj(d)}</td>
                         <td style={{padding:"4px 8px",textAlign:"right",fontWeight:600,color:"#3D3A36"}}>{eurObj(p)}</td>
                         <td style={{padding:"4px 8px",textAlign:"right",fontWeight:700,color:dif>=0?"#059669":"#B91C1C"}}>{dif>=0?"+":""}{eurObj(dif)}</td>
-                        <td style={{padding:"4px 8px",color:"#7C3AED",fontSize:10,fontWeight:600}}>{nyAqui?"🗽 NY cubierto":""}{k===n-1?"🇰🇷 Corea cubierta":""}</td>
+                        <td style={{padding:"4px 8px",color:"#3D3A36",fontSize:10,fontWeight:600}}>{nyAqui?"🗽 NY cubierto":""}{k===n-1?"🇰🇷 Corea cubierta":""}</td>
                       </tr>
                     );
                   })}
@@ -5255,7 +5258,7 @@ function PresupuestosTab({ ing, gas, hojas, projects, sb, periodo, otros, banco 
       <input autoFocus value={editVal} onChange={e=>setEditVal(e.target.value)}
         onBlur={()=>saveCell(pn,mi,tipo,editVal)}
         onKeyDown={e=>{if(e.key==="Enter")saveCell(pn,mi,tipo,editVal);if(e.key==="Escape")setEditCell(null);}}
-        style={{width:52,fontSize:10,padding:"2px 3px",border:"1px solid #F59E0B",borderRadius:3,fontFamily:"inherit",textAlign:"right",background:"#FEF6DC"}}/>
+        style={{width:52,fontSize:10,padding:"2px 3px",border:"1px solid #3D3A36",borderRadius:3,fontFamily:"inherit",textAlign:"right",background:"#F7F6F4"}}/>
     );
     return(
       <span onDoubleClick={()=>{setEditCell({pn,mi,tipo});setEditVal(String(est));}}
@@ -5366,9 +5369,9 @@ body{font-family:'Inter','Helvetica Neue',Arial,sans-serif;font-size:8px;color:#
 .doc-right p{font-size:8.5px;color:#6B665F;margin-top:4px}
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
 .kpi{border-radius:7px;padding:10px 14px;border:1.5px solid}
-.kpi.g{background:#EAF7EE;border-color:#BBF7D0}
+.kpi.g{background:#F7F6F4;border-color:#BBF7D0}
 .kpi.r{background:#FDECEC;border-color:#FECACA}
-.kpi.b{background:#E8F0FB;border-color:#BFDBFE}
+.kpi.b{background:#F7F6F4;border-color:#BFDBFE}
 .kpi-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
 .kpi.g .kpi-lbl{color:#059669}.kpi.r .kpi-lbl{color:#B91C1C}.kpi.b .kpi-lbl{color:#2B2926}
 .kpi-val{font-size:20px;font-weight:800;letter-spacing:-1px;line-height:1.1}
@@ -5386,16 +5389,16 @@ td{padding:3px 3px;vertical-align:middle;border-right:1px solid #E5E2DD;text-ali
 .col-real{font-style:italic;color:#7F7973;font-size:7px;font-weight:400}
 .col-dif{color:#7F7973;font-size:7px;font-weight:400}
 .col-tot{border-left:2px solid #BBD3F0;font-weight:700;padding:3px 6px}
-.col-ing-est{color:#3D3A36;background:#EAF7EE}
-.col-ing-real{color:#059669;background:#EAF7EE}
+.col-ing-est{color:#3D3A36;background:#F7F6F4}
+.col-ing-real{color:#059669;background:#F7F6F4}
 .col-gas-est{color:#3D3A36;background:#FDECEC}
 .col-gas-real{color:#B91C1C;background:#FDECEC}
-.bg-ing-est{background:#EAF7EE}
-.bg-ing-real{background:#EAF7EE}
+.bg-ing-est{background:#F7F6F4}
+.bg-ing-real{background:#F7F6F4}
 .bg-gas-est{background:#FDECEC}
 .bg-gas-real{background:#FDECEC}
-.bg-mar-est{background:#E8F0FB}
-.bg-mar-real{background:#E8F0FB}
+.bg-mar-est{background:#F7F6F4}
+.bg-mar-real{background:#F7F6F4}
 .bg-dif{background:#F7F6F4;border-bottom:1px solid #E5E2DD;font-size:7px}
 .footer{margin-top:14px;padding-top:8px;border-top:1px solid #E5E2DD;display:flex;justify-content:space-between;font-size:7.5px;color:#7F7973}
 @media print{body{padding:8px 10px}@page{size:A4 landscape;margin:7mm}}
@@ -5511,12 +5514,12 @@ td{padding:3px 3px;vertical-align:middle;border-right:1px solid #E5E2DD;text-ali
                   <th key={m} colSpan={3} style={{padding:"4px 0",textAlign:"center",fontSize:9,fontWeight:700,
                     color:esMesActual(mi)?"#2B2926":"#6B665F",
                     borderRight:"1px solid #E5E2DD",
-                    background:esMesActual(mi)?"#E8F0FB":"transparent",
+                    background:esMesActual(mi)?"#F7F6F4":"transparent",
                     minWidth:114}}>
                     {m}
                   </th>
                 ))}
-                <th colSpan={3} style={{padding:"4px 0",textAlign:"center",fontSize:9,fontWeight:700,color:"#2B2926",background:"#E8F0FB",minWidth:114}}>TOTAL</th>
+                <th colSpan={3} style={{padding:"4px 0",textAlign:"center",fontSize:9,fontWeight:700,color:"#2B2926",background:"#F7F6F4",minWidth:114}}>TOTAL</th>
               </tr>
               <tr style={{background:"#F7F6F4",borderBottom:"2px solid #E5E2DD"}}>
                 <th style={{borderRight:"2px solid #E5E2DD",padding:"3px 0"}}></th>
@@ -5531,8 +5534,8 @@ td{padding:3px 3px;vertical-align:middle;border-right:1px solid #E5E2DD;text-ali
             </thead>
             <tbody>
               {[
-                {label:"💰 Ingresos",tipo:"ing",bg:"#EAF7EE",cr:"#059669",et:"ing_est",getEst:mi=>presup?.[pn]?.[K(mi)]?.ing_est||0,getReal:mi=>realIng(pn,mi)},
-                {label:"💸 Gastos",  tipo:"gas",bg:"#FDECEC",cr:"#DC2626",et:"gas_est",getEst:mi=>presup?.[pn]?.[K(mi)]?.gas_est||0,getReal:mi=>realGas(pn,mi)},
+                {label:"💰 Ingresos",tipo:"ing",bg:"#FFFFFF",cr:"#059669",et:"ing_est",getEst:mi=>presup?.[pn]?.[K(mi)]?.ing_est||0,getReal:mi=>realIng(pn,mi)},
+                {label:"💸 Gastos",  tipo:"gas",bg:"#FFFFFF",cr:"#DC2626",et:"gas_est",getEst:mi=>presup?.[pn]?.[K(mi)]?.gas_est||0,getReal:mi=>realGas(pn,mi)},
               ].map(row=>{
                 const tE=prevSum(MESES.map((_,mi)=>row.getEst(mi)),MESES.map((_,mi)=>row.getReal(mi)));
                 const tR=MESES.reduce((s,_,mi)=>s+row.getReal(mi),0);
@@ -5557,9 +5560,9 @@ td{padding:3px 3px;vertical-align:middle;border-right:1px solid #E5E2DD;text-ali
                       );
                     })}
                     <Fragment>
-                      <td style={{padding:"4px 3px",textAlign:"right",fontWeight:700,color:"#3D3A36",background:"#E8F0FB",fontSize:10}}>{tE.toFixed(0)}</td>
-                      <td style={{padding:"4px 3px",textAlign:"right",fontWeight:700,color:row.cr,background:"#E8F0FB",fontSize:10}}>{tR!==0?tR.toFixed(0):"—"}</td>
-                      <td style={{padding:"4px 6px",textAlign:"right",fontWeight:700,background:"#E8F0FB",fontSize:10,color:dc(tD,row.tipo)}}>{(tD>=0?"+":"")+tD.toFixed(0)}</td>
+                      <td style={{padding:"4px 3px",textAlign:"right",fontWeight:700,color:"#3D3A36",background:"#F7F6F4",fontSize:10}}>{tE.toFixed(0)}</td>
+                      <td style={{padding:"4px 3px",textAlign:"right",fontWeight:700,color:row.cr,background:"#F7F6F4",fontSize:10}}>{tR!==0?tR.toFixed(0):"—"}</td>
+                      <td style={{padding:"4px 6px",textAlign:"right",fontWeight:700,background:"#F7F6F4",fontSize:10,color:dc(tD,row.tipo)}}>{(tD>=0?"+":"")+tD.toFixed(0)}</td>
                     </Fragment>
                   </tr>
                 );
@@ -5588,9 +5591,9 @@ td{padding:3px 3px;vertical-align:middle;border-right:1px solid #E5E2DD;text-ali
                       );
                     })}
                     <Fragment>
-                      <td style={{padding:"4px 3px",textAlign:"right",fontWeight:800,fontSize:10,color:mE>=0?"#059669":"#B91C1C",background:"#E8F0FB"}}>{mE.toFixed(0)}</td>
-                      <td style={{padding:"4px 3px",textAlign:"right",fontWeight:800,fontSize:10,color:mR>=0?"#059669":"#B91C1C",background:"#E8F0FB"}}>{(tIR!==0||tGR!==0)?mR.toFixed(0):"—"}</td>
-                      <td style={{padding:"4px 6px",textAlign:"right",fontWeight:800,fontSize:10,background:"#E8F0FB",color:dc(tD,"ing")}}>{(tD>=0?"+":"")+tD.toFixed(0)}</td>
+                      <td style={{padding:"4px 3px",textAlign:"right",fontWeight:800,fontSize:10,color:mE>=0?"#059669":"#B91C1C",background:"#F7F6F4"}}>{mE.toFixed(0)}</td>
+                      <td style={{padding:"4px 3px",textAlign:"right",fontWeight:800,fontSize:10,color:mR>=0?"#059669":"#B91C1C",background:"#F7F6F4"}}>{(tIR!==0||tGR!==0)?mR.toFixed(0):"—"}</td>
+                      <td style={{padding:"4px 6px",textAlign:"right",fontWeight:800,fontSize:10,background:"#F7F6F4",color:dc(tD,"ing")}}>{(tD>=0?"+":"")+tD.toFixed(0)}</td>
                     </Fragment>
                   </tr>
                 );
@@ -5608,19 +5611,19 @@ td{padding:3px 3px;vertical-align:middle;border-right:1px solid #E5E2DD;text-ali
                 <div style={{fontWeight:600,fontSize:11,color:"#059669",marginBottom:6}}>Ingresos ({fIng.length})</div>
                 {fIng.length===0?<div style={{fontSize:10,color:"#7F7973"}}>Sin facturas de ingreso</div>:(
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:10}}>
-                    <thead><tr style={{background:"#E6F5EC"}}>
+                    <thead><tr style={{background:"#F7F6F4"}}>
                       {["Ref","Fecha","Base €","Descripción"].map(h=><th key={h} style={{padding:"3px 8px",textAlign:h==="Base €"?"right":"left",color:"#059669",fontWeight:600}}>{h}</th>)}
                     </tr></thead>
                     <tbody>
                       {fIng.map((f,i)=>(
-                        <tr key={i} style={{borderTop:"1px solid #A9DDBF"}}>
+                        <tr key={i} style={{borderTop:"1px solid #E5E2DD"}}>
                           <td style={{padding:"3px 8px",fontWeight:600}}>{f.ref||"—"}</td>
                           <td style={{padding:"3px 8px",color:"#6B665F"}}>{f.fecha||"—"}</td>
                           <td style={{padding:"3px 8px",textAlign:"right",color:"#059669",fontWeight:700}}>{signedBase(f).toFixed(2)}</td>
                           <td style={{padding:"3px 8px",color:"#6B665F",maxWidth:150,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.descripcion||"—"}</td>
                         </tr>
                       ))}
-                      <tr style={{borderTop:"2px solid #A9DDBF",background:"#E6F5EC"}}>
+                      <tr style={{borderTop:"2px solid #E5E2DD",background:"#F7F6F4"}}>
                         <td colSpan={2} style={{padding:"4px 8px",fontWeight:700,color:"#059669"}}>TOTAL</td>
                         <td style={{padding:"4px 8px",textAlign:"right",fontWeight:800,color:"#059669"}}>{fIng.reduce((s,f)=>s+signedBase(f),0).toFixed(2)}€</td>
                         <td></td>
@@ -5688,7 +5691,7 @@ td{padding:3px 3px;vertical-align:middle;border-right:1px solid #E5E2DD;text-ali
           <div style={{fontSize:11,color:"#6B665F",marginTop:2}}>Doble clic en Est. para editar · Clic ▼ para ver facturas · ✕ para quitar proyecto</div>
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          {saving&&<span style={{fontSize:10,color:"#F59E0B",fontWeight:600}}>💾 Guardando...</span>}
+          {saving&&<span style={{fontSize:10,color:"#A8341F",fontWeight:600}}>💾 Guardando...</span>}
           <button onClick={genPDF}
             style={{background:"#F2F0ED",color:"#3D3A36",border:"1px solid #E5E2DD",borderRadius:8,padding:"7px 14px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
             ⬇ Exportar PDF
@@ -5736,20 +5739,20 @@ td{padding:3px 3px;vertical-align:middle;border-right:1px solid #E5E2DD;text-ali
           <div style={{overflowX:"auto",background:"#FFFFFF"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
               <thead>
-                <tr style={{background:"#E8F0FB"}}>
-                  <th style={{padding:"5px 10px",textAlign:"left",fontSize:9,color:"#2B2926",fontWeight:700,width:75,borderRight:"2px solid #BBD3F0"}}>Concepto</th>
+                <tr style={{background:"#F7F6F4"}}>
+                  <th style={{padding:"5px 10px",textAlign:"left",fontSize:9,color:"#2B2926",fontWeight:700,width:75,borderRight:"2px solid #E5E2DD"}}>Concepto</th>
                   {MESES.map((m,mi)=>(
                     <th key={m} colSpan={3} style={{padding:"4px 0",textAlign:"center",fontSize:9,fontWeight:700,
                       color:esMesActual(mi)?"#2B2926":"#6B665F",
-                      borderRight:"1px solid #BBD3F0",
-                      background:esMesActual(mi)?"#E8F0FB":"transparent",minWidth:114}}>
+                      borderRight:"1px solid #E5E2DD",
+                      background:esMesActual(mi)?"#F7F6F4":"transparent",minWidth:114}}>
                       {m}
                     </th>
                   ))}
-                  <th colSpan={3} style={{padding:"4px 0",textAlign:"center",fontSize:9,fontWeight:700,color:"#2B2926",background:"#E8F0FB",minWidth:114}}>TOTAL</th>
+                  <th colSpan={3} style={{padding:"4px 0",textAlign:"center",fontSize:9,fontWeight:700,color:"#2B2926",background:"#F7F6F4",minWidth:114}}>TOTAL</th>
                 </tr>
                 <tr style={{background:"#F2F0ED",borderBottom:"2px solid #D3CFC9"}}>
-                  <th style={{borderRight:"2px solid #BBD3F0",padding:"2px 0"}}></th>
+                  <th style={{borderRight:"2px solid #E5E2DD",padding:"2px 0"}}></th>
                   {[...MESES,"T"].map((_,i)=>(
                     <Fragment key={i}>
                       <th title={i===MESES.length?"Previsión: real de los meses pasados + estimado de este mes y los siguientes":undefined} style={{padding:"2px 3px",textAlign:"right",fontSize:8,color:i===MESES.length?"#2B2926":"#7F7973",fontWeight:i===MESES.length?800:600,width:38}}>{i===MESES.length?"Prev.":"Est."}</th>
@@ -5761,16 +5764,16 @@ td{padding:3px 3px;vertical-align:middle;border-right:1px solid #E5E2DD;text-ali
               </thead>
               <tbody>
                 {[
-                  {label:"💰 Ingresos",est:totIngEst,real:totIngReal,tipo:"ing",bg:"#EAF7EE",cr:"#059669"},
+                  {label:"💰 Ingresos",est:totIngEst,real:totIngReal,tipo:"ing",bg:"#FFFFFF",cr:"#059669"},
                   ...(hayFuera&&fueraIng.some(v=>Math.abs(v)>=0.5)?[{label:"↳ fuera de previsión",est:MESES.map(()=>0),real:fueraIng,tipo:"ing",bg:"#F7F6F4",cr:"#6B665F",sub:true}]:[]),
-                  {label:"💸 Gastos",  est:totGasEst,real:totGasReal,tipo:"gas",bg:"#FDECEC",cr:"#DC2626"},
+                  {label:"💸 Gastos",  est:totGasEst,real:totGasReal,tipo:"gas",bg:"#FFFFFF",cr:"#DC2626"},
                   ...(hayFuera&&fueraGas.some(v=>Math.abs(v)>=0.5)?[{label:"↳ fuera de previsión",est:MESES.map(()=>0),real:fueraGas,tipo:"gas",bg:"#F7F6F4",cr:"#6B665F",sub:true}]:[]),
                   {label:"📈 Margen",  est:totIngEst.map((v,i)=>v-totGasEst[i]),real:totIngReal.map((v,i)=>v-totGasReal[i]),tipo:"ing",bg:"#F7F6F4",cr:"#2B2926"},
                 ].map(row=>{
                   const tE=prevSum(row.est,row.real), tR=row.real.reduce((a,b)=>a+b,0), tD=tR-tE;
                   if(row.sub) return(
                     <tr key={row.label+row.tipo} style={{background:row.bg}} title="Facturas, hojas y otros gastos sin proyecto o de proyectos que no están en esta previsión. Ya están sumados en la fila de arriba.">
-                      <td style={{padding:"3px 10px 3px 18px",fontWeight:600,fontSize:9,color:row.cr,borderRight:"2px solid #BBD3F0",fontStyle:"italic",whiteSpace:"nowrap"}}>{row.label}</td>
+                      <td style={{padding:"3px 10px 3px 18px",fontWeight:600,fontSize:9,color:row.cr,borderRight:"2px solid #E5E2DD",fontStyle:"italic",whiteSpace:"nowrap"}}>{row.label}</td>
                       {row.real.map((r,mi)=>(
                         <Fragment key={mi}>
                           <td></td>
@@ -5778,14 +5781,14 @@ td{padding:3px 3px;vertical-align:middle;border-right:1px solid #E5E2DD;text-ali
                           <td style={{borderRight:"1px solid #E5E2DD"}}></td>
                         </Fragment>
                       ))}
-                      <td style={{background:"#E8F0FB"}}></td>
-                      <td style={{padding:"3px 3px",textAlign:"right",fontSize:9,color:row.cr,fontStyle:"italic",background:"#E8F0FB"}}>{tR.toFixed(0)}</td>
-                      <td style={{background:"#E8F0FB"}}></td>
+                      <td style={{background:"#F7F6F4"}}></td>
+                      <td style={{padding:"3px 3px",textAlign:"right",fontSize:9,color:row.cr,fontStyle:"italic",background:"#F7F6F4"}}>{tR.toFixed(0)}</td>
+                      <td style={{background:"#F7F6F4"}}></td>
                     </tr>
                   );
                   return(
                     <tr key={row.label} style={{background:row.bg,borderTop:"1px solid #E5E2DD"}}>
-                      <td style={{padding:"5px 10px",fontWeight:800,fontSize:10,color:row.cr,borderRight:"2px solid #BBD3F0"}}>{row.label}</td>
+                      <td style={{padding:"5px 10px",fontWeight:800,fontSize:10,color:row.cr,borderRight:"2px solid #E5E2DD"}}>{row.label}</td>
                       {row.est.map((e,mi)=>{
                         const r=row.real[mi], d=r-e;
                         return(
@@ -5799,9 +5802,9 @@ td{padding:3px 3px;vertical-align:middle;border-right:1px solid #E5E2DD;text-ali
                         );
                       })}
                       <Fragment>
-                        <td style={{padding:"4px 3px",textAlign:"right",fontWeight:800,color:"#3D3A36",background:"#E8F0FB",fontSize:10}}>{tE.toFixed(0)}</td>
-                        <td style={{padding:"4px 3px",textAlign:"right",fontWeight:800,color:row.cr,background:"#E8F0FB",fontSize:10}}>{tR!==0?tR.toFixed(0):"—"}</td>
-                        <td style={{padding:"4px 6px",textAlign:"right",fontWeight:800,background:"#E8F0FB",fontSize:10,color:dc(tD,row.tipo)}}>{(tD>=0?"+":"")+tD.toFixed(0)}</td>
+                        <td style={{padding:"4px 3px",textAlign:"right",fontWeight:800,color:"#3D3A36",background:"#F7F6F4",fontSize:10}}>{tE.toFixed(0)}</td>
+                        <td style={{padding:"4px 3px",textAlign:"right",fontWeight:800,color:row.cr,background:"#F7F6F4",fontSize:10}}>{tR!==0?tR.toFixed(0):"—"}</td>
+                        <td style={{padding:"4px 6px",textAlign:"right",fontWeight:800,background:"#F7F6F4",fontSize:10,color:dc(tD,row.tipo)}}>{(tD>=0?"+":"")+tD.toFixed(0)}</td>
                       </Fragment>
                     </tr>
                   );
@@ -6030,18 +6033,18 @@ function estadoPago(info, key, fecha, pagado){
 }
 // Fondo de la fila según el estado: verde saldada, amarillo pendiente
 function fondoEstado(estado,i){
-  if(estado==="si"||estado==="manual") return "#E6F5EC";
-  if(estado==="anulada") return "#F1EEFC";
-  if(estado==="no") return "#FEF6DC";
+  if(estado==="si"||estado==="manual") return "#F7F6F4";
+  if(estado==="anulada") return "#F7F6F4";
+  if(estado==="no") return "#F7F6F4";
   return i%2===0?"#F7F6F4":"#FFFFFF";
 }
 function EstadoPagoBadge({estado, ingreso, nota, onClick}){
   const cfg={
-    manual:{t:ingreso?"✅ Cobrada":"✅ Pagada", bg:"#E6F5EC", c:"#047857", b:"#A9DDBF", tip:`Marcada a mano (sin movimiento del banco)${nota?": "+nota:""}`},
-    si:   {t:ingreso?"✅ Cobrada":"✅ Pagada",       bg:"#E6F5EC", c:"#047857", b:"#A9DDBF", tip:"Conciliada en 🏦 Banco"},
-    no:   {t:ingreso?"⏳ No cobrada":"⏳ No pagada", bg:"#FEF6DC", c:"#B45309", b:"#FCD34D", tip:"Se marcará sola cuando se concilie en 🏦 Banco"},
+    manual:{t:ingreso?"✅ Cobrada":"✅ Pagada", bg:"#FFFFFF", c:"#047857", b:"#A9DDBF", tip:`Marcada a mano (sin movimiento del banco)${nota?": "+nota:""}`},
+    si:   {t:ingreso?"✅ Cobrada":"✅ Pagada",       bg:"#FFFFFF", c:"#047857", b:"#A9DDBF", tip:"Conciliada en 🏦 Banco"},
+    no:   {t:ingreso?"⏳ No cobrada":"⏳ No pagada", bg:"#FFFFFF", c:"#3D3A36", b:"#FCD34D", tip:"Se marcará sola cuando se concilie en 🏦 Banco"},
     fuera:{t:"— antes del extracto",                   bg:"#F2F0ED", c:"#7F7973", b:"#E5E2DD", tip:"Es anterior al primer movimiento del banco importado"},
-    anulada:{t:"↩️ Rectificada",                       bg:"#F1EEFC", c:"#6D28D9", b:"#F1EEFC", tip:"Anulada con una rectificativa: no pasa por el banco"},
+    anulada:{t:"↩️ Rectificada",                       bg:"#FFFFFF", c:"#3D3A36", b:"#F7F6F4", tip:"Anulada con una rectificativa: no pasa por el banco"},
   }[estado];
   const puede=onClick&&(estado==="no"||estado==="manual"||estado==="fuera");
   return <span title={cfg.tip+(puede?(estado==="manual"?" · clic para quitar la marca":" · clic para marcarla como saldada a mano"):"")} onClick={puede?onClick:undefined}
@@ -6324,8 +6327,8 @@ function BancoTab({ing,setIng,gas,setGas,hojas,onPendientes,onMovs,irOtros,rect,
             {leyendoPdf?"⏳ Leyendo PDF…":"⬆ Importar extracto (PDF/Excel/CSV)"}
             <input type="file" accept=".pdf,.xlsx,.xls,.csv" style={{display:"none"}} onChange={importar}/>
           </label>
-          {movs.length>0&&<button onClick={reAuto} style={btn("#FBEAE5","#4F46E5")}>🔗 Conciliar automáticamente</button>}
-          {sinConc.length>0&&<button onClick={cuadrarPendientes} title="Justifica como otro ingreso/gasto lo que no cuadra de los movimientos pendientes" style={btn("#FBEFE3","#C2410C")}>🧹 Cuadrar lo que queda ({sinConc.length})</button>}
+          {movs.length>0&&<button onClick={reAuto} style={btn("#F7F6F4","#3D3A36")}>🔗 Conciliar automáticamente</button>}
+          {sinConc.length>0&&<button onClick={cuadrarPendientes} title="Justifica como otro ingreso/gasto lo que no cuadra de los movimientos pendientes" style={btn("#F7F6F4","#C2410C")}>🧹 Cuadrar lo que queda ({sinConc.length})</button>}
           {movs.length>0&&<button onClick={vaciar} style={btn("#F2F0ED","#6B665F")}>Vaciar</button>}
         </div>
       </div>
@@ -6342,21 +6345,21 @@ function BancoTab({ing,setIng,gas,setGas,hojas,onPendientes,onMovs,irOtros,rect,
             ⚠️ Faltan {sinConc.length} movimiento{sinConc.length>1?"s":""} por conciliar. Cada entrada tiene que ir con sus facturas de ingreso y cada salida con sus facturas u hojas de gasto, y la suma tiene que cuadrar con el importe del banco (o marcarse como "Otros gastos" con el motivo).
           </div>
         ):(
-          <div style={{background:"#E6F5EC",border:"1px solid #A9DDBF",color:"#047857",borderRadius:10,padding:"10px 14px",marginBottom:12,fontSize:12,fontWeight:600}}>
+          <div style={{background:"#F7F6F4",border:"1px solid #E5E2DD",color:"#047857",borderRadius:10,padding:"10px 14px",marginBottom:12,fontSize:12,fontWeight:600}}>
             ✅ Todos los movimientos del banco están asociados.
           </div>
         )}
         {esperan.length>0&&(
-          <div style={{background:"#FEF6DC",border:"1px solid #F1DE9C",color:"#A8341F",borderRadius:10,padding:"8px 14px",marginBottom:12,fontSize:11.5,fontWeight:600}}>
+          <div style={{background:"#F7F6F4",border:"1px solid #E5E2DD",color:"#A8341F",borderRadius:10,padding:"8px 14px",marginBottom:12,fontSize:11.5,fontWeight:600}}>
             ⏳ {esperan.length} movimiento{esperan.length>1?"s":""} esperando factura: {esperan.map(m=>`${m.concepto} (${eur(m.importe)})`).join(", ")}. Cuando subáis la factura, asociadla en el movimiento.
           </div>
         )}
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8,marginBottom:14}}>
           {card("Movimientos",movs.length,"#2B2926","#F7F6F4",`${movs[0].fecha} → ${movs[movs.length-1].fecha}`)}
-          {card("Entradas",eur(entradas),"#059669","#E6F5EC")}
+          {card("Entradas",eur(entradas),"#059669","#F7F6F4")}
           {card("Salidas",eur(salidas),"#B91C1C","#FDECEC")}
           {ultimo&&card("Saldo final",eur(ultimo.saldo),"#2B2926","#F7F6F4",cuadraSaldo===null?"":cuadraSaldo?"✅ Cuadra con los movimientos":"⚠️ No cuadra: faltan movimientos")}
-          {card("Conciliado",`${pct}%`,pct===100?"#059669":"#D97706",pct===100?"#E6F5EC":"#FEF6DC",`${conc.length} de ${movs.length} · ${sinConc.length} pendientes${esperan.length?` · ${esperan.length} esperando factura`:""}`)}
+          {card("Conciliado",`${pct}%`,pct===100?"#059669":"#3D3A36",pct===100?"#F7F6F4":"#F7F6F4",`${conc.length} de ${movs.length} · ${sinConc.length} pendientes${esperan.length?` · ${esperan.length} esperando factura`:""}`)}
         </div>
 
         <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:8,flexWrap:"wrap"}}>
@@ -6400,7 +6403,7 @@ function BancoTab({ing,setIng,gas,setGas,hojas,onPendientes,onMovs,irOtros,rect,
                     <td style={{padding:"6px 8px",minWidth:280}}>
                       {est.otro?(
                         <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                          <span onClick={irOtros} title="Ver en Otros gastos" style={{background:m.importe<0?"#FBEFE3":"#E6F5EC",color:m.importe<0?"#C2410C":"#047857",borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700,whiteSpace:"nowrap",cursor:irOtros?"pointer":"default"}}>{m.importe<0?"Otros gastos":"Otros ingresos"}</span>
+                          <span onClick={irOtros} title="Ver en Otros gastos" style={{background:m.importe<0?"#F7F6F4":"#F7F6F4",color:m.importe<0?"#C2410C":"#047857",borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700,whiteSpace:"nowrap",cursor:irOtros?"pointer":"default"}}>{m.importe<0?"Otros gastos":"Otros ingresos"}</span>
                           <input defaultValue={m.nota||""} placeholder="Motivo obligatorio (comisión, traspaso…)" onBlur={e=>e.target.value!==(m.nota||"")&&setNota(m.id,e.target.value)}
                             style={{border:`1px solid ${(m.nota||"").trim()?"#E5E2DD":"#F5C2C2"}`,background:(m.nota||"").trim()?"#FFFFFF":"#FDECEC",borderRadius:5,padding:"3px 6px",fontSize:10,fontFamily:"inherit",flex:1,minWidth:0}}/>
                           <button onClick={()=>quitarOtro(m.id)} style={{background:"none",border:"none",color:"#7F7973",cursor:"pointer"}}>✕</button>
@@ -6409,7 +6412,7 @@ function BancoTab({ing,setIng,gas,setGas,hojas,onPendientes,onMovs,irOtros,rect,
                         <div style={{display:"flex",flexDirection:"column",gap:4}}>
                           {movEspera(m)&&(
                             <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                              <span style={{background:"#FEF6DC",color:"#A8341F",borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>⏳ Esperando factura</span>
+                              <span style={{background:"#F7F6F4",color:"#A8341F",borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>⏳ Esperando factura</span>
                               <input defaultValue={m.espera?.nota||""} placeholder="De quién / qué es (opcional)" onBlur={e=>e.target.value!==(m.espera?.nota||"")&&setEspera(m.id,e.target.value)}
                                 style={{border:"1px solid #E5E2DD",background:"#FFFFFF",borderRadius:5,padding:"3px 6px",fontSize:10,fontFamily:"inherit",flex:1,minWidth:0}}/>
                               <button onClick={()=>quitarEspera(m.id)} style={{background:"none",border:"none",color:"#7F7973",cursor:"pointer"}} title="Quitar">✕</button>
@@ -6417,7 +6420,7 @@ function BancoTab({ing,setIng,gas,setGas,hojas,onPendientes,onMovs,irOtros,rect,
                           )}
                           {est.items.map(it=>(
                             <div key={it.key} style={{display:"flex",gap:6,alignItems:"center"}}>
-                              <span style={{background:est.ok?"#E6F5EC":"#FEF6DC",color:est.ok?"#047857":"#A8341F",borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700}}>
+                              <span style={{background:est.ok?"#F7F6F4":"#F7F6F4",color:est.ok?"#047857":"#A8341F",borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700}}>
                                 {est.ok?"✅":"🧩"} {itemLabel(it)} · {eur(importeBanco(it))}
                               </span>
                               {it.r.linkFactura&&<a href={it.r.linkFactura} target="_blank" rel="noreferrer" style={{fontSize:11,textDecoration:"none"}} title="Ver archivo">📄</a>}
@@ -6426,7 +6429,7 @@ function BancoTab({ing,setIng,gas,setGas,hojas,onPendientes,onMovs,irOtros,rect,
                           ))}
                           {est.just&&(
                             <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                              <span style={{background:est.just.importe<0?"#FBEFE3":"#E6F5EC",color:est.just.importe<0?"#C2410C":"#047857",borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>
+                              <span style={{background:est.just.importe<0?"#F7F6F4":"#F7F6F4",color:est.just.importe<0?"#C2410C":"#047857",borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>
                                 {est.just.importe<0?"Otro gasto":"Otro ingreso"} · {eur(est.just.importe)}
                               </span>
                               <input defaultValue={est.just.nota||""} placeholder="Motivo obligatorio (premio, aportación, fianza…)" onBlur={e=>e.target.value!==(est.just.nota||"")&&setNotaJust(m.id,e.target.value)}
@@ -6441,13 +6444,13 @@ function BancoTab({ing,setIng,gas,setGas,hojas,onPendientes,onMovs,irOtros,rect,
                             </div>
                           )}
                           {(est.items.length>0||est.just)&&!est.ok&&Math.abs(est.falta)>=0.02&&(
-                            <div style={{fontSize:10,fontWeight:700,color:"#B45309"}}>
+                            <div style={{fontSize:10,fontWeight:700,color:"#A8341F"}}>
                               Asociado {eur(est.suma)} de {eur(m.importe)} · {Math.sign(est.falta)===Math.sign(m.importe)?`falta ${eur(Math.abs(est.falta))}`:`sobra ${eur(Math.abs(est.falta))}`}
                             </div>
                           )}
                           {!est.ok&&(
                             <select value="" onChange={e=>e.target.value&&addKey(m.id,e.target.value)}
-                              style={{width:"100%",border:"1px solid #F1DE9C",background:"#FEF6DC",borderRadius:6,padding:"4px 6px",fontSize:11,fontFamily:"inherit",color:"#A8341F",cursor:"pointer"}}>
+                              style={{width:"100%",border:"1px solid #E5E2DD",background:"#F7F6F4",borderRadius:6,padding:"4px 6px",fontSize:11,fontFamily:"inherit",color:"#A8341F",cursor:"pointer"}}>
                               <option value="">{keys.length?"+ Añadir otra factura…":"⚠️ Elegir factura…"}</option>
                               {porRef.length>0&&<optgroup label="📎 Mencionadas en el concepto">{porRef.map(opt)}</optgroup>}
                               {hojasPers.length>0&&<optgroup label={`🧾 Hojas de ${nombresM.join(", ")}`}>{hojasPers.map(opt)}</optgroup>}
@@ -6463,12 +6466,12 @@ function BancoTab({ing,setIng,gas,setGas,hojas,onPendientes,onMovs,irOtros,rect,
                           {!est.ok&&(
                             <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
                               {porRef.length>1&&(
-                                <button onClick={()=>addKeys(m.id,porRef.map(x=>x.key))} style={{background:"#FBEAE5",color:"#A8341F",border:"1px solid #F2C3B7",borderRadius:6,padding:"3px 9px",fontSize:10.5,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                                <button onClick={()=>addKeys(m.id,porRef.map(x=>x.key))} style={{background:"#F7F6F4",color:"#A8341F",border:"1px solid #E5E2DD",borderRadius:6,padding:"3px 9px",fontSize:10.5,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
                                   📎 Añadir las {porRef.length} del concepto ({eur(sumRef)})
                                 </button>
                               )}
                               {Math.abs(est.falta)>=0.02&&(
-                                <button onClick={()=>buscarQueCuadre(m)} style={{background:"#EAF7EE",color:"#047857",border:"1px solid #A9DDBF",borderRadius:6,padding:"3px 9px",fontSize:10.5,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                                <button onClick={()=>buscarQueCuadre(m)} style={{background:"#F7F6F4",color:"#047857",border:"1px solid #E5E2DD",borderRadius:6,padding:"3px 9px",fontSize:10.5,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
                                   🔍 Buscar qué cuadra {eur(Math.abs(est.falta))}
                                 </button>
                               )}
@@ -6530,7 +6533,7 @@ function OtrosGastosTab({movs, guardar, projects, irBanco, ing}){
   const otros=todosOtros.filter(o=>!o.partida).sort((a,b)=>bancoTs(b.fecha)-bancoTs(a.fecha));
   const gastosO=otros.filter(o=>o.importe<0);
   const ingresosO=otros.filter(o=>o.importe>0);
-  const ac="#C2410C", acBg="#FBEFE3";
+  const ac="#C2410C", acBg="#F7F6F4";
   const eur=v=>`${v.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})}€`;
 
   function upd(id,field,val){
@@ -6616,7 +6619,7 @@ function OtrosGastosTab({movs, guardar, projects, irBanco, ing}){
           🔒 Modo lectura — <span style={{color:"#171717",fontWeight:600}}>Haz clic para editar</span>
         </div>
       ):(
-        <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"#E6F5EC",border:"1px solid #A9DDBF",borderRadius:8,padding:"5px 12px",marginBottom:12,fontSize:10,color:"#059669"}}>
+        <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"#F7F6F4",border:"1px solid #E5E2DD",borderRadius:8,padding:"5px 12px",marginBottom:12,fontSize:10,color:"#059669"}}>
           🔓 Modo edición activo
         </div>
       )}
@@ -6624,9 +6627,9 @@ function OtrosGastosTab({movs, guardar, projects, irBanco, ing}){
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:8,marginBottom:14}}>
         {[
           {label:"🧾 Total otros gastos", val:`${totGasto.toFixed(0)}€`, sub:"Sin traspasos", color:ac, bg:acBg},
-          {label:"🏦 Movimientos", val:gastosO.length, color:"#D94A32", bg:"#FBEAE5"},
-          ...(totIng?[{label:"💰 Otros ingresos", val:`${totIng.toFixed(0)}€`, color:"#059669", bg:"#E6F5EC"}]:[]),
-          {label:"⚠️ Sin motivo", val:sinMotivo, color:sinMotivo?"#B91C1C":"#059669", bg:sinMotivo?"#FDECEC":"#E6F5EC"},
+          {label:"🏦 Movimientos", val:gastosO.length, color:"#D94A32", bg:"#FFFFFF"},
+          ...(totIng?[{label:"💰 Otros ingresos", val:`${totIng.toFixed(0)}€`, color:"#059669", bg:"#FFFFFF"}]:[]),
+          {label:"⚠️ Sin motivo", val:sinMotivo, color:sinMotivo?"#B91C1C":"#059669", bg:sinMotivo?"#FFFFFF":"#FFFFFF"},
           ...(noComputa.length?[{label:"↔️ Traspasos (no computan)", val:noComputa.length, color:"#6B665F", bg:"#F7F6F4"}]:[]),
         ].map(k=>(
           <div key={k.label} style={{background:k.bg,borderRadius:10,padding:"10px 12px",border:`1.5px solid ${k.color}22`}}>
@@ -6651,7 +6654,7 @@ function OtrosGastosTab({movs, guardar, projects, irBanco, ing}){
       </div>
 
       {ajustesCuadre.length>0&&(
-        <div style={{fontSize:10.5,color:"#6D28D9",background:"#F1EEFC",border:"1px solid #D4CCF4",borderRadius:8,padding:"7px 12px",marginBottom:8}}>
+        <div style={{fontSize:10.5,color:"#3D3A36",background:"#F7F6F4",border:"1px solid #E5E2DD",borderRadius:8,padding:"7px 12px",marginBottom:8}}>
           🧹 {ajustesCuadre.length} ajustes del cuadre del banco no salen aquí: cuentan en la cuenta de resultados como facturas emitidas ({ajustesCuadre.filter(o=>o.partida==="emitidas").reduce((s,o)=>s+o.importe,0).toFixed(2)}€), facturas recibidas ({(-ajustesCuadre.filter(o=>o.partida==="recibidas").reduce((s,o)=>s+o.importe,0)).toFixed(2)}€) y hojas de gastos ({(-ajustesCuadre.filter(o=>o.partida==="hojas").reduce((s,o)=>s+o.importe,0)).toFixed(2)}€).
         </div>
       )}
@@ -6687,13 +6690,13 @@ function OtrosGastosTab({movs, guardar, projects, irBanco, ing}){
 
       {(ingresosO.length>0||facturasOI.length>0)&&(
         <div style={{marginBottom:12,borderRadius:12,overflow:"hidden",border:"1px solid #05966933"}}>
-          <div style={{background:"#059669",padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{background:"#171717",padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <span style={{color:"#FFF",fontWeight:700,fontSize:13,fontFamily:FONT_TITULOS}}>💰 Otros ingresos · {facturasOI.length} facturas OI + {ingresosO.length} entradas del banco</span>
             <span style={{color:"#FFFFFFCC",fontSize:11,fontWeight:700}}>Total: {totIng.toFixed(0)}€</span>
           </div>
           {facturasOI.length>0&&(
             <div style={{background:"#FFFFFF",overflowX:"auto"}}>
-              <div style={{padding:"6px 14px",background:"#E6F5EC",fontSize:10,fontWeight:700,color:"#047857"}}>🧾 Facturas de otros ingresos (OI) · {totOI.toFixed(0)}€ sin IVA · se editan en 💰 Ingresos</div>
+              <div style={{padding:"6px 14px",background:"#F7F6F4",fontSize:10,fontWeight:700,color:"#047857"}}>🧾 Facturas de otros ingresos (OI) · {totOI.toFixed(0)}€ sin IVA · se editan en 💰 Ingresos</div>
               <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
                 <THead cols={["Proyecto","Persona","Fecha","Base €","Total €","Nº factura","Descripción","PDF"]} color="#059669"/>
                 <tbody>
@@ -6701,7 +6704,7 @@ function OtrosGastosTab({movs, guardar, projects, irBanco, ing}){
                     const proj=(projects||[]).find(p=>p.name===r.proyecto);
                     const personas=(r.reparto||[]).filter(x=>parseFloat(x.importe)>0).map(x=>x.member);
                     return(
-                      <tr key={r.id} style={{background:i%2===0?"#EAF7EE":"#FFFFFF"}}>
+                      <tr key={r.id} style={{background:i%2===0?"#F7F6F4":"#FFFFFF"}}>
                         <td style={{padding:"5px 8px",color:proj?.color||"#6B665F",fontWeight:proj?600:400}}>{r.proyecto||"— Empresa (general) —"}</td>
                         <td style={{padding:"5px 8px",color:"#3D3A36"}}>{personas.length?personas.join(", "):"—"}</td>
                         <td style={{padding:"5px 8px",whiteSpace:"nowrap",color:"#3D3A36"}}>{r.fecha||"—"}</td>
@@ -6719,7 +6722,7 @@ function OtrosGastosTab({movs, guardar, projects, irBanco, ing}){
           )}
           {ingresosO.length>0&&(
             <div style={{background:"#FFFFFF"}}>
-              {facturasOI.length>0&&<div style={{padding:"6px 14px",background:"#E6F5EC",fontSize:10,fontWeight:700,color:"#047857",borderTop:"1px solid #A9DDBF"}}>🏦 Entradas del banco sin factura</div>}
+              {facturasOI.length>0&&<div style={{padding:"6px 14px",background:"#F7F6F4",fontSize:10,fontWeight:700,color:"#047857",borderTop:"1px solid #E5E2DD"}}>🏦 Entradas del banco sin factura</div>}
               {tabla(ingresosO,"#059669")}
             </div>
           )}
@@ -6855,8 +6858,8 @@ tr.oing td,tr.is td{border-bottom:1px solid #171717}
         <div>
           <div style={{fontWeight:800,fontSize:17,color:"#171717",display:"flex",alignItems:"center",gap:10,fontFamily:FONT_TITULOS}}>
             📈 Cuenta de Resultados {year}
-            <span style={{display:"inline-flex",alignItems:"center",gap:5,background:"#E6F5EC",color:"#047857",borderRadius:99,padding:"2px 9px",fontSize:9.5,fontWeight:700}}>
-              <span style={{width:6,height:6,borderRadius:99,background:"#059669",animation:"bleskPulse 1.8s infinite"}}/> En directo
+            <span style={{display:"inline-flex",alignItems:"center",gap:5,background:"#F7F6F4",color:"#047857",borderRadius:99,padding:"2px 9px",fontSize:9.5,fontWeight:700}}>
+              <span style={{width:6,height:6,borderRadius:99,background:"#171717",animation:"bleskPulse 1.8s infinite"}}/> En directo
             </span>
           </div>
           <div style={{fontSize:11,color:"#6B665F",marginTop:2}}>Se actualiza sola con cada factura, hoja de gasto y otro gasto del banco · Clic en una partida para ver el detalle</div>
@@ -6882,11 +6885,11 @@ tr.oing td,tr.is td{border-bottom:1px solid #171717}
 
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8,marginBottom:14}}>
         {[
-          {l:"Ingresos",v:`${eur0(tIng)}€`,c:"#059669",bg:"#E6F5EC"},
-          {l:"Gastos",v:`${eur0(tGas)}€`,c:"#B91C1C",bg:"#FDECEC"},
+          {l:"Ingresos",v:`${eur0(tIng)}€`,c:"#059669",bg:"#FFFFFF"},
+          {l:"Gastos",v:`${eur0(tGas)}€`,c:"#B91C1C",bg:"#FFFFFF"},
           {l:"Resultado antes de imp.",v:`${eur0(tRAI)}€`,c:colRes(tRAI),bg:"#F7F6F4"},
-          {l:"Resultado neto",v:`${eur0(tNeto)}€`,c:colRes(tNeto),bg:tNeto>=0?"#E6F5EC":"#FDECEC",big:true},
-          {l:"Margen neto",v:margen===null?"—":`${margen.toFixed(1)}%`,c:"#2B2926",bg:"#E8F0FB"},
+          {l:"Resultado neto",v:`${eur0(tNeto)}€`,c:colRes(tNeto),bg:tNeto>=0?"#FFFFFF":"#FFFFFF",big:true},
+          {l:"Margen neto",v:margen===null?"—":`${margen.toFixed(1)}%`,c:"#2B2926",bg:"#FFFFFF"},
         ].map(k=>(
           <div key={k.l} style={{background:k.bg,borderRadius:10,padding:"11px 14px",border:k.big?`1.5px solid ${k.c}55`:"none"}}>
             <div style={{fontSize:9,color:k.c,fontWeight:700,letterSpacing:"0",marginBottom:3}}>{k.l}</div>
@@ -6904,7 +6907,7 @@ tr.oing td,tr.is td{border-bottom:1px solid #171717}
                 <th style={{...thBase,textAlign:"left",position:"sticky",left:0,background:"#FFFFFF",minWidth:200,borderRight:"1.5px solid #171717"}}></th>
                 {COLS.map((c,i)=>(
                   <th key={i} style={{...thBase,minWidth:c.tipo==="mes"?50:58,
-                    background:c.tipo==="mes"?(esActualMes(c.m)?"#FEF6DC":"#F2F0ED"):c.tipo==="total"?"#D3CFC9":"#FFFFFF",
+                    background:c.tipo==="mes"?(esActualMes(c.m)?"#F7F6F4":"#F2F0ED"):c.tipo==="total"?"#D3CFC9":"#FFFFFF",
                     color:c.tipo==="total"?"#FFF":c.tipo==="mes"&&esFuturoMes(c.m)?"#7F7973":"#171717",
                     borderLeft:c.tipo!=="mes"?"1px solid #171717":"none",borderRight:c.tipo==="tri"?"1px solid #171717":"none"}}>
                     {c.label}
@@ -6917,7 +6920,7 @@ tr.oing td,tr.is td{border-bottom:1px solid #171717}
                 const clic=!!f.items;
                 const fuerte=["ing","gas","rai","neto"].includes(f.tipo);
                 const lineaAbajo=["oing","ing","gas","rai","is"].includes(f.tipo||f.key);
-                const bgFila=f.tipo==="neto"?"#F7F6F4":abierta&&abierta===f.key?"#FEF6DC":"#FFFFFF";
+                const bgFila=f.tipo==="neto"?"#F7F6F4":abierta&&abierta===f.key?"#F7F6F4":"#FFFFFF";
                 const signo=["rai","neto"].includes(f.tipo);
                 return(
                   <tr key={ri} onClick={clic?()=>setAbierta(abierta===f.key?null:f.key):undefined}
@@ -6932,7 +6935,7 @@ tr.oing td,tr.is td{border-bottom:1px solid #171717}
                       const v=col(f.arr,c);
                       return(
                         <td key={i} style={{padding:"6px 5px",textAlign:"right",fontVariantNumeric:"tabular-nums",
-                          background:c.tipo==="mes"?(esActualMes(c.m)?"#FEF6DC":"#F7F6F4"):c.tipo==="total"?"#F2F0ED":undefined,
+                          background:c.tipo==="mes"?(esActualMes(c.m)?"#F7F6F4":"#F7F6F4"):c.tipo==="total"?"#F2F0ED":undefined,
                           borderLeft:c.tipo!=="mes"?"1px solid #171717":"none",borderRight:c.tipo==="tri"?"1px solid #171717":"none",
                           fontWeight:c.tipo!=="mes"||fuerte?800:500,
                           color:signo?colRes(v):f.color||"#3D3A36",
@@ -6950,7 +6953,7 @@ tr.oing td,tr.is td{border-bottom:1px solid #171717}
       </div>
 
       {filaAbierta&&(
-        <div style={{marginTop:12,border:"1px solid #F1DE9C",borderRadius:12,background:"#FEF6DC",padding:"12px 16px"}}>
+        <div style={{marginTop:12,border:"1px solid #E5E2DD",borderRadius:12,background:"#F7F6F4",padding:"12px 16px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
             <div style={{fontWeight:700,fontSize:12,color:"#171717"}}>{filaAbierta.label} · {year} · {filaAbierta.items.length} apuntes · {eur2(T(filaAbierta.arr))}</div>
             <button onClick={()=>setAbierta(null)} style={{background:"none",border:"none",color:"#7F7973",cursor:"pointer",fontSize:14}}>✕</button>
@@ -6959,7 +6962,7 @@ tr.oing td,tr.is td{border-bottom:1px solid #171717}
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
               <tbody>
                 {[...filaAbierta.items].sort((a,b)=>bancoTs(b.fecha)-bancoTs(a.fecha)).map((x,i)=>(
-                  <tr key={i} style={{borderTop:"1px solid #F1DE9C"}}>
+                  <tr key={i} style={{borderTop:"1px solid #E5E2DD"}}>
                     <td style={{padding:"4px 6px",color:"#6B665F",whiteSpace:"nowrap",width:80}}>{x.fecha}</td>
                     <td style={{padding:"4px 6px",color:"#171717"}}>{x.label}</td>
                     <td style={{padding:"4px 6px",color:"#6B665F",fontSize:10}}>{x.proyecto||"—"}</td>
@@ -7187,7 +7190,7 @@ function BalanceTab({ing, gas, hojas, otros, banco, rect, saldadas}){
                   return(
                     <th key={i} onClick={futuro(c.m)?undefined:()=>setMesSel(c.m)} title={futuro(c.m)?"":"Ver el balance a esta fecha"}
                       style={{...thBase,minWidth:c.tipo==="mes"?52:60,cursor:futuro(c.m)?"default":"pointer",
-                        background:sel&&c.tipo==="mes"?"#FEF6DC":c.tipo==="mes"?"#1F2937":"#D3CFC9",
+                        background:sel&&c.tipo==="mes"?"#F7F6F4":c.tipo==="mes"?"#1F2937":"#D3CFC9",
                         color:sel&&c.tipo==="mes"?"#171717":futuro(c.m)?"#6B665F":"#FFF",
                         borderLeft:c.tipo!=="mes"?"1px solid #4B5563":"none"}}>
                       {c.label}
@@ -7200,7 +7203,7 @@ function BalanceTab({ing, gas, hojas, otros, banco, rect, saldadas}){
               {filas.map((f,ri)=>{
                 const vacia=!f.campo;
                 const clic=!!f.det;
-                const bg=f.total?"#171717":f.nivel===0?"#E5E2DD":abierta===f.det&&clic?"#FEF6DC":"#FFFFFF";
+                const bg=f.total?"#171717":f.nivel===0?"#E5E2DD":abierta===f.det&&clic?"#F7F6F4":"#FFFFFF";
                 const color=f.total?"#FFFFFF":vacia?"#7F7973":"#171717";
                 return(
                   <tr key={ri} onClick={clic?()=>setAbierta(abierta===f.det?null:f.det):undefined}
@@ -7218,7 +7221,7 @@ function BalanceTab({ing, gas, hojas, otros, banco, rect, saldadas}){
                       return(
                         <td key={i} onDoubleClick={f.editable&&c.tipo==="mes"&&!futuro(c.m)?()=>editarManual(f.editable,c.m,f.label):undefined}
                           style={{padding:"5px 4px",textAlign:"right",fontVariantNumeric:"tabular-nums",
-                            background:f.total?undefined:sel?"#FEF6DC":c.tipo==="mes"?"#F7F6F4":c.tipo==="total"?"#F2F0ED":undefined,
+                            background:f.total?undefined:sel?"#F7F6F4":c.tipo==="mes"?"#F7F6F4":c.tipo==="total"?"#F2F0ED":undefined,
                             borderLeft:c.tipo!=="mes"?`1px solid ${f.total?"#4B5563":"#D3CFC9"}`:"none",
                             fontWeight:f.total||f.nivel===0||c.tipo!=="mes"?800:500,
                             color:f.total?"#FFF":v<0?"#B91C1C":color,
@@ -7270,8 +7273,8 @@ ${tabla("ACTIVO",ACTIVO)}${tabla("PATRIMONIO NETO Y PASIVO",PASIVO)}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,flexWrap:"wrap",gap:10}}>
         <div>
           <div style={{fontWeight:800,fontSize:17,color:"#171717",display:"flex",alignItems:"center",gap:10,fontFamily:FONT_TITULOS}}>⚖️ Balance de situación {year}
-            <span style={{display:"inline-flex",alignItems:"center",gap:5,background:"#E6F5EC",color:"#047857",borderRadius:99,padding:"2px 9px",fontSize:9.5,fontWeight:700}}>
-              <span style={{width:6,height:6,borderRadius:99,background:"#059669",animation:"bleskPulse 1.8s infinite"}}/> En directo
+            <span style={{display:"inline-flex",alignItems:"center",gap:5,background:"#F7F6F4",color:"#047857",borderRadius:99,padding:"2px 9px",fontSize:9.5,fontWeight:700}}>
+              <span style={{width:6,height:6,borderRadius:99,background:"#171717",animation:"bleskPulse 1.8s infinite"}}/> En directo
             </span>
           </div>
           <div style={{fontSize:11,color:"#6B665F",marginTop:2}}>Se rellena solo con las facturas, hojas de gasto, el banco y la cuenta de resultados · foto a fin de cada mes · pincha en un mes de la cabecera para ver el balance a esa fecha · clic en una partida con ▸ para ver el detalle</div>
@@ -7287,9 +7290,9 @@ ${tabla("ACTIVO",ACTIVO)}${tabla("PATRIMONIO NETO Y PASIVO",PASIVO)}
       <div style={{fontSize:11,fontWeight:700,color:"#3D3A36",marginBottom:6}}>📅 A {fechaSel}</div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:8,marginBottom:14}}>
         {[
-          {l:"Total activo",v:eur2(S.activo),c:"#2B2926",bg:"#E8F0FB"},
-          {l:"Patrimonio neto",v:eur2(S.fondos),c:S.fondos>=0?"#059669":"#B91C1C",bg:S.fondos>=0?"#E6F5EC":"#FDECEC"},
-          {l:"Pasivo",v:eur2(S.pasivoCorriente),c:"#B45309",bg:"#FEF6DC"},
+          {l:"Total activo",v:eur2(S.activo),c:"#2B2926",bg:"#FFFFFF"},
+          {l:"Patrimonio neto",v:eur2(S.fondos),c:S.fondos>=0?"#059669":"#B91C1C",bg:S.fondos>=0?"#FFFFFF":"#FFFFFF"},
+          {l:"Pasivo",v:eur2(S.pasivoCorriente),c:"#3D3A36",bg:"#FFFFFF"},
         ].map(k=>(
           <div key={k.l} style={{background:k.bg,borderRadius:10,padding:"11px 14px"}}>
             <div style={{fontSize:9,color:k.c,fontWeight:700,letterSpacing:"0",marginBottom:3}}>{k.l}</div>
@@ -7303,7 +7306,7 @@ ${tabla("ACTIVO",ACTIVO)}${tabla("PATRIMONIO NETO Y PASIVO",PASIVO)}
       <Tabla titulo="PATRIMONIO NETO Y PASIVO" filas={PASIVO}/>
 
       {detalle&&(
-        <div style={{marginBottom:12,border:"1px solid #F1DE9C",borderRadius:12,background:"#FEF6DC",padding:"12px 16px"}}>
+        <div style={{marginBottom:12,border:"1px solid #E5E2DD",borderRadius:12,background:"#F7F6F4",padding:"12px 16px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
             <div style={{fontWeight:700,fontSize:12,color:"#171717"}}>{DET[abierta]} a {fechaSel} · {detalle.length} · {eur2(detalle.reduce((s,d)=>s+d.pendiente,0))}</div>
             <button onClick={()=>setAbierta(null)} style={{background:"none",border:"none",color:"#7F7973",cursor:"pointer",fontSize:14}}>✕</button>
@@ -7313,7 +7316,7 @@ ${tabla("ACTIVO",ACTIVO)}${tabla("PATRIMONIO NETO Y PASIVO",PASIVO)}
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
               <tbody>
                 {[...detalle].sort((a,b)=>a.t-b.t).map((d,i)=>(
-                  <tr key={i} style={{borderTop:"1px solid #F1DE9C"}}>
+                  <tr key={i} style={{borderTop:"1px solid #E5E2DD"}}>
                     <td style={{padding:"4px 6px",color:"#6B665F",whiteSpace:"nowrap",width:80}}>{d.r.fecha}</td>
                     <td style={{padding:"4px 6px",color:"#171717"}}>{d.kind==="hoja"?`HG · ${d.r.responsable||"Sin responsable"}`:`${d.r.ref||"s/ref"} · ${d.r.descripcion||""}`}</td>
                     <td style={{padding:"4px 6px",color:"#6B665F",fontSize:10}}>{d.pago===Infinity?"sin cobrar / pagar":`saldada el ${new Date(d.pago).toLocaleDateString("es-ES")}`}</td>
@@ -7419,7 +7422,7 @@ function IngresoModal({inicial, projects, onGuardar, onCerrar, gasto}){
             );
           })}
         </div>
-        <div style={{marginTop:10,fontSize:12,color:Math.abs(falta)<0.02?"#059669":"#B45309",fontWeight:600}}>
+        <div style={{marginTop:10,fontSize:12,color:Math.abs(falta)<0.02?"#059669":"#3D3A36",fontWeight:600}}>
           Repartido: {eur(repartido)} de {eur(total)}{Math.abs(falta)>=0.02&&` · ${falta>0?"faltan":"sobran"} ${eur(Math.abs(falta))}`}
         </div>
         <button onClick={guardar} disabled={!ok}
@@ -7450,7 +7453,7 @@ function MovimientosLista({filas, setFilas, projects, gasto}){
           <div style={{fontSize:11,color:"#6B665F"}}>{gasto?"Dinero que ha gastado el equipo":"Dinero que ha ganado el equipo: premios, retos, pagos…"}</div>
           <div style={{fontSize:22,fontWeight:800,color:ac,marginTop:2}}>{gasto&&total?"−":""}{eur(total)}</div>
         </div>
-        {!visitante&&<button onClick={()=>setModal("nuevo")} style={{background:ac,color:"#FFF",border:"none",borderRadius:10,padding:"10px 16px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>{gasto?"+ Añadir gasto":"+ Añadir ingreso"}</button>}
+        {!visitante&&<button onClick={()=>setModal("nuevo")} style={{background:"#171717",color:"#FFF",border:"none",borderRadius:99,padding:"10px 16px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>{gasto?"+ Añadir gasto":"+ Añadir ingreso"}</button>}
       </div>
       {lista.length===0&&<div style={{fontSize:12,color:"#7F7973",fontStyle:"italic",padding:20,textAlign:"center",background:"#FFF",borderRadius:12,border:"1px dashed #E5E2DD"}}>{gasto?"Todavía no hay gastos.":"Todavía no hay ingresos. Pulsa “Añadir ingreso” cuando ganéis dinero."}</div>}
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -7462,7 +7465,7 @@ function MovimientosLista({filas, setFilas, projects, gasto}){
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:14,fontWeight:700}}>{r.ref||r.descripcion||(gasto?"Gasto":"Ingreso")}</div>
                   <div style={{fontSize:11,color:"#6B665F",marginTop:2}}>{r.fecha}{r.proyecto?` · ${r.proyecto}`:""}{r.ref&&r.descripcion?` · ${r.descripcion}`:""}</div>
-                  {r.linkFactura&&<a href={r.linkFactura} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#2563EB"}}>📎 Ver documento</a>}
+                  {r.linkFactura&&<a href={r.linkFactura} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#3D3A36"}}>📎 Ver documento</a>}
                 </div>
                 <div style={{fontSize:16,fontWeight:800,color:ac,whiteSpace:"nowrap"}}>{gasto?"−":""}{eur(importeIngreso(r))}</div>
                 {!visitante&&<div style={{display:"flex",gap:2}}>
@@ -7944,7 +7947,7 @@ function AuditoriaChecklist({data, storageKey, label, onUpdate}){
               <span style={{fontWeight:600,fontSize:12,color:"#2B2926"}}>{sec.title}</span>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <span style={{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:99,
-                  background:secDone===sec.items.length?"#E6F5EC":"#EDEBE8",
+                  background:secDone===sec.items.length?"#F7F6F4":"#EDEBE8",
                   color:secDone===sec.items.length?"#059669":"#6B665F",
                   border:`1px solid ${secDone===sec.items.length?"#A9DDBF":"#E5E2DD"}`
                 }}>{secDone}/{sec.items.length}</span>
@@ -7970,7 +7973,7 @@ function AuditoriaChecklist({data, storageKey, label, onUpdate}){
                           textDecoration:checked[item.id]?"line-through":"none",lineHeight:1.5}}>{item.text}</span>
                         <span style={{marginLeft:6}}>
                           {item.urgent&&<span style={{fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:4,background:"#FDECEC",color:"#B91C1C",marginRight:4}}>urgente</span>}
-                          {item.key&&<span style={{fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:4,background:"#FEF6DC",color:"#A8341F"}}>clave</span>}
+                          {item.key&&<span style={{fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:4,background:"#F7F6F4",color:"#A8341F"}}>clave</span>}
                         </span>
                       </div>
                     </div>
@@ -8038,8 +8041,8 @@ function AuditoriaTab(){
           const tot=a.data.reduce((s,sec)=>s+sec.items.length,0);
           const done=a.data.reduce((s,sec)=>s+sec.items.filter(i=>st[i.id]).length,0);
           const pct=tot?Math.round(done/tot*100):0;
-          const COLORS={finanzas:{bg:"#FBEFE3",accent:"#F59E0B",text:"#A8341F"},digital:{bg:"#FBEAE5",accent:"#D94A32",text:"#A8341F"},legal:{bg:"#EAF7EE",accent:"#22C55E",text:"#14532D"}};
-          const c=COLORS[a.id]||{bg:"#E6F3FB",accent:"#0EA5E9",text:"#0C4A6E"};
+          const COLORS={finanzas:{bg:"#FFFFFF",accent:"#3D3A36",text:"#A8341F"},digital:{bg:"#FFFFFF",accent:"#3D3A36",text:"#A8341F"},legal:{bg:"#FFFFFF",accent:"#3D3A36",text:"#14532D"}};
+          const c=COLORS[a.id]||{bg:"#FFFFFF",accent:"#3D3A36",text:"#3D3A36"};
           return(
             <div key={a.id} onClick={()=>setAuditoria(a.id)} style={{
               background:auditoria===a.id?c.bg:"#F7F6F4",
@@ -8462,14 +8465,14 @@ function DiamanteTab({ing, gas, hojas, projects, diamante, setDiamante}){
 }
 
 // ── CALENDARIO TAB ────────────────────────────────────────────────────────────
-const PRIORIDAD_COLORS = {"🔴 Alta":"#FDECEC","🟡 Media":"#FEF9DD","🟢 Baja":"#E6F5EC"};
+const PRIORIDAD_COLORS = {"🔴 Alta":"#FDECEC","🟡 Media":"#FEF9DD","🟢 Baja":"#F7F6F4"};
 const PRIORIDAD_TEXT   = {"🔴 Alta":"#B91C1C","🟡 Media":"#78350F","🟢 Baja":"#14532D"};
 
 // ── CALENDARIO TAB ────────────────────────────────────────────────────────────
 const PRIORIDADES = [
   {id:"alta",   label:"🔴 Alta",   color:"#B91C1C", light:"#FDECEC"},
-  {id:"media",  label:"🟡 Media",  color:"#D97706", light:"#FEF6DC"},
-  {id:"baja",   label:"🟢 Baja",   color:"#16A34A", light:"#E6F5EC"},
+  {id:"media",  label:"🟡 Media",  color:"#A8341F", light:"#F7F6F4"},
+  {id:"baja",   label:"🟢 Baja",   color:"#16A34A", light:"#F7F6F4"},
 ];
 const CAL_ESTADOS = ["Pendiente","En curso","Hecho"];
 
@@ -8501,8 +8504,8 @@ function CalendarioTab({tareas, setTareas, projects}){
     return(
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
         {CAL_ESTADOS.map(estado=>{
-          const col = estado==="Pendiente"?"#2B2926":estado==="En curso"?"#D97706":"#16A34A";
-          const colLight = estado==="Pendiente"?"#E8F0FB":estado==="En curso"?"#FEF6DC":"#E6F5EC";
+          const col = "#2B2926"; // columnas sin color (diseño glass)
+          const colLight = "#F7F6F4";
           const items = tareas.filter(t=>t.estado===estado).sort((a,b)=>a.fecha>b.fecha?1:-1);
           return(
             <div key={estado}>
@@ -8589,10 +8592,10 @@ function CalendarioTab({tareas, setTareas, projects}){
             const tareasDelDia = valido?tareas.filter(t=>t.fecha===fecha):[];
             const esHoy = fecha===hoy;
             return(
-              <div key={i} style={{minHeight:80,background:esHoy?"#E8F0FB":valido?"#FFFFFF":"#F7F6F4",
+              <div key={i} style={{minHeight:80,background:esHoy?"#F7F6F4":valido?"#FFFFFF":"#F7F6F4",
                 borderRadius:8,border:`1px solid ${esHoy?"#BBD3F0":"#E5E2DD"}`,padding:"4px",
                 opacity:valido?1:0.3}}>
-                {valido&&<div style={{fontSize:10,fontWeight:esHoy?800:600,color:esHoy?"#1D4ED8":"#57534E",marginBottom:3}}>{dia}</div>}
+                {valido&&<div style={{fontSize:10,fontWeight:esHoy?800:600,color:esHoy?"#3D3A36":"#57534E",marginBottom:3}}>{dia}</div>}
                 {tareasDelDia.slice(0,3).map(t=>{
                   const p=pr(t);
                   return(
@@ -8734,7 +8737,7 @@ const MTA_PROCESOS = [
   {
     id:"personal_cultivation", label:"Personal Cultivation II", emoji:"🌱",
     materia:"2.4 · Liderazgo, aprendizaje autogestionado y desarrollo personal II",
-    color:"#14532D", light:"#E6F5EC",
+    color:"#14532D", light:"#F7F6F4",
     indicadores:[
       "Rutinas diarias de bienestar (mental, físico, emocional, espiritual) integradas en la TC",
       "Leído 'Teaching Critical Thinking' (bell hooks) + training session sobre comunicación horizontal",
@@ -8745,7 +8748,7 @@ const MTA_PROCESOS = [
   {
     id:"self_driven", label:"Self Driven Learning II", emoji:"🧭",
     materia:"2.4 · Liderazgo, aprendizaje autogestionado y desarrollo personal II",
-    color:"#2B2926", light:"#E8F0FB",
+    color:"#2B2926", light:"#F7F6F4",
     indicadores:[
       "Learning Contract/Compass revisado regularmente con progreso medible",
       "80 learning points — ensayos que cristalizan conocimiento aplicado a proyectos",
@@ -8787,7 +8790,7 @@ const MTA_PROCESOS = [
   {
     id:"leading_thoughts", label:"Leading Thoughts II", emoji:"💡",
     materia:"4.2 · Creación y desarrollo de equipos y comunidades II",
-    color:"#A8341F", light:"#FEF6DC",
+    color:"#A8341F", light:"#F7F6F4",
     indicadores:[
       "Todo el equipo interiorizado y consecuente con los Leading Thoughts de la TC",
       "Misión, visión y valores rediseñados; planes estratégicos alineados con propósito",
@@ -8796,7 +8799,7 @@ const MTA_PROCESOS = [
   {
     id:"team_lj", label:"Team Learning Journeys II", emoji:"✈️",
     materia:"5.2 · Estancias Internacionales II",
-    color:"#BE185D", light:"#FCE7F3",
+    color:"#3D3A36", light:"#F7F6F4",
     indicadores:[
       "Actitud de respeto y aportación al bienestar del equipo durante el LJ",
       "Team Learning Contract creado proactivamente, integrado en propósito personal",
@@ -8809,7 +8812,7 @@ const MTA_PROCESOS = [
   {
     id:"digital_tech", label:"Digital & Exponential Tech Skill II", emoji:"💻",
     materia:"1.6 · Tecnologías emergentes II",
-    color:"#047857", light:"#E6F5EC",
+    color:"#047857", light:"#F7F6F4",
     indicadores:[
       "Mínimo 2 evidencias individuales aptas por miembro; identidad digital profesional",
       "Páginas web de proyectos diseñadas desde investigación de usuario",
@@ -8822,7 +8825,7 @@ const MTA_PROCESOS = [
   {
     id:"financial_tech", label:"Financial Tech Skill II", emoji:"💰",
     materia:"1.4 · Finanzas para emprendedores II",
-    color:"#B45309", light:"#FEF9DD",
+    color:"#A8341F", light:"#FEF9DD",
     indicadores:[
       "Panel Modelo de Medición de Valor Financiero MTA creado con 5 indicadores",
       "Análisis de viabilidad y proyección a 3 años de proyectos/formas jurídicas",
@@ -8834,7 +8837,7 @@ const MTA_PROCESOS = [
   {
     id:"legal_tech", label:"Legal Tech Skill II", emoji:"⚖️",
     materia:"1.2 · Creación y organización de empresa II",
-    color:"#4C3DB0", light:"#F1EEFC",
+    color:"#4C3DB0", light:"#F7F6F4",
     indicadores:[
       "Mínimo 2 evidencias individuales aptas; conocimiento compartido en equipo",
       "Identificación de necesidades de protección intelectual e industrial en proyectos",
@@ -8856,7 +8859,7 @@ const MTA_PROCESOS = [
   {
     id:"teampreneurship", label:"Teampreneurship & Customer Co-creation II", emoji:"🤝",
     materia:"3.2 · Gestión de clientes, marketing y ventas II",
-    color:"#1D4ED8", light:"#E8F0FB",
+    color:"#3D3A36", light:"#F7F6F4",
     indicadores:[
       "100 CVs acumuladas desde el inicio; propuesta de valor mejorada",
       "Plan de clientes estratégicos con herramientas y referencias teóricas (funnel de ventas...)",
@@ -8868,7 +8871,7 @@ const MTA_PROCESOS = [
   {
     id:"design_thinking", label:"Design Thinking I", emoji:"🎨",
     materia:"6.1 · Pensamiento de diseño y generación de modelos de negocio I",
-    color:"#BE185D", light:"#FCE7F3",
+    color:"#3D3A36", light:"#F7F6F4",
     indicadores:[
       "Programa de pre-incubación MTA completado con dossier de investigación",
       "Metodología de diseño aprendida aplicada; resultados en proyectos",
@@ -8878,7 +8881,7 @@ const MTA_PROCESOS = [
   {
     id:"business_model", label:"Business Model Creation I", emoji:"🏗️",
     materia:"6.1 · Pensamiento de diseño y generación de modelos de negocio I",
-    color:"#065F46", light:"#E6F5EC",
+    color:"#065F46", light:"#F7F6F4",
     indicadores:[
       "3 conceptos innovadores ideados en pre-incubación; 1 en fase prototipo/validación con cliente",
       "Cada miembro en al menos 1 proyecto a medio/largo plazo que cumple criterios MTA",
@@ -8887,7 +8890,7 @@ const MTA_PROCESOS = [
   {
     id:"innovation_strategy", label:"Innovation Strategy I", emoji:"🚀",
     materia:"6.3 · Estrategia e innovación abierta I",
-    color:"#2B2926", light:"#E8F0FB",
+    color:"#2B2926", light:"#F7F6F4",
     indicadores:[
       "Equipo capacitado para liderar procesos de innovación; fases y factores clave entendidos",
       "Recursos internos (tiempo, dinero) destinados a innovación; resultados medidos",
@@ -8896,7 +8899,7 @@ const MTA_PROCESOS = [
   {
     id:"branding", label:"Branding & Communication I", emoji:"📣",
     materia:"6.3 · Estrategia e innovación abierta I",
-    color:"#7C3AED", light:"#F1EEFC",
+    color:"#3D3A36", light:"#F7F6F4",
     indicadores:[
       "Storytelling y pitch dominados; exposición a terceros medida y mejorada",
       "Presencia activa en redes y medios; estrategia de comunicación por proyecto",
@@ -8906,7 +8909,7 @@ const MTA_PROCESOS = [
 ];
 
 const MTA_ESTADO_OPTS = ["⬜ Sin empezar","🟡 En progreso","🟢 Completado","🔴 Bloqueado"];
-const MTA_ESTADO_COLORS = {"⬜ Sin empezar":"#7F7973","🟡 En progreso":"#F59E0B","🟢 Completado":"#22C55E","🔴 Bloqueado":"#EF4444"};
+const MTA_ESTADO_COLORS = {"⬜ Sin empezar":"#7F7973","🟡 En progreso":"#3D3A36","🟢 Completado":"#22C55E","🔴 Bloqueado":"#EF4444"};
 
 function MTAModelTab({mta, setMta}){
   const [open, setOpen] = useState(null);
@@ -8962,7 +8965,7 @@ function MTAModelTab({mta, setMta}){
                             <div style={{height:"100%",width:`${procPct}%`,background:proc.color,borderRadius:99}}/>
                           </div>
                           <span style={{fontSize:10,color:"#7F7973"}}>{procDone}/{proc.indicadores.length}</span>
-                          {procDone===proc.indicadores.length&&<span style={{fontSize:9,fontWeight:700,color:"#22C55E",background:"#E6F5EC",padding:"1px 7px",borderRadius:99}}>✓ COMPLETADO</span>}
+                          {procDone===proc.indicadores.length&&<span style={{fontSize:9,fontWeight:700,color:"#22C55E",background:"#F7F6F4",padding:"1px 7px",borderRadius:99}}>✓ COMPLETADO</span>}
                         </div>
                       </div>
                       <span style={{color:"#A19B93",fontSize:13,transform:isOpen?"rotate(180deg)":"none",transition:"transform .2s"}}>▼</span>
@@ -8973,8 +8976,8 @@ function MTAModelTab({mta, setMta}){
                           {proc.indicadores.map((ind,i)=>{
                             const key=`${proc.id}_ind_${i}`;
                             const estado=mta[key]||"⬜ Sin empezar";
-                            const bg = estado==="🟢 Completado"?"#E6F5EC":estado==="🟡 En progreso"?"#FEF6DC":estado==="🔴 Bloqueado"?"#FDECEC":"#F7F6F4";
-                            const border = estado==="🟢 Completado"?"#E6F5EC":estado==="🟡 En progreso"?"#FEF6DC":estado==="🔴 Bloqueado"?"#FECDD3":"#E5E2DD";
+                            const bg = estado==="🟢 Completado"?"#F7F6F4":estado==="🟡 En progreso"?"#F7F6F4":estado==="🔴 Bloqueado"?"#FDECEC":"#F7F6F4";
+                            const border = estado==="🟢 Completado"?"#F7F6F4":estado==="🟡 En progreso"?"#F7F6F4":estado==="🔴 Bloqueado"?"#FECDD3":"#E5E2DD";
                             return(
                               <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"8px 12px",background:bg,borderRadius:8,border:`1px solid ${border}`}}>
                                 <div style={{flex:1,fontSize:11,color:"#171717",lineHeight:1.6,paddingTop:2}}>{ind}</div>
@@ -9096,8 +9099,8 @@ function ActasTab({actas, setActas, projects}){
                       {acta.titulo||"Reunión sin título"}
                     </span>
                     <span style={{fontSize:11,color:"#7F7973"}}>{acta.fecha}</span>
-                    {pendientes>0&&<span style={{background:"#FEF6DC",color:"#A8341F",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:99}}>⏳ {pendientes} pendiente{pendientes>1?"s":""}</span>}
-                    {hechas>0&&pendientes===0&&<span style={{background:"#E6F5EC",color:"#059669",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:99}}>✅ Todo hecho</span>}
+                    {pendientes>0&&<span style={{background:"#F7F6F4",color:"#A8341F",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:99}}>⏳ {pendientes} pendiente{pendientes>1?"s":""}</span>}
+                    {hechas>0&&pendientes===0&&<span style={{background:"#F7F6F4",color:"#059669",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:99}}>✅ Todo hecho</span>}
                   </div>
                   <div style={{display:"flex",gap:6,marginTop:5,flexWrap:"wrap"}}>
                     {acta.asistentes.slice(0,6).map(name=>{
@@ -9205,7 +9208,7 @@ function ActasTab({actas, setActas, projects}){
                         {acta.tareas.map(t=>{
                           const resp=INIT_MEMBERS.find(m=>m.name===t.responsable);
                           return(
-                            <div key={t.id} style={{display:"flex",alignItems:"center",gap:6,background:t.done?"#E6F5EC":"#F7F6F4",borderRadius:7,padding:"5px 8px"}}>
+                            <div key={t.id} style={{display:"flex",alignItems:"center",gap:6,background:t.done?"#F7F6F4":"#F7F6F4",borderRadius:7,padding:"5px 8px"}}>
                               <input type="checkbox" checked={t.done} onChange={e=>updTarea(acta.id,t.id,"done",e.target.checked)}
                                 style={{cursor:"pointer",width:14,height:14,accentColor:"#059669"}}/>
                               <span style={{flex:1,fontSize:11,color:t.done?"#7F7973":"#2B2926",textDecoration:t.done?"line-through":"none",lineHeight:1.4}}>{t.texto}</span>
@@ -9226,7 +9229,7 @@ function ActasTab({actas, setActas, projects}){
                           placeholder="Añadir tarea..." 
                           style={{flex:1,border:"1px solid #E5E2DD",borderRadius:7,padding:"6px 9px",fontSize:11,fontFamily:"inherit"}}/>
                         <button onClick={()=>addTarea(acta.id)}
-                          style={{background:"#059669",color:"#FFF",border:"none",borderRadius:7,padding:"6px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>+</button>
+                          style={{background:"#171717",color:"#FFF",border:"none",borderRadius:7,padding:"6px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>+</button>
                       </div>
                     </div>
                   </div>
@@ -9279,8 +9282,8 @@ function CRMTab({data,setData,projects}){
       <Block key={p.name} name={p.name} color={p.color} light={p.light} badge={`${f.cont} contactos · ${f.vent} ventas · ${pct}% conv.`}>
         {/* Funnel */}
         <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
-          {[{l:"Contactados",v:f.cont,bg:"#E8F0FB",c:"#2B2926"},{l:"Propuesta",v:f.prop,bg:"#FEF9DD",c:"#78350F"},
-            {l:"CV cerrada",v:f.cvc,bg:"#FBEFE3",c:"#7C2D12"},{l:"Venta cerrada",v:f.vent,bg:"#E6F5EC",c:"#14532D"},
+          {[{l:"Contactados",v:f.cont,bg:"#FFFFFF",c:"#2B2926"},{l:"Propuesta",v:f.prop,bg:"#FEF9DD",c:"#78350F"},
+            {l:"CV cerrada",v:f.cvc,bg:"#FFFFFF",c:"#7C2D12"},{l:"Venta cerrada",v:f.vent,bg:"#FFFFFF",c:"#14532D"},
             {l:"Conversión",v:`${pct}%`,bg:"#F2F0ED",c:"#059669"}
           ].map(s=>(
             <div key={s.l} style={{background:s.bg,borderRadius:8,padding:"6px 12px",textAlign:"center",minWidth:70}}>
@@ -9388,7 +9391,7 @@ function TrabajadoresSemana({bp,cv}){
                 </div>
                 <div style={{minWidth:0}}>
                   <div style={{fontSize:15,fontWeight:800,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b.quien.map(m=>m.name).join(", ")}</div>
-                  <div style={{fontSize:12,color:"#FCD34D",fontWeight:700}}>{p.fmt(b.max)}</div>
+                  <div style={{fontSize:12,color:"#E5E2DD",fontWeight:700}}>{p.fmt(b.max)}</div>
                 </div>
               </div>}
             </div>
@@ -9457,16 +9460,16 @@ function InicioTab({bp,cv,ing,gas,hojas,projects,tareas,setTareas}){
   const updates = [];
   // Últimas facturas
   const lastFact = [...ing].sort((a,b)=>b.id-a.id).slice(0,2);
-  lastFact.forEach(f=>{ if(f.ref) updates.push({icon:"💰",text:`${f.ref} añadida — ${parseFloat(f.base||0).toFixed(0)}€ base`,color:"#059669",bg:"#E6F5EC"}); });
+  lastFact.forEach(f=>{ if(f.ref) updates.push({icon:"💰",text:`${f.ref} añadida — ${parseFloat(f.base||0).toFixed(0)}€ base`,color:"#059669",bg:"#FFFFFF"}); });
   // Últimos bookpoints
   const allBP = Object.entries(bp).filter(([m])=>!MIEMBROS_OCULTOS.includes(m)).flatMap(([m,rows])=>rows.map(r=>({...r,member:m}))).sort((a,b)=>b.id-a.id).slice(0,2);
-  allBP.forEach(r=>{ if(r.libro) updates.push({icon:"📚",text:`${r.member} — ${r.puntos} pts — ${r.libro}`,color:"#D94A32",bg:"#FBEAE5"}); });
+  allBP.forEach(r=>{ if(r.libro) updates.push({icon:"📚",text:`${r.member} — ${r.puntos} pts — ${r.libro}`,color:"#D94A32",bg:"#FFFFFF"}); });
   // Últimas CVs
   const allCV = Object.entries(cv).filter(([m])=>!MIEMBROS_OCULTOS.includes(m)).flatMap(([m,rows])=>rows.filter(r=>!r.linkedFrom&&r.cat==="CV").map(r=>({...r,member:m}))).sort((a,b)=>b.id-a.id).slice(0,2);
-  allCV.forEach(r=>{ if(r.cliente) updates.push({icon:"🤝",text:`${r.member} cerró CV con ${r.cliente}${r.proyecto?" ("+r.proyecto+")":""}`,color:"#0EA5E9",bg:"#E6F3FB"}); });
+  allCV.forEach(r=>{ if(r.cliente) updates.push({icon:"🤝",text:`${r.member} cerró CV con ${r.cliente}${r.proyecto?" ("+r.proyecto+")":""}`,color:"#3D3A36",bg:"#FFFFFF"}); });
   // Último gasto
   const lastGas = [...gas].sort((a,b)=>b.id-a.id)[0];
-  if(lastGas?.descripcion) updates.push({icon:"💸",text:`Gasto registrado — ${lastGas.descripcion} — ${parseFloat(lastGas.base||0).toFixed(0)}€`,color:"#B91C1C",bg:"#FDECEC"});
+  if(lastGas?.descripcion) updates.push({icon:"💸",text:`Gasto registrado — ${lastGas.descripcion} — ${parseFloat(lastGas.base||0).toFixed(0)}€`,color:"#B91C1C",bg:"#FFFFFF"});
   // Sort updates by most recent (facturas first, then BP, CV, gastos)
 
   // ── Mini gráfico mes actual ────────────────────────────────────────────────
@@ -9524,12 +9527,12 @@ function InicioTab({bp,cv,ing,gas,hojas,projects,tareas,setTareas}){
       {/* ── KPIs principales ── */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:10,marginBottom:24}}>
         {[
-          {label:"Facturación",val:totalIng.toFixed(0)+"€",color:"#065F46",bg:"#E6F5EC",accent:"#059669"},
-          {label:"Neto",val:(neto>=0?"+":"")+neto.toFixed(0)+"€",color:neto>=0?"#065F46":"#991B1B",bg:neto>=0?"#E6F5EC":"#FDECEC",accent:neto>=0?"#059669":"#EF4444"},
-          {label:"Bookpoints",val:String(totBP),color:"#A8341F",bg:"#FBEAE5",accent:"#D94A32"},
-          {label:"CV totales",val:String(totCV),color:"#0C4A6E",bg:"#E6F3FB",accent:"#0EA5E9"},
-          {label:"Proyectos",val:String(projects.length),color:"#A8341F",bg:"#FBEFE3",accent:"#F59E0B"},
-          {label:"Fact. pendientes",val:String(pendientes),color:pendientes>0?"#991B1B":"#065F46",bg:pendientes>0?"#FDECEC":"#E6F5EC",accent:pendientes>0?"#EF4444":"#059669"},
+          {label:"Facturación",val:totalIng.toFixed(0)+"€",color:"#065F46",bg:"#FFFFFF",accent:"#3D3A36"},
+          {label:"Neto",val:(neto>=0?"+":"")+neto.toFixed(0)+"€",color:neto>=0?"#065F46":"#991B1B",bg:neto>=0?"#FFFFFF":"#FFFFFF",accent:neto>=0?"#3D3A36":"#3D3A36"},
+          {label:"Bookpoints",val:String(totBP),color:"#A8341F",bg:"#FFFFFF",accent:"#3D3A36"},
+          {label:"CV totales",val:String(totCV),color:"#3D3A36",bg:"#FFFFFF",accent:"#3D3A36"},
+          {label:"Proyectos",val:String(projects.length),color:"#A8341F",bg:"#FFFFFF",accent:"#3D3A36"},
+          {label:"Fact. pendientes",val:String(pendientes),color:pendientes>0?"#991B1B":"#065F46",bg:pendientes>0?"#FFFFFF":"#FFFFFF",accent:pendientes>0?"#3D3A36":"#3D3A36"},
         ].map(k=>(
           <div key={k.label} style={{background:k.bg,borderRadius:14,padding:"16px 18px",border:"none",position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:k.accent,borderRadius:"14px 14px 0 0"}}/>
@@ -9593,16 +9596,16 @@ function InicioTab({bp,cv,ing,gas,hojas,projects,tareas,setTareas}){
           })).filter(p=>p.ing>0).sort((a,b)=>b.ing-a.ing).slice(0,5);
           const maxIng=Math.max(...topProj.map(p=>p.ing),1);
           return topProj.length>0?(
-            <div style={{background:"#E6F3FB",borderRadius:14,padding:"16px 18px",gridColumn:"1 / -1"}}>
-              <div style={{fontSize:10,color:"#0C4A6E",fontWeight:600,letterSpacing:"0",marginBottom:14}}>Top proyectos</div>
+            <div style={{background:"#F7F6F4",borderRadius:14,padding:"16px 18px",gridColumn:"1 / -1"}}>
+              <div style={{fontSize:10,color:"#3D3A36",fontWeight:600,letterSpacing:"0",marginBottom:14}}>Top proyectos</div>
               {topProj.map(p=>(
                 <div key={p.name} style={{marginBottom:10}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4}}>
-                    <span style={{fontSize:11,color:"#0C4A6E",fontWeight:500}}>{p.name}</span>
-                    <span style={{fontSize:13,fontWeight:500,color:p.color||"#0EA5E9"}}>{p.ing.toFixed(0)}€</span>
+                    <span style={{fontSize:11,color:"#3D3A36",fontWeight:500}}>{p.name}</span>
+                    <span style={{fontSize:13,fontWeight:500,color:p.color||"#3D3A36"}}>{p.ing.toFixed(0)}€</span>
                   </div>
-                  <div style={{height:4,background:"#E6F3FB",borderRadius:99,overflow:"hidden"}}>
-                    <div style={{height:4,background:p.color||"#0EA5E9",width:`${Math.round(p.ing/maxIng*100)}%`,borderRadius:99}}/>
+                  <div style={{height:4,background:"#F7F6F4",borderRadius:99,overflow:"hidden"}}>
+                    <div style={{height:4,background:p.color||"#3D3A36",width:`${Math.round(p.ing/maxIng*100)}%`,borderRadius:99}}/>
                   </div>
                 </div>
               ))}
@@ -9644,7 +9647,7 @@ function InicioTab({bp,cv,ing,gas,hojas,projects,tareas,setTareas}){
             const maxV=Math.max(...months.map(m=>Math.max(m.ingV,m.gasV)),1);
             const curMonth=months[months.length-1];
             return(
-              <div style={{background:"#E6F5EC",borderRadius:14,padding:"16px 18px"}}>
+              <div style={{background:"#F7F6F4",borderRadius:14,padding:"16px 18px"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:14}}>
                   <div style={{fontSize:10,color:"#065F46",fontWeight:600,letterSpacing:"0"}}>{curMonth.label} {now.getFullYear()}</div>
                   <div style={{fontSize:18,fontWeight:500,color:curMonth.neto>=0?"#059669":"#B91C1C"}}>{curMonth.neto>=0?"+":""}{curMonth.neto.toFixed(0)}€ <span style={{fontSize:10,opacity:0.6}}>neto</span></div>
@@ -9655,7 +9658,7 @@ function InicioTab({bp,cv,ing,gas,hojas,projects,tareas,setTareas}){
                     const hg=Math.max(4,Math.round((m.gasV/maxV)*56));
                     return(
                       <div key={i} style={{flex:1,display:"flex",gap:1,alignItems:"flex-end",height:60}}>
-                        <div style={{flex:1,height:hi,background:m.isCurrent?"#059669":"#E6F5EC",borderRadius:"2px 2px 0 0"}}/>
+                        <div style={{flex:1,height:hi,background:m.isCurrent?"#059669":"#F7F6F4",borderRadius:"2px 2px 0 0"}}/>
                         <div style={{flex:1,height:hg,background:m.isCurrent?"#EF4444":"#FDECEC",borderRadius:"2px 2px 0 0"}}/>
                       </div>
                     );
@@ -9667,7 +9670,7 @@ function InicioTab({bp,cv,ing,gas,hojas,projects,tareas,setTareas}){
                   ))}
                 </div>
                 <div style={{display:"flex",gap:12,marginTop:10}}>
-                  <div style={{fontSize:11,color:"#065F46"}}><span style={{display:"inline-block",width:8,height:8,borderRadius:2,background:"#059669",marginRight:4}}/>Ingresos {curMonth.ingV.toFixed(0)}€</div>
+                  <div style={{fontSize:11,color:"#065F46"}}><span style={{display:"inline-block",width:8,height:8,borderRadius:2,background:"#171717",marginRight:4}}/>Ingresos {curMonth.ingV.toFixed(0)}€</div>
                   <div style={{fontSize:11,color:"#065F46"}}><span style={{display:"inline-block",width:8,height:8,borderRadius:2,background:"#EF4444",marginRight:4}}/>Gastos {curMonth.gasV.toFixed(0)}€</div>
                 </div>
               </div>
@@ -9675,12 +9678,12 @@ function InicioTab({bp,cv,ing,gas,hojas,projects,tareas,setTareas}){
           })()}
 
           {/* Top 3 */}
-          <div style={{background:"#FBEFE3",borderRadius:14,padding:"16px 18px"}}>
+          <div style={{background:"#F7F6F4",borderRadius:14,padding:"16px 18px"}}>
             <div style={{fontSize:10,color:"#A8341F",fontWeight:600,letterSpacing:"0",marginBottom:14}}>Top del equipo</div>
             {[
-              {label:"Bookpoints",m:top3BP,val:(top3BP?.pts||0)+" pts",bg:"#FEF6DC",color:"#A8341F",accent:"#F59E0B"},
-              {label:"CV",m:top3CV,val:(top3CV?.cvC||0)+" CV",bg:"#E8F0FB",color:"#1D4ED8",accent:"#3B82F6"},
-              {label:"Facturación",m:top3Fact,val:(top3Fact?.fact?.toFixed(0)||0)+"€",bg:"#EAF7EE",color:"#15803D",accent:"#22C55E"},
+              {label:"Bookpoints",m:top3BP,val:(top3BP?.pts||0)+" pts",bg:"#FFFFFF",color:"#A8341F",accent:"#3D3A36"},
+              {label:"CV",m:top3CV,val:(top3CV?.cvC||0)+" CV",bg:"#FFFFFF",color:"#3D3A36",accent:"#3D3A36"},
+              {label:"Facturación",m:top3Fact,val:(top3Fact?.fact?.toFixed(0)||0)+"€",bg:"#FFFFFF",color:"#15803D",accent:"#3D3A36"},
             ].map(t=>(
               <div key={t.label} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,padding:"10px 12px",background:t.bg,borderRadius:10}}>
                 <div>
@@ -9693,7 +9696,7 @@ function InicioTab({bp,cv,ing,gas,hojas,projects,tareas,setTareas}){
           </div>
 
           {/* Estado auditorías */}
-          <div style={{background:"#FBEAE5",borderRadius:14,padding:"16px 18px"}}>
+          <div style={{background:"#F7F6F4",borderRadius:14,padding:"16px 18px"}}>
             <div style={{fontSize:10,color:"#A8341F",fontWeight:600,letterSpacing:"0",marginBottom:14}}>Estado auditorías</div>
             {auditItems.map(a=>{
               const st=auditProg[a.key]||{};
@@ -9705,7 +9708,7 @@ function InicioTab({bp,cv,ing,gas,hojas,projects,tareas,setTareas}){
                     <span style={{fontSize:12,color:"#A8341F",fontWeight:500}}>{a.label.replace(/[^\w\s.]/g,"").trim()}</span>
                     <span style={{fontSize:18,fontWeight:500,color:"#4338CA"}}>{pct}%</span>
                   </div>
-                  <div style={{height:4,background:"#E8EDFB",borderRadius:99,overflow:"hidden"}}>
+                  <div style={{height:4,background:"#F7F6F4",borderRadius:99,overflow:"hidden"}}>
                     <div style={{height:4,background:pct===100?"#059669":"#D94A32",width:`${pct}%`,borderRadius:99,transition:"width .4s"}}/>
                   </div>
                 </div>
@@ -9921,13 +9924,13 @@ function RendimientoTab({bp,cv,ing,gas,hojas,projects}){
 
       {/* KPI grid */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:10,marginBottom:20}}>
-        <KPI label="Bookpoints" val={totalBP} sub={`${mBP.length} lecturas`} color="#D94A32" bg="#FBEAE5"/>
-        <KPI label="CV cerradas" val={totalCV} sub={`${totalLV} LV`} color="#0EA5E9" bg="#E6F3FB"/>
-        <KPI label="Facturación" val={totalFact.toFixed(0)+"€"} sub={totalOI>0?`+${totalOI.toFixed(0)}€ OI`:""} color="#059669" bg="#E6F5EC"/>
+        <KPI label="Bookpoints" val={totalBP} sub={`${mBP.length} lecturas`} color="#D94A32" bg="#F7F6F4"/>
+        <KPI label="CV cerradas" val={totalCV} sub={`${totalLV} LV`} color="#3D3A36" bg="#F7F6F4"/>
+        <KPI label="Facturación" val={totalFact.toFixed(0)+"€"} sub={totalOI>0?`+${totalOI.toFixed(0)}€ OI`:""} color="#059669" bg="#F7F6F4"/>
         <KPI label="Gastos" val={totalGasTot.toFixed(0)+"€"} sub={`${mGas.length+mHojas.length} reg.`} color="#DC2626" bg="#FDECEC"/>
-        <KPI label="Horas" val={horasLoaded?fmtH(totalSecs):"—"} sub={horasLoaded?`${proyHoras.length} proyectos`:""} color="#7C3AED" bg="#F1EEFC"/>
-        <KPI label="€/hora real" val={euroHora!==null&&horasLoaded?euroHora.toFixed(2)+"€":"—"} sub={costeSMI>0?`SMI: ${costeSMI.toFixed(0)}€`:""} color={euroHora!==null&&euroHora>=17?"#059669":"#DC2626"} bg={euroHora!==null&&euroHora>=17?"#E6F5EC":"#FDECEC"}/>
-        {efectividad!==null&&<KPI label="Efectividad CV" val={`${efectividad}%`} sub={`${totalCV}/${totalCV+totalLV}`} color="#F59E0B" bg="#FEF6DC"/>}
+        <KPI label="Horas" val={horasLoaded?fmtH(totalSecs):"—"} sub={horasLoaded?`${proyHoras.length} proyectos`:""} color="#3D3A36" bg="#F7F6F4"/>
+        <KPI label="€/hora real" val={euroHora!==null&&horasLoaded?euroHora.toFixed(2)+"€":"—"} sub={costeSMI>0?`SMI: ${costeSMI.toFixed(0)}€`:""} color={euroHora!==null&&euroHora>=17?"#059669":"#DC2626"} bg={euroHora!==null&&euroHora>=17?"#F7F6F4":"#FDECEC"}/>
+        {efectividad!==null&&<KPI label="Efectividad CV" val={`${efectividad}%`} sub={`${totalCV}/${totalCV+totalLV}`} color="#3D3A36" bg="#F7F6F4"/>}
         <KPI label="Proyectos activos" val={String(proyActivos.length||0)} sub={proyActivos.slice(0,2).join(", ")||"-"} color="#3D3A36" bg="#F7F6F4"/>
       </div>
 
@@ -9959,7 +9962,7 @@ function RendimientoTab({bp,cv,ing,gas,hojas,projects}){
               );
             }):<div style={{fontSize:11,color:"#6B665F",fontStyle:"italic"}}>Sin horas registradas este período</div>}
             {totalSecs>0&&(
-              <div style={{marginTop:12,paddingTop:10,borderTop:"1px solid #364D63",display:"flex",justifyContent:"space-between"}}>
+              <div style={{marginTop:12,paddingTop:10,borderTop:"1px solid #3D3A36",display:"flex",justifyContent:"space-between"}}>
                 <span style={{fontSize:11,color:"#6B665F"}}>Total</span>
                 <span style={{fontSize:13,fontWeight:700,color:"#2B2926",fontFamily:FONT_TITULOS}}>{fmtH(totalSecs)}</span>
               </div>
@@ -9992,7 +9995,7 @@ function RendimientoTab({bp,cv,ing,gas,hojas,projects}){
             const isCV=r.cat==="CV";
             return(
             <div key={r.id} style={{display:"flex",gap:10,padding:"7px 0",borderBottom:i<mCV.length-1?"1px solid #E5E2DD":"none",alignItems:"center"}}>
-              <div style={{width:32,height:32,borderRadius:8,background:isCV?"#E6F5EC":"#FBEAE5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:isCV?"#059669":"#D94A32",flexShrink:0,border:`1.5px solid ${isCV?"#A9DDBF":"#C7D2FE"}`}}>{r.cat||"CV"}</div>
+              <div style={{width:32,height:32,borderRadius:8,background:isCV?"#F7F6F4":"#F7F6F4",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:isCV?"#059669":"#D94A32",flexShrink:0,border:`1.5px solid ${isCV?"#A9DDBF":"#C7D2FE"}`}}>{r.cat||"CV"}</div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:12,color:"#171717",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.cliente||"Sin cliente"}</div>
                 <div style={{fontSize:10,color:"#6B665F",display:"flex",gap:6,flexWrap:"wrap"}}>
@@ -10188,10 +10191,10 @@ function EquipoTab({bp,cv,ing,gas,hojas,projects,ultimaAct}){
   });
   const [colorEditModal,setColorEditModal] = useState(null); // member name
   const [tmpColor,setTmpColor] = useState("");
-  const PALETTE_OPTIONS = ["#2B2926","#7C3AED","#059669","#DC2626","#D97706","#0891B2","#DB2777","#65A30D","#9333EA","#EA580C","#3D3A36","#0F4C75","#1A1A2E","#2D6A4F","#4A1942","#7B2D00","#D94A32","#8B5CF6","#EC4899","#EF4444","#F97316","#EAB308","#22C55E","#14B8A6"];
+  const PALETTE_OPTIONS = ["#2B2926","#3D3A36","#059669","#DC2626","#3D3A36","#3D3A36","#3D3A36","#3D3A36","#3D3A36","#3D3A36","#3D3A36","#3D3A36","#1A1A2E","#2D6A4F","#4A1942","#7B2D00","#D94A32","#3D3A36","#3D3A36","#EF4444","#3D3A36","#3D3A36","#22C55E","#3D3A36"];
 
   function getMemberColor(name){
-    return (memberColors[name]&&aClaro(memberColors[name])) || INIT_MEMBERS.find(m=>m.name===name)?.color || "#3D3A36";
+    return NEUTRO; // colores por persona desactivados (diseño glass)
   }
   function saveMemberColor(name, color){
     const next = {...memberColors,[name]:color};
@@ -10239,12 +10242,12 @@ function EquipoTab({bp,cv,ing,gas,hojas,projects,ultimaAct}){
       {/* Team KPIs */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:10,marginBottom:24}}>
         {[
-          {label:"Bookpoints",val:String(teamPts),color:"#A8341F",bg:"#FBEAE5",accent:"#D94A32",sub:"Meta: "+(MIEMBROS_VISIBLES.length*META_BP)},
-          {label:"CV totales",val:String(teamCV),color:"#0C4A6E",bg:"#E6F3FB",accent:"#0EA5E9"},
-          {label:"LV totales",val:String(teamLV),color:"#14532D",bg:"#E6F5EC",accent:"#10B981"},
-          {label:"Ingresos",val:teamIng.toFixed(0)+"€",color:"#065F46",bg:"#E6F5EC",accent:"#059669"},
-          {label:"Gastos",val:teamGas.toFixed(0)+"€",color:"#991B1B",bg:"#FDECEC",accent:"#EF4444"},
-          {label:"Neto equipo",val:(teamNeto>=0?"+":"")+teamNeto.toFixed(0)+"€",color:teamNeto>=0?"#065F46":"#991B1B",bg:teamNeto>=0?"#E6F5EC":"#FDECEC",accent:teamNeto>=0?"#059669":"#EF4444"},
+          {label:"Bookpoints",val:String(teamPts),color:"#A8341F",bg:"#FFFFFF",accent:"#3D3A36",sub:"Meta: "+(MIEMBROS_VISIBLES.length*META_BP)},
+          {label:"CV totales",val:String(teamCV),color:"#3D3A36",bg:"#FFFFFF",accent:"#3D3A36"},
+          {label:"LV totales",val:String(teamLV),color:"#14532D",bg:"#FFFFFF",accent:"#3D3A36"},
+          {label:"Ingresos",val:teamIng.toFixed(0)+"€",color:"#065F46",bg:"#FFFFFF",accent:"#3D3A36"},
+          {label:"Gastos",val:teamGas.toFixed(0)+"€",color:"#991B1B",bg:"#FFFFFF",accent:"#3D3A36"},
+          {label:"Neto equipo",val:(teamNeto>=0?"+":"")+teamNeto.toFixed(0)+"€",color:teamNeto>=0?"#065F46":"#991B1B",bg:teamNeto>=0?"#FFFFFF":"#FFFFFF",accent:teamNeto>=0?"#3D3A36":"#3D3A36"},
         ].map(k=>(
           <div key={k.label} style={{background:k.bg,borderRadius:14,padding:"16px 18px",position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:k.accent,borderRadius:"14px 14px 0 0"}}/>
@@ -10267,7 +10270,7 @@ function EquipoTab({bp,cv,ing,gas,hojas,projects,ultimaAct}){
                   style={{width:28,height:28,borderRadius:7,background:c,border:tmpColor===c?"3px solid #111":"2px solid #E5E2DD",cursor:"pointer",transition:"transform .1s",transform:tmpColor===c?"scale(1.15)":"scale(1)"}}/>
               ))}
             </div>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
+            <div style={{display:"none",alignItems:"center",gap:8,marginBottom:20}}>
               <div style={{fontSize:10,color:"#7F7973"}}>Personalizado:</div>
               <input type="color" value={tmpColor} onChange={e=>setTmpColor(e.target.value)}
                 style={{width:32,height:26,border:"1.5px solid #E5E2DD",borderRadius:6,padding:2,cursor:"pointer",background:"none"}}/>
@@ -10291,7 +10294,7 @@ function EquipoTab({bp,cv,ing,gas,hojas,projects,ultimaAct}){
             <div key={m.name} style={{background:bg,borderRadius:16,borderTop:`3px solid ${m.color}`,boxShadow:"0 1px 2px rgba(23,23,23,.04), 0 8px 24px -16px rgba(23,23,23,.18)",padding:"18px 20px",position:"relative",cursor:"pointer",transition:"transform .15s"}} onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"} onClick={()=>{setSelectedMember(m.name);setVerTodasFacturas(false);}}>
               {/* Color edit button */}
               <button onClick={e=>{e.stopPropagation();setTmpColor(m.color);setColorEditModal(m.name);}}
-                style={{position:"absolute",top:12,right:12,background:"#F7F6F4",border:"none",borderRadius:6,width:24,height:24,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:m.color}}>
+                style={{position:"absolute",top:12,right:12,background:"#F7F6F4",border:"none",borderRadius:6,width:24,height:24,cursor:"pointer",display:"none",alignItems:"center",justifyContent:"center",color:m.color}}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
               </button>
               {/* Header */}
@@ -10343,11 +10346,11 @@ function EquipoTab({bp,cv,ing,gas,hojas,projects,ultimaAct}){
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:10}} className="blesk-rankings">
         {[
-          {title:"🏆 Ranking Bookpoints",rank:rankBP,val:s=>`${s.pts} pts`,bar:s=>s.pts,max:maxPts,color:"#D94A32",bg:"#FBEAE5"},
-          {title:"🤝 Ranking Customers",rank:rankCV,val:s=>`${s.cvCount} CV`,bar:s=>s.cvCount,max:maxCV,color:"#0EA5E9",bg:"#E6F3FB"},
-          {title:"💶 Ranking Beneficio",rank:rankNeto,val:s=>`${s.neto>=0?"+":""}${s.neto.toFixed(0)}€`,bar:s=>Math.max(s.neto,0),max:maxNeto,color:"#10B981",bg:"#E6F5EC"},
-          {title:"💰 Ranking Facturación",rank:rankFact,val:s=>`${s.totIng.toFixed(0)}€`,bar:s=>s.totIng,max:maxFact,color:"#F59E0B",bg:"#FEF6DC"},
-          {title:"🧭 Ranking Learning Visits",rank:rankLV,val:s=>`${s.lvCount} LV`,bar:s=>s.lvCount,max:maxLV,color:"#7C3AED",bg:"#F1EAFD"},
+          {title:"🏆 Ranking Bookpoints",rank:rankBP,val:s=>`${s.pts} pts`,bar:s=>s.pts,max:maxPts,color:"#D94A32",bg:"#FFFFFF"},
+          {title:"🤝 Ranking Customers",rank:rankCV,val:s=>`${s.cvCount} CV`,bar:s=>s.cvCount,max:maxCV,color:"#3D3A36",bg:"#FFFFFF"},
+          {title:"💶 Ranking Beneficio",rank:rankNeto,val:s=>`${s.neto>=0?"+":""}${s.neto.toFixed(0)}€`,bar:s=>Math.max(s.neto,0),max:maxNeto,color:"#10B981",bg:"#FFFFFF"},
+          {title:"💰 Ranking Facturación",rank:rankFact,val:s=>`${s.totIng.toFixed(0)}€`,bar:s=>s.totIng,max:maxFact,color:"#A8341F",bg:"#FFFFFF"},
+          {title:"🧭 Ranking Learning Visits",rank:rankLV,val:s=>`${s.lvCount} LV`,bar:s=>s.lvCount,max:maxLV,color:"#3D3A36",bg:"#F1EAFD"},
         ].map(r=>(
           <div key={r.title} style={{background:"#FFFFFF",borderRadius:12,overflow:"hidden",border:"1px solid #E5E2DD",boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}>
             <div style={{background:r.color,padding:"10px 14px"}}>
@@ -10400,7 +10403,7 @@ function EquipoTab({bp,cv,ing,gas,hojas,projects,ultimaAct}){
               <div style={{padding:"10px 14px",borderBottom:"1px solid #F2F0EB",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <span style={{fontWeight:700,fontSize:12,color:"#2B2926"}}>📈 Ingresos vs Gastos</span>
                 <div style={{display:"flex",gap:10,fontSize:9,color:"#6B665F"}}>
-                  <span style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:3,background:"#059669",borderRadius:99,display:"inline-block"}}/>Ingresos</span>
+                  <span style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:3,background:"#171717",borderRadius:99,display:"inline-block"}}/>Ingresos</span>
                   <span style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:3,background:"#DC2626",borderRadius:99,display:"inline-block"}}/>Gastos</span>
                 </div>
               </div>
@@ -10496,9 +10499,9 @@ function EquipoTab({bp,cv,ing,gas,hojas,projects,ultimaAct}){
                   <div style={{fontSize:10,color:"#7F7973",fontWeight:600,letterSpacing:"0",marginBottom:10}}>Finanzas</div>
                   <div style={{display:"flex",gap:8}}>
                     {[
-                      {label:"Ingresos",val:m.totIng.toFixed(0)+"€",bg:"#E6F5EC",color:"#065F46"},
-                      {label:"Gastos",val:m.totGas.toFixed(0)+"€",bg:"#FDECEC",color:"#991B1B"},
-                      {label:"OI",val:m.totOI.toFixed(0)+"€",bg:"#FBEAE5",color:"#A8341F"},
+                      {label:"Ingresos",val:m.totIng.toFixed(0)+"€",bg:"#FFFFFF",color:"#065F46"},
+                      {label:"Gastos",val:m.totGas.toFixed(0)+"€",bg:"#FFFFFF",color:"#991B1B"},
+                      {label:"OI",val:m.totOI.toFixed(0)+"€",bg:"#FFFFFF",color:"#A8341F"},
                     ].map(k=>(
                       <div key={k.label} style={{flex:1,background:k.bg,borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
                         <div style={{fontSize:16,fontWeight:500,color:k.color}}>{k.val}</div>
@@ -11795,6 +11798,7 @@ export default function Dashboard(){
   const totPts=allBP.reduce((s,r)=>s+(parseFloat(r.puntos)||0),0);
   const totVent=allCRM.filter(r=>r.estado==="Venta cerrada").length;
 
+  const projectsV=projects.map(neutroP); // sin color por proyecto (diseño glass)
   // Cifras de la cabecera (las mismas que salían arriba antes)
   const totIngresos=ingC.reduce((s,r)=>s+signedBase(r),0);
   const totGastos=gasC.reduce((s,r)=>s+signedBase(r),0)+hojas.reduce((s,r)=>s+(parseFloat(r.importe)||0),0);
@@ -11916,7 +11920,7 @@ export default function Dashboard(){
           <div style={{margin:"0 10px 10px",background:"rgba(254,246,220,.95)",borderRadius:14,padding:"7px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
             <span style={{fontSize:11,color:"#A8341F",fontWeight:600}}>🔄 Hay una nueva versión del dashboard disponible</span>
             <button onClick={()=>window.location.replace(`${window.location.pathname}?v=${Date.now()}`)}
-              style={{background:"#D97706",color:"#FFF",border:"none",borderRadius:99,padding:"5px 14px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+              style={{background:"#3D3A36",color:"#FFF",border:"none",borderRadius:99,padding:"5px 14px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
               Actualizar ahora
             </button>
           </div>
@@ -11934,16 +11938,16 @@ export default function Dashboard(){
       {/* Solo cuentan los movimientos de 💰 Ingresos y gastos; las facturas son solo registro */}
       <div className="keia-hoja">
       <div key={tab} className="blesk-content keia-entrar" style={{padding:"28px 32px 48px",maxWidth:1400,margin:"0 auto"}}>
-        {tab==="inicio"     && <InicioTab bp={bp} cv={cv} ing={ingC} gas={gasC} hojas={hojas} projects={projects} tareas={tareas} setTareas={setTareas}/>}
-        {tab==="equipo"     && <EquipoTab     bp={bp} cv={cv} ing={ingC} gas={gasC} hojas={hojas} projects={projects} ultimaAct={ultimaAct}/>}
-        {tab==="proyectos"   && <ProyectosTab  projects={projects} setProjects={setProjects} setProjectsDirectly={setProjectsDirectly} crm={crm} setCRM={setCRM} customers={cv} ingresos={ingC} gastos={gasC} hojas={hojas} ing={ingC} cv={cv} bp={bp}/>}
-        {tab==="checkpoints" && <CheckpointsTab ing={ingC} gas={gasC} hojas={hojas} bp={bp} setBP={setBP} bpGroups={bpGroups} setBPGroups={setBPGroups} cv={cv} setCV={setCV} cvGroups={cvGroups} setCVGroups={setCVGroups} projects={projects}/>}
-        {tab==="finanzas"   && <FinanzasTab ing={ing} setIng={setIng} gas={gas} setGas={setGas} hojas={hojas} setHojas={setHojas} projects={projects} diamante={diamante} setDiamante={setDiamante} sb={sb}/>}
+        {tab==="inicio"     && <InicioTab bp={bp} cv={cv} ing={ingC} gas={gasC} hojas={hojas} projects={projectsV} tareas={tareas} setTareas={setTareas}/>}
+        {tab==="equipo"     && <EquipoTab     bp={bp} cv={cv} ing={ingC} gas={gasC} hojas={hojas} projects={projectsV} ultimaAct={ultimaAct}/>}
+        {tab==="proyectos"   && <ProyectosTab  projects={projectsV} setProjects={setProjects} setProjectsDirectly={setProjectsDirectly} crm={crm} setCRM={setCRM} customers={cv} ingresos={ingC} gastos={gasC} hojas={hojas} ing={ingC} cv={cv} bp={bp}/>}
+        {tab==="checkpoints" && <CheckpointsTab ing={ingC} gas={gasC} hojas={hojas} bp={bp} setBP={setBP} bpGroups={bpGroups} setBPGroups={setBPGroups} cv={cv} setCV={setCV} cvGroups={cvGroups} setCVGroups={setCVGroups} projects={projectsV}/>}
+        {tab==="finanzas"   && <FinanzasTab ing={ing} setIng={setIng} gas={gas} setGas={setGas} hojas={hojas} setHojas={setHojas} projects={projectsV} diamante={diamante} setDiamante={setDiamante} sb={sb}/>}
         {tab==="documentos" && <DocumentosTab/>}
         {tab==="auditoria"  && <AuditoriaTab/>}
-        {tab==="clockify"   && <HorasTab projects={projects}/>}
+        {tab==="clockify"   && <HorasTab projects={projectsV}/>}
         {tab==="mta"        && <MTAModelTab   mta={mta} setMta={setMta}/>}
-        {tab==="calendario" && <CalendarioTab tareas={tareas} setTareas={setTareas} projects={projects}/>}
+        {tab==="calendario" && <CalendarioTab tareas={tareas} setTareas={setTareas} projects={projectsV}/>}
         {tab==="evaluaciones" && <EvaluacionesTab/>}
       </div>
       </div>
