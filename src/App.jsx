@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, Fragment } from "react";
 import { EMPRESA, EMPRESA_SUB, MIEMBROS, MIEMBROS_ANTIGUOS, EXTERNOS, PROYECTOS_INICIALES, CLAVE_EDICION, CLAVE_CHAT_PRIVADO } from "./config.js";
 import { sb } from "./supabase.js";
-import { perfil, puedoEditar, puedoGestionar } from "./perfil.js";
+import { perfil, puedoEditar, puedoGestionar, esVisitante } from "./perfil.js";
 import { Avatar, BotonPerfil, iniciarFotos, FotoAmpliada } from "./Fotos.jsx";
 import Novedades from "./Novedades.jsx";
 
@@ -7337,8 +7337,171 @@ ${tabla("ACTIVO",ACTIVO)}${tabla("PATRIMONIO NETO Y PASIVO",PASIVO)}
 }
 
 // ── FINANZAS TAB ──────────────────────────────────────────────────────────────
+// ── 💰 Ingresos: dinero que gana el equipo (premios, retos, pagos sin factura…) ──
+// Se guarda en la tabla facturas con es_ingreso=true, así cuenta igual que antes en
+// rankings, banco, cuenta de resultados, etc. La pestaña "Facturas" no los enseña.
+const numE = x => { const s=String(x??"").trim().replace(/\s|€/g,""); if(!s) return 0; const t=s.includes(",")&&s.includes(".")?s.replace(/\./g,"").replace(",","."):s.replace(",","."); return parseFloat(t)||0; };
+const eur = n => (Math.round(n*100)/100).toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
+const hoyDDMM = () => { const d=new Date(); return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`; };
+const importeIngreso = r => numE(r.total)||numE(r.base);
+
+function IngresoModal({inicial, projects, onGuardar, onCerrar}){
+  const [concepto,setConcepto]=useState(inicial?.ref||inicial?.descripcion||"");
+  const [fecha,setFecha]=useState(inicial?.fecha||hoyDDMM());
+  const [importe,setImporte]=useState(inicial?String(importeIngreso(inicial)).replace(".",","):"");
+  const [proyecto,setProyecto]=useState(inicial?.proyecto||"");
+  const [nota,setNota]=useState(inicial?.ref?inicial?.descripcion||"":"");
+  const [rep,setRep]=useState(()=>{
+    const m={}; (inicial?.reparto||[]).forEach(x=>{ if(x.member&&numE(x.importe)>0) m[x.member]=String(x.importe).replace(".",","); }); return m;
+  });
+  const total=numE(importe);
+  const personas=[...MIEMBROS_VISIBLES, ...INIT_MEMBERS.filter(m=>!MIEMBROS_VISIBLES.includes(m)&&rep[m.name]!==undefined), EMPRESA_REPARTO];
+  const elegidos=Object.keys(rep);
+  const repartido=elegidos.reduce((s,k)=>s+numE(rep[k]),0);
+  const falta=Math.round((total-repartido)*100)/100;
+  function igualar(nombres){
+    if(!nombres.length){ setRep({}); return; }
+    const c=Math.floor(total/nombres.length*100)/100;
+    const m={}; nombres.forEach((n,i)=>{ m[n]=String(i===0?Math.round((total-c*(nombres.length-1))*100)/100:c).replace(".",","); });
+    setRep(m);
+  }
+  function toggle(n){
+    const next=elegidos.includes(n)?elegidos.filter(x=>x!==n):[...elegidos,n];
+    igualar(next);
+  }
+  const ok=concepto.trim()&&fecha&&total>0&&Math.abs(falta)<0.02;
+  function guardar(){
+    if(!ok) return;
+    const reparto=elegidos.map(n=>({member:n,pct:total?String(Math.round(numE(rep[n])/total*1000)/10):"",importe:numE(rep[n]).toFixed(2)}));
+    onGuardar({
+      ...(inicial||{}), id:inicial?.id||Date.now(), es_ingreso:true,
+      ref:concepto.trim(), descripcion:nota.trim(), fecha, proyecto,
+      base:total.toFixed(2), total:total.toFixed(2), iva:"0%", pagado:inicial?.pagado??true,
+      reparto, linkFactura:inicial?.linkFactura||"", frcSign:"+",
+    });
+  }
+  const lab={fontSize:11,fontWeight:700,color:"#57534E",marginBottom:4};
+  const box={width:"100%",border:"1px solid #E5E2DD",borderRadius:8,padding:"8px 10px",fontSize:13,fontFamily:"inherit",background:"#F7F6F4",outline:"none",boxSizing:"border-box"};
+  return(
+    <div onClick={onCerrar} style={{position:"fixed",inset:0,background:"rgba(23,23,23,.55)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:12}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"#FFF",borderRadius:16,width:"100%",maxWidth:520,maxHeight:"92vh",overflowY:"auto",padding:"20px 20px 16px",boxShadow:"0 24px 64px rgba(0,0,0,.25)",color:"#171717"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+          <div style={{fontSize:16,fontWeight:700}}>{inicial?"Editar ingreso":"💰 Nuevo ingreso"}</div>
+          <button onClick={onCerrar} style={{background:"#F2F0ED",border:"none",borderRadius:8,width:28,height:28,cursor:"pointer"}}>✕</button>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <div style={{gridColumn:"1 / -1"}}><div style={lab}>¿De qué es el dinero?</div><input style={box} value={concepto} onChange={e=>setConcepto(e.target.value)} placeholder="Ej.: Premio Action Week"/></div>
+          <div><div style={lab}>Importe total (€)</div><input style={box} inputMode="decimal" value={importe} onChange={e=>setImporte(e.target.value)} placeholder="0,00"/></div>
+          <div><div style={lab}>Fecha</div><DateInp value={fecha} onChange={setFecha} w="100%"/></div>
+          <div style={{gridColumn:"1 / -1"}}><div style={lab}>Proyecto (opcional)</div><Sel value={proyecto} onChange={setProyecto} options={projects.map(p=>p.name)} placeholder="Sin proyecto"/></div>
+          <div style={{gridColumn:"1 / -1"}}><div style={lab}>Nota (opcional)</div><input style={box} value={nota} onChange={e=>setNota(e.target.value)} placeholder="Cualquier detalle"/></div>
+        </div>
+        <div style={{marginTop:16,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
+          <div style={lab}>Repartir entre personas</div>
+          <div style={{display:"flex",gap:6}}>
+            <button onClick={()=>igualar(MIEMBROS_VISIBLES.map(m=>m.name))} disabled={!total} style={{background:"#F2F0ED",border:"none",borderRadius:7,padding:"5px 10px",fontSize:11,fontWeight:600,cursor:"pointer"}}>Todos a partes iguales</button>
+            <button onClick={()=>igualar([])} style={{background:"transparent",border:"1px solid #E5E2DD",borderRadius:7,padding:"5px 10px",fontSize:11,cursor:"pointer"}}>Nadie</button>
+          </div>
+        </div>
+        {!total&&<div style={{fontSize:11,color:"#7F7973",marginTop:6}}>Pon primero el importe total.</div>}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:6,marginTop:8}}>
+          {personas.map(m=>{
+            const sel=rep[m.name]!==undefined;
+            return(
+              <div key={m.name} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 7px",borderRadius:8,border:`1px solid ${sel?m.color+"66":"#E5E2DD"}`,background:sel?m.light:"#FFF"}}>
+                <div onClick={()=>total&&toggle(m.name)} style={{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:0,cursor:total?"pointer":"default"}}>
+                  <input type="checkbox" readOnly checked={sel} style={{margin:0}}/>
+                  <span style={{fontSize:12,fontWeight:sel?700:400,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{m.name==="EMPRESA"?"Empresa":m.name}</span>
+                </div>
+                {sel&&<input value={rep[m.name]} inputMode="decimal" onChange={e=>setRep(r=>({...r,[m.name]:e.target.value}))}
+                  style={{width:62,border:"1px solid #E5E2DD",borderRadius:5,padding:"3px 5px",fontSize:11,textAlign:"right",fontFamily:"inherit"}}/>}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{marginTop:10,fontSize:12,color:Math.abs(falta)<0.02?"#059669":"#B45309",fontWeight:600}}>
+          Repartido: {eur(repartido)} de {eur(total)}{Math.abs(falta)>=0.02&&` · ${falta>0?"faltan":"sobran"} ${eur(Math.abs(falta))}`}
+        </div>
+        <button onClick={guardar} disabled={!ok}
+          style={{marginTop:14,width:"100%",background:ok?"#059669":"#B5AFA8",color:"#FFF",border:"none",borderRadius:10,padding:12,fontSize:14,fontWeight:700,cursor:ok?"pointer":"default",fontFamily:"inherit"}}>
+          Guardar ingreso
+        </button>
+        {!ok&&<div style={{fontSize:11,color:"#7F7973",textAlign:"center",marginTop:6}}>Para guardar: concepto, fecha, importe y que el reparto sume el total.</div>}
+      </div>
+    </div>
+  );
+}
+
+function IngresosDineroTab({ingresos, setIngresos, projects}){
+  const [modal,setModal]=useState(null);   // null | "nuevo" | fila
+  const lista=[...ingresos].sort((a,b)=>parseDD(b.fecha)-parseDD(a.fecha));
+  const total=lista.reduce((s,r)=>s+importeIngreso(r),0);
+  const visitante=esVisitante();
+  function guardar(fila){
+    setIngresos(prev=>prev.find(x=>x.id===fila.id)?prev.map(x=>x.id===fila.id?fila:x):[...prev,fila]);
+    setModal(null);
+  }
+  return(
+    <div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap",marginBottom:14}}>
+        <div>
+          <div style={{fontSize:11,color:"#6B665F"}}>Dinero que ha ganado el equipo (sin factura): premios, retos, pagos…</div>
+          <div style={{fontSize:22,fontWeight:800,color:"#059669",marginTop:2}}>{eur(total)}</div>
+        </div>
+        {!visitante&&<button onClick={()=>setModal("nuevo")} style={{background:"#059669",color:"#FFF",border:"none",borderRadius:10,padding:"10px 16px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>+ Añadir ingreso</button>}
+      </div>
+      {lista.length===0&&<div style={{fontSize:12,color:"#7F7973",fontStyle:"italic",padding:20,textAlign:"center",background:"#FFF",borderRadius:12,border:"1px dashed #E5E2DD"}}>Todavía no hay ingresos. Pulsa “Añadir ingreso” cuando ganéis dinero.</div>}
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {lista.map(r=>{
+          const rep=(r.reparto||[]).filter(x=>numE(x.importe)>0);
+          return(
+            <div key={r.id} style={{background:"#FFF",border:"1px solid #E5E2DD",borderRadius:12,padding:"12px 14px"}}>
+              <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:14,fontWeight:700}}>{r.ref||r.descripcion||"Ingreso"}</div>
+                  <div style={{fontSize:11,color:"#6B665F",marginTop:2}}>{r.fecha}{r.proyecto?` · ${r.proyecto}`:""}{r.ref&&r.descripcion?` · ${r.descripcion}`:""}</div>
+                  {r.linkFactura&&<a href={r.linkFactura} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#2563EB"}}>📎 Ver documento</a>}
+                </div>
+                <div style={{fontSize:16,fontWeight:800,color:"#059669",whiteSpace:"nowrap"}}>{eur(importeIngreso(r))}</div>
+                {!visitante&&<div style={{display:"flex",gap:2}}>
+                  <button onClick={()=>setModal(r)} title="Editar" style={{background:"transparent",border:"none",cursor:"pointer",fontSize:13,color:"#57534E"}}>✏️</button>
+                  <DelBtn onClick={()=>setIngresos(prev=>prev.filter(x=>x.id!==r.id))}/>
+                </div>}
+              </div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:10}}>
+                {rep.length===0&&<span style={{fontSize:11,color:"#7F7973",fontStyle:"italic"}}>Sin repartir</span>}
+                {rep.map(x=>{
+                  const m=INIT_MEMBERS.find(k=>k.name===x.member)||EMPRESA_REPARTO;
+                  return(
+                    <span key={x.member} style={{display:"inline-flex",alignItems:"center",gap:5,background:m.light||"#F2F0ED",border:`1px solid ${m.color}44`,borderRadius:99,padding:"2px 8px 2px 3px",fontSize:11}}>
+                      {x.member==="EMPRESA"?<span style={{width:18,height:18,borderRadius:99,background:"#2B2926",color:"#FFF",fontSize:9,display:"inline-flex",alignItems:"center",justifyContent:"center"}}>K</span>:<Avatar nombre={x.member} color={m.color} size={18} fontSize={9}/>}
+                      <span style={{fontWeight:600}}>{x.member==="EMPRESA"?"Empresa":x.member}</span>
+                      <span style={{color:"#57534E"}}>{eur(numE(x.importe))}</span>
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {modal&&<IngresoModal inicial={modal==="nuevo"?null:modal} projects={projects} onGuardar={guardar} onCerrar={()=>setModal(null)}/>}
+    </div>
+  );
+}
+
 function FinanzasTab({ing,setIng,gas,setGas,hojas,setHojas,projects,diamante,setDiamante,sb}){
-  const [sub,setSub]=useState("ingresos");
+  const [sub,setSub]=useState("dinero");
+  // Los ingresos sin factura (💰 Ingresos) y las facturas de ingreso comparten "ing" (cuentan igual en todo),
+  // pero cada pestaña solo ve y toca los suyos.
+  const esIngSimple=r=>!!r.es_ingreso;
+  const ingDinero=(ing||[]).filter(esIngSimple), ingFacturas=(ing||[]).filter(r=>!esIngSimple(r));
+  const setParte=quien=>upd=>setIng(prev=>{
+    const mia=prev.filter(r=>quien(r)), otra=prev.filter(r=>!quien(r));
+    const nueva=typeof upd==="function"?upd(mia):upd;
+    return [...otra,...nueva];
+  });
+  const setIngDinero=setParte(esIngSimple), setIngFacturas=setParte(r=>!esIngSimple(r));
   const [bancoMovs,setBancoMovs]=useState(null);
   const [bancoPend,setBancoPend]=useState(null);
   // Movimientos del banco: se recargan al cambiar de apartado (Banco los carga él mismo y los devuelve por onMovs)
@@ -7625,8 +7788,9 @@ function FinanzasTab({ing,setIng,gas,setGas,hojas,setHojas,projects,diamante,set
     <div>
       <div style={{display:"flex",flexWrap:"wrap",gap:0,borderBottom:"1px solid #E5E2DD",marginBottom:20}}>
         {[
-          {id:"ingresos", label:"💰 Ingresos"},
-          {id:"gastos",   label:"💸 Gastos"},
+          {id:"dinero",   label:"💰 Ingresos"},
+          {id:"ingresos", label:"📄 Facturas ingreso"},
+          {id:"gastos",   label:"💸 Facturas gasto"},
           {id:"hojas",    label:"🧾 Hojas Gasto"},
           {id:"otros",    label:"🧾 Otros gastos"},
           {id:"banco",    label:bancoPend?`🏦 Banco (${bancoPend})`:"🏦 Banco"},
@@ -7643,7 +7807,8 @@ function FinanzasTab({ing,setIng,gas,setGas,hojas,setHojas,projects,diamante,set
           }}>{t.label}</button>
         ))}
       </div>
-      {sub==="ingresos"&&<FacturasTab   facturas={ing} setFacturas={setIng} tipo="ingresos" projects={projects} pagoInfo={pagoInfo} rect={rect} onRect={enlazarRect} onSaldada={toggleSaldada}/>}
+      {sub==="dinero"  &&<IngresosDineroTab ingresos={ingDinero} setIngresos={setIngDinero} projects={projects}/>}
+      {sub==="ingresos"&&<FacturasTab   facturas={ingFacturas} setFacturas={setIngFacturas} tipo="ingresos" projects={projects} pagoInfo={pagoInfo} rect={rect} onRect={enlazarRect} onSaldada={toggleSaldada}/>}
       {sub==="gastos"  &&<FacturasTab   facturas={gas} setFacturas={setGas} tipo="gastos"   projects={projects} pagoInfo={pagoInfo} rect={rect} onRect={enlazarRect} onSaldada={toggleSaldada}/>}
       {sub==="hojas"   &&<HojasGastoTab hojas={hojas} setHojas={setHojas} gastos={gas} projects={projects} pagoInfo={pagoInfo} onSaldada={toggleSaldada}/>}
       {sub==="otros"   &&<OtrosGastosTab movs={bancoMovs} guardar={guardarBanco} projects={projects} irBanco={()=>setSub("banco")} ing={ing}/>}
@@ -11370,7 +11535,7 @@ export default function Dashboard(){
         base:r.base||"", iva:r.iva||"", total:r.total||"", ref:r.ref||"",
         descripcion:r.descripcion||"", link_factura:r.linkFactura||r.link_factura||"",
         reparto:JSON.stringify(r.reparto||[]), pagado:r.pagado||false,
-        frc_sign:r.frcSign||r.frc_sign||"+", estado:"aprobada"
+        frc_sign:r.frcSign||r.frc_sign||"+", estado:"aprobada", es_ingreso:!!r.es_ingreso
       }));
       if(deleted.length) sb.from("facturas").delete().in("id",deleted.map(r=>r.id)).then(({error})=>{if(error)console.error("❌ facturas delete",error);});
       if(upserted.length) sb.from("facturas").upsert(upserted).then(({error})=>{if(error)console.error("❌ facturas upsert ingreso",error);else console.log("✅ facturas ingreso guardado",upserted.length,"filas");});

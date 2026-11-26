@@ -12,6 +12,16 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-26-4",
+    fecha: "26/11/2026",
+    titulo: "Nuevo: 💰 Ingresos en Finanzas",
+    cambios: [
+      "En Finanzas hay un apartado nuevo, 💰 Ingresos, para apuntar el dinero que ganamos.",
+      "Cada ingreso se puede repartir entre personas (o todos a partes iguales).",
+      "El dinero de la Action Week ya está ahí. Las facturas siguen en su sitio.",
+    ],
+  },
+  {
     id: "2026-11-26-3",
     fecha: "26/11/2026",
     titulo: "Ver fotos en grande",
