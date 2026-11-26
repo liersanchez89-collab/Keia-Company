@@ -12,6 +12,15 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-26-8",
+    fecha: "26/11/2026",
+    titulo: "📋 Nueva plantilla de hoja de gastos",
+    cambios: [
+      "Al crear una hoja de gastos, ahora se genera con la plantilla oficial de KEIA (logo, colores y formato de la hoja de Excel).",
+      "Incluye km por día, Peajes, Taxi, Mugi, Billetes, Dietas, Otros, itinerario, comentarios y firmas. Sale en horizontal, lista para imprimir o guardar en PDF.",
+    ],
+  },
+  {
     id: "2026-11-26-7",
     fecha: "26/11/2026",
     titulo: "Equipo actualizado",

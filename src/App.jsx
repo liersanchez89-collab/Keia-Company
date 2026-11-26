@@ -2968,7 +2968,7 @@ function FormularioHojaGasto({form,updForm,updDia,addDia,delDia,updGasto,addTick
                     )}
                     {isAlojSub&&(
                       <tr style={{background:"#EAF7EE"}}>
-                        <td style={{padding:"5px 10px",fontWeight:700,color:"#059669",fontSize:10,borderRight:"2px solid #E5E2DD"}}>→ Total aloj. y manut.</td>
+                        <td style={{padding:"5px 10px",fontWeight:700,color:"#059669",fontSize:10,borderRight:"2px solid #E5E2DD"}}>→ Total dietas</td>
                         {form.dias.map((_,di)=>(
                           <td key={di} style={{padding:"5px 6px",textAlign:"right",fontSize:10,fontWeight:600,color:"#059669",borderLeft:"1px solid #E5E2DD"}}>
                             {["aloj","desayuno","almuerzo","cena"].reduce((s,id)=>s+(parseFloat(form.gastos[di]?.[id])||0),0)||""}
@@ -3185,13 +3185,13 @@ const CATEGORIAS_GASTO = [
   {id:"km",      label:"Importe Kilómetros"},
   {id:"peaje",   label:"Peajes"},
   {id:"taxi",    label:"Taxi"},
-  {id:"otros_t", label:"Otros (tren o autobús)"},
+  {id:"otros_t", label:"Mugi"},
   {id:"billetes",label:"Billetes nacionales"},
   {id:"aloj",    label:"Alojamiento"},
   {id:"desayuno",label:"Desayuno"},
   {id:"almuerzo",label:"Almuerzo"},
   {id:"cena",    label:"Cena"},
-  {id:"otros",   label:"Otros gastos"},
+  {id:"otros",   label:"Otros"},
 ];
 
 const FORM_VACIO = {
@@ -3290,157 +3290,152 @@ function SolicitudHojaGasto({projects, unlocked, hojas, setHojas}){
     if(!form.nombre.trim()){ alert("Selecciona tu nombre"); return; }
     setEnviando(true);
     try{
-      // Generar HTML que replica la plantilla
+      // Generar HTML que replica la plantilla oficial "PLANTILLA HOJA DE GASTOS KEIA"
       const dias = form.dias.slice(0,7);
       const nDias = dias.length;
-      const fmtEur = v => (parseFloat(v)||0).toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
-      const totalCatFn = id => dias.reduce((s,_,di)=>s+(parseFloat(form.gastos[di]?.[id])||0),0);
-      const totalDiaFn = di => [
-        "km","peaje","taxi","otros_t","billetes","aloj","desayuno","almuerzo","cena","otros"
-      ].reduce((s,id)=>s+(parseFloat(form.gastos[di]?.[id])||0),0);
-      const grandTotal = dias.reduce((_,__,di)=>_+totalDiaFn(di),0);
+      const huecos = Math.max(0,7-nDias);
+      const esc = v => String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+      const num = v => (parseFloat(v)||0).toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2});
+      const eur = v => num(v)+" €";
+      const val = (di,id) => parseFloat(form.gastos[di]?.[id])||0;
+      const ID_TRANS=["km","peaje","taxi","otros_t","billetes"], ID_DIETAS=["aloj","desayuno","almuerzo","cena"], ID_OTROS=["otros"];
+      const ID_TODOS=[...ID_TRANS,...ID_DIETAS,...ID_OTROS];
+      const sumaDia = (di,ids) => ids.reduce((s,id)=>s+val(di,id),0);
+      const sumaTot = ids => dias.reduce((s,_,di)=>s+sumaDia(di,ids),0);
+      const grandTotal = sumaTot(ID_TODOS);
+      const fechaCorta = f => { const m=String(f||"").match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}/${m[2]}`:esc(f||""); };
+      const fechaLarga = f => { const m=String(f||"").match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}/${m[2]}/${m[1]}`:esc(f||""); };
+      const fRef = form.fecha_ini || dias.map(d=>d.fecha).filter(Boolean).sort()[0] || "";
+      const mRef = String(fRef).match(/^(\d{4})-(\d{2})/);
+      const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+      const mesTxt = mRef?MESES[parseInt(mRef[2],10)-1]:"";
+      const anioTxt = mRef?mRef[1]:"";
+      const origen = window.location.origin;
+      const vacias = (cls="") => Array(huecos).fill(`<td class="c ${cls}"></td>`).join("");
 
-      const dayHeaders = dias.map(d=>`<th>${d.fecha||"—"}</th>`).join("")+
-        Array(7-nDias).fill("<th></th>").join("");
-
-      function catRow(id,label,alt){
-        const bg = alt?"#F7F6F4":"#FFFFFF";
-        const cells = dias.map((_,di)=>`<td class="num" style="background:${bg}">${fmtEur(form.gastos[di]?.[id]||0)}</td>`).join("")+
-          Array(7-nDias).fill(`<td class="num" style="background:${bg}">—</td>`).join("");
-        const tot = totalCatFn(id);
-        return `<tr style="background:${bg}"><td colspan="2" class="lbl">${label}</td>${cells}<td class="num tot-cell">${fmtEur(tot)}</td></tr>`;
+      // Fila de una categoría: celdas vacías si no hay importe, total siempre
+      function fila(id,label){
+        const celdas = dias.map((_,di)=>`<td class="c n">${val(di,id)?num(val(di,id)):""}</td>`).join("")+vacias();
+        return `<tr><td class="l">${label}</td>${celdas}<td class="c n tot">${eur(sumaTot([id]))}</td></tr>`;
       }
-      function subRow(label,ids){
-        const cells = dias.map((_,di)=>{
-          const v=ids.reduce((s,id)=>s+(parseFloat(form.gastos[di]?.[id])||0),0);
-          return `<td class="num sub-num">${fmtEur(v)}</td>`;
-        }).join("")+Array(7-nDias).fill('<td class="num sub-num">—</td>').join("");
-        const tot=ids.reduce((s,id)=>s+totalCatFn(id),0);
-        return `<tr class="sub-row"><td colspan="2" class="lbl sub-lbl">${label}</td>${cells}<td class="num sub-num">${fmtEur(tot)}</td></tr>`;
+      function filaTotal(label,ids,conEuro=true){
+        const celdas = dias.map((_,di)=>`<td class="c n">${conEuro?eur(sumaDia(di,ids)):num(sumaDia(di,ids))}</td>`).join("")+vacias();
+        return `<tr class="rojo"><td class="l">${label}</td>${celdas}<td class="c n tot">${eur(sumaTot(ids))}</td></tr>`;
       }
+      const hueco = `<tr class="hueco"><td colspan="9"></td></tr>`;
 
-      const itRows = dias.map(d=>`
-        <tr>
-          <td class="it-val">${d.fecha||""}</td>
-          <td class="it-val" colspan="8">${d.recorrido||""}</td>
-          <td class="it-num">${d.kms||0}</td>
-        </tr>`).join("")+
-        Array(Math.max(0,5-nDias)).fill(`<tr>${'<td class="it-val"></td>'.repeat(9)}<td class="it-num"></td></tr>`).join("");
+      const kmsTotal = dias.reduce((s,d)=>s+(parseFloat(d.kms)||0),0);
+      const itRows = dias.map(d=>`<tr><td>${fechaLarga(d.fecha)}</td><td>${esc(d.recorrido)}</td><td class="n">${d.kms||""}</td></tr>`).join("")+
+        Array(Math.max(0,5-nDias)).fill(`<tr><td>&nbsp;</td><td></td><td></td></tr>`).join("");
 
       const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-<title>Hoja de Gastos — ${form.nombre}</title>
+<title>Hoja de Gastos — ${esc(form.nombre)}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter','Helvetica Neue',Arial,sans-serif;font-size:9px;color:#171717;background:#FFFFFF;padding:12px}
-h1{font-size:15px;font-weight:800;letter-spacing:-.5px;color:#fff;background:#171717;padding:10px 14px;text-align:center;border-radius:6px 6px 0 0;margin-bottom:0}
-.datos-gen{border:1.5px solid #F2F0ED;border-top:none;padding:8px 12px;background:#E8F0FB;border-radius:0 0 6px 6px;margin-bottom:10px;display:grid;grid-template-columns:1fr 1fr;gap:4px 20px}
-.dato-row{display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid #1F467A}
-.dato-lbl{font-weight:700;font-size:9px;color:#2B2926;min-width:90px;text-transform:uppercase;letter-spacing:.3px}
-.dato-val{font-size:10px;color:#171717;font-weight:500}
-table{width:100%;border-collapse:collapse;margin-bottom:10px}
-.sect-hdr{background:#171717;color:#fff;font-weight:800;font-size:10px;padding:7px 10px;text-align:left}
-.day-hdr{background:#D3CFC9;color:#fff;font-weight:700;font-size:8.5px;text-align:center;padding:5px 3px}
-.lbl{padding:5px 8px;font-weight:500;color:#3D3A36;border-right:1.5px solid #E5E2DD;text-align:left;font-size:8.5px}
-.num{text-align:right;padding:5px 6px;color:#3D3A36;font-size:8.5px;border-left:1px solid #E5E2DD}
-.tot-cell{background:#E8F0FB!important;color:#2B2926;font-weight:700;border-left:2px solid #BBD3F0}
-.sub-row{background:#E6F5EC!important}
-.sub-lbl{color:#065F46;font-weight:700;background:#E6F5EC}
-.sub-num{color:#065F46;font-weight:700;background:#E6F5EC!important}
-.total-row td{background:#171717!important;color:#fff;font-weight:800;font-size:10px;padding:7px 8px}
-.total-row .num{color:#fff;border-color:#D3CFC9}
-tr:nth-child(even) td{background:#F7F6F4}
-tr:nth-child(even) .num{background:#F7F6F4}
-.it-val{padding:5px 8px;border-bottom:1px solid #E5E2DD;font-size:8.5px;color:#3D3A36}
-.it-num{padding:5px 8px;text-align:right;border-bottom:1px solid #E5E2DD;font-weight:700;font-size:8.5px;color:#2B2926}
-.coment-box{border:1.5px solid #E5E2DD;border-radius:6px;padding:8px 12px;min-height:50px;font-size:9px;color:#3D3A36;margin-bottom:10px;background:#F7F6F4}
-.firma-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
-.firma-box{background:#171717;color:#fff;font-weight:700;font-size:9px;text-align:center;padding:10px;border-radius:6px}
-.firma-line{border-top:1.5px solid #E5E2DD;margin-top:28px;padding-top:4px;font-size:8px;color:#7F7973;text-align:center}
-.tickets-section{margin-bottom:10px}
-.tickets-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
-.ticket-img{width:90px;height:90px;object-fit:cover;border-radius:6px;border:1.5px solid #E5E2DD}
-.section-title{background:#D3CFC9;color:#fff;font-weight:700;font-size:9.5px;padding:6px 10px;border-radius:4px 4px 0 0;margin-bottom:0}
-.meta{font-size:8px;color:#7F7973;text-align:right;margin-bottom:6px}
+body{font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;font-size:10px;color:#000;background:#fff;padding:18px 28px}
+.hoja{width:976px;margin:0 auto}
+.cab{position:relative;height:84px;margin-bottom:20px}
+.cab img{position:absolute;left:22px;top:0;height:50px}
+.cab h1{position:absolute;left:246px;top:74px;font-size:11px;font-weight:700}
+.datos{position:relative;height:72px;margin-bottom:24px}
+.datos>div{position:absolute}
+.dl{font-weight:700;font-size:10px}
+.bar{background:#E06666;min-height:14px;padding:1px 4px;font-size:10px;border-bottom:1px solid #8a8a8a}
+.linea{border-bottom:1px solid #000;min-height:14px;font-size:9px;color:#444;padding:0 2px}
+table{border-collapse:collapse;width:100%}
+.g td{border:1px solid #000;height:14px;padding:0 4px;font-size:10px}
+.g .l{width:175px;font-weight:700;text-align:left}
+.g .c{width:75px}
+.g .n{text-align:right}
+.g .tot{width:auto}
+.g .rojo td{background:#E06666;font-weight:700}
+.g .rojo .tot{font-weight:700}
+.g .cab-f td{background:#E06666;font-weight:700}
+.g .hueco td{border:none;height:12px}
+.g .total td{background:#E06666;font-weight:700}
+.bajo{display:grid;grid-template-columns:487px 70px 1fr;margin-top:12px;align-items:start}
+.it td,.it th{border:1px solid #000;height:14px;padding:0 4px;font-size:10px;font-weight:400;text-align:left}
+.it .hdr th{background:#E06666;font-weight:700}
+.it .n{text-align:right;width:75px}
+.it td:first-child,.it th:first-child{width:75px}
+.coment .t{background:#E06666;font-weight:700;text-align:center;border:1px solid #000;padding:1px 4px}
+.coment .b{border:1px solid #000;border-top:none;min-height:84px;padding:4px 6px;white-space:pre-wrap}
+.firmas{display:grid;grid-template-columns:412px 70px 1fr;margin-top:28px}
+.firmas .bar{min-height:16px;font-size:10px}
+.firmas .dl{margin-top:4px}
+.pie{margin-top:26px}
+.pie img{height:20px}
+.tickets{page-break-before:always;margin-top:20px}
+.tickets h2{background:#E06666;font-size:11px;padding:3px 6px;margin-bottom:8px}
+.tickets .grid{display:flex;flex-wrap:wrap;gap:10px}
+.tickets img{width:160px;height:160px;object-fit:cover;border:1px solid #000}
+.tickets .nm{font-size:8px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media print{
-  body{padding:6px}
-  @page{size:A4;margin:8mm}
+  body{padding:0}
+  @page{size:A4 landscape;margin:10mm}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
-</style></head><body>
-<div class="meta">Generado el ${new Date().toLocaleDateString("es-ES",{day:"2-digit",month:"long",year:"numeric"})} · ${EMPRESA} · ${EMPRESA_SUB}</div>
-<h1>HOJA DE GASTOS</h1>
-<div class="datos-gen">
-  <div class="dato-row"><span class="dato-lbl">Nombre</span><span class="dato-val">${form.nombre}</span></div>
-  <div class="dato-row"><span class="dato-lbl">Asociación</span><span class="dato-val">${EMPRESA}</span></div>
-  <div class="dato-row"><span class="dato-lbl">Actividad</span><span class="dato-val">${form.actividad||"—"}</span></div>
-  <div class="dato-row"><span class="dato-lbl">Proyecto</span><span class="dato-val">${form.proyecto||"—"}</span></div>
-  <div class="dato-row"><span class="dato-lbl">Fecha inicio</span><span class="dato-val">${form.fecha_ini||"—"}</span></div>
-  <div class="dato-row"><span class="dato-lbl">Fecha fin</span><span class="dato-val">${form.fecha_fin||"—"}</span></div>
+</style></head><body><div class="hoja">
+
+<div class="cab"><img src="${origen}/keia-simbolo.svg" alt="KEIA"/><h1>HOJA DE GASTOS</h1></div>
+
+<div class="datos">
+  <div class="dl" style="left:4px;top:0">Nombre</div><div class="bar" style="left:76px;width:336px;top:0">${esc(form.nombre)}</div>
+  <div class="dl" style="left:488px;top:0">Asociación</div><div class="bar" style="left:624px;width:352px;top:0">Asociación Estudiantil Junior Empresa KEIA</div>
+  <div class="linea" style="left:76px;width:100px;top:28px">${esc(form.proyecto||"")}</div>
+  <div class="linea" style="left:250px;width:86px;top:28px">${form.fecha_ini||form.fecha_fin?`${fechaCorta(form.fecha_ini)}${form.fecha_fin?" – "+fechaCorta(form.fecha_fin):""}`:""}</div>
+  <div class="dl" style="left:458px;top:28px">Mes</div><div class="bar" style="left:486px;width:138px;top:28px">${mesTxt}</div>
+  <div class="dl" style="left:628px;top:28px">año</div><div class="bar" style="left:697px;width:279px;top:28px">${anioTxt}</div>
+  <div class="dl" style="left:4px;top:56px">Actividad</div><div class="bar" style="left:174px;width:802px;top:56px">${esc(form.actividad)}</div>
 </div>
 
-<table>
-  <thead>
-    <tr><td colspan="${2+7+1}" class="sect-hdr">GASTOS</td></tr>
-    <tr>
-      <th class="day-hdr" colspan="2" style="text-align:left;padding-left:8px">Categoría</th>
-      ${dayHeaders}
-      <th class="day-hdr">Totales</th>
-    </tr>
-  </thead>
-  <tbody>
-    ${catRow("km","Importe Kilómetros",false)}
-    ${catRow("peaje","Peajes",true)}
-    ${catRow("taxi","Taxi",false)}
-    ${catRow("otros_t","Otros (tren o autobús)",true)}
-    ${catRow("billetes","Billetes nacionales",false)}
-    ${subRow("→ Total transportes",["km","peaje","taxi","otros_t","billetes"])}
-    ${catRow("aloj","Alojamiento",false)}
-    ${catRow("desayuno","Desayuno",true)}
-    ${catRow("almuerzo","Almuerzo",false)}
-    ${catRow("cena","Cena",true)}
-    ${subRow("→ Total aloj. y manutención",["aloj","desayuno","almuerzo","cena"])}
-    ${catRow("otros","Otros gastos",false)}
-    ${subRow("→ Total otros gastos",["otros"])}
-    <tr class="total-row">
-      <td colspan="2">TOTAL GASTOS A JUSTIFICAR</td>
-      ${dias.map((_,di)=>`<td class="num">${fmtEur(totalDiaFn(di))}</td>`).join("")}
-      ${Array(7-nDias).fill('<td class="num">—</td>').join("")}
-      <td class="num" style="font-size:12px">${fmtEur(grandTotal)}</td>
-    </tr>
-  </tbody>
+<table class="g">
+  <tr class="cab-f"><td class="l">FECHA</td>${dias.map(d=>`<td class="c">${d.fecha?fechaCorta(d.fecha):"dia ?"}</td>`).join("")}${Array(huecos).fill('<td class="c">dia ?</td>').join("")}<td class="tot"></td></tr>
+  <tr><td class="l">km</td>${dias.map(d=>`<td class="c n">${d.kms?num(d.kms):""}</td>`).join("")}${vacias()}<td class="tot" style="text-align:center;font-weight:700">Totales</td></tr>
+  <tr><td class="l" style="font-weight:400">Importe km</td>${dias.map((_,di)=>`<td class="c n">${num(val(di,"km"))}</td>`).join("")}${Array(huecos).fill('<td class="c n">0,00</td>').join("")}<td class="n tot">${eur(sumaTot(["km"]))}</td></tr>
+  ${fila("peaje","Peajes")}
+  ${fila("taxi","Taxi")}
+  ${fila("otros_t","Mugi")}
+  ${fila("billetes","Billetes nacionales")}
+  ${filaTotal("Total TRANSPORTES",ID_TRANS)}
+  ${hueco}
+  ${fila("aloj","Alojamiento")}
+  ${fila("desayuno","Desayuno")}
+  ${fila("almuerzo","Almuerzo")}
+  ${fila("cena","Cena")}
+  ${filaTotal("Total DIETAS",ID_DIETAS,false)}
+  ${hueco}
+  ${fila("otros","Otros")}
+  ${filaTotal("Total OTROS GASTOS",ID_OTROS)}
+  ${hueco}
+  <tr class="total"><td class="l">TOTAL</td>${dias.map((_,di)=>`<td class="c n">${num(sumaDia(di,ID_TODOS))}</td>`).join("")}${Array(huecos).fill('<td class="c n">0,00</td>').join("")}<td class="n tot">${eur(grandTotal)}</td></tr>
 </table>
 
-<table>
-  <thead>
-    <tr><td colspan="10" class="sect-hdr">DETALLE DEL ITINERARIO DEL VIAJE Y RECORRIDO EN KMS.</td></tr>
-    <tr>
-      <th class="day-hdr" style="width:80px">Fecha</th>
-      <th class="day-hdr" colspan="8" style="text-align:left;padding-left:8px">Recorrido realizado</th>
-      <th class="day-hdr" style="width:60px">KMS.</th>
-    </tr>
-  </thead>
-  <tbody>${itRows}</tbody>
-</table>
+<div class="bajo">
+  <table class="it">
+    <tr class="hdr"><th colspan="3">DETALLE DEL ITINERARIO DEL VIAJE Y RECORRIDO EN KMS.</th></tr>
+    <tr class="hdr"><th>Fecha</th><th style="text-align:center">Recorrido realizado</th><th class="n" style="text-align:center">KMS.</th></tr>
+    ${itRows}
+    ${kmsTotal?`<tr><td></td><td style="text-align:right;font-weight:700">Total km</td><td class="n" style="font-weight:700">${num(kmsTotal)}</td></tr>`:""}
+  </table>
+  <div></div>
+  <div class="coment"><div class="t">COMENTARIOS Y OBSERVACIONES</div><div class="b">${esc(form.comentarios)}</div></div>
+</div>
 
-<div class="section-title">COMENTARIOS Y OBSERVACIONES</div>
-<div class="coment-box">${form.comentarios||""}</div>
+<div class="firmas">
+  <div><div class="bar">${esc(form.nombre)}</div><div class="dl">NOMBRE Y FIRMA ASOCIADO</div></div>
+  <div></div>
+  <div><div class="bar"></div><div class="dl">APROBADO POR</div></div>
+</div>
+
+<div class="pie"><img src="${origen}/leinn-logo.png" alt="LEINN"/></div>
 
 ${form.tickets&&form.tickets.length>0?`
-<div class="section-title" style="margin-bottom:6px">🧾 TICKETS Y JUSTIFICANTES (${form.tickets.length})</div>
-<div class="tickets-grid">
-  ${form.tickets.map(t=>`<div style="text-align:center"><img src="${t.preview}" class="ticket-img" onerror="this.style.display='none'"/><div style="font-size:7px;color:#6B665F;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.nombre}</div></div>`).join("")}
-</div>`:""}
+<div class="tickets"><h2>TICKETS Y JUSTIFICANTES (${form.tickets.length})</h2><div class="grid">
+  ${form.tickets.map(t=>`<div><img src="${t.preview}" onerror="this.style.display='none'"/><div class="nm">${esc(t.nombre)}</div></div>`).join("")}
+</div></div>`:""}
 
-<div class="firma-row">
-  <div class="firma-box">
-    NOMBRE Y FIRMA ASOCIADO
-    <div class="firma-line">${form.nombre}</div>
-  </div>
-  <div class="firma-box">
-    APROBADO POR
-    <div class="firma-line"> </div>
-  </div>
-</div>
-</body></html>`;
+</div></body></html>`;
 
       // Abrir en nueva pestaña para imprimir/guardar PDF
       const win = window.open("","_blank");
