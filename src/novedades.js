@@ -12,6 +12,14 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-26-7",
+    fecha: "26/11/2026",
+    titulo: "Equipo actualizado",
+    cambios: [
+      "Eneko Ruiz y Mario ya no salen en ninguna lista: proyectos, checkpoints, horas, equipo, actas…",
+    ],
+  },
+  {
     id: "2026-11-26-6",
     fecha: "26/11/2026",
     titulo: "🏆 Trabajadores de la semana",

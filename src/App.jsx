@@ -761,8 +761,8 @@ function ProyectoEquipoTab({pname, color}){
 
   if(loading) return <div style={{padding:20,color:"#7F7973",fontSize:11}}>Cargando...</div>;
 
-  const asignados = INIT_MEMBERS.filter(m=>roles[m.name]);
-  const sinAsignar = INIT_MEMBERS.filter(m=>!roles[m.name]);
+  const asignados = MIEMBROS_VISIBLES.filter(m=>roles[m.name]);
+  const sinAsignar = MIEMBROS_VISIBLES.filter(m=>!roles[m.name]);
 
   return(
     <div>
@@ -944,7 +944,7 @@ function EstrategiaProyectosTab({projects,ing,cv,bp,hojas}){
         </div>
         <div style={{fontWeight:600,fontSize:10,color:"#3D3A36",letterSpacing:"0",marginBottom:12}}>Asignación por persona</div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10,marginBottom:24}}>
-          {INIT_MEMBERS.map(m=>{
+          {MIEMBROS_VISIBLES.map(m=>{
             const asignados=(estrategia[`verano_${m.name}_proy`]||[]).filter(pn=>activos.includes(pn));
             return(
               <div key={m.name} style={{background:"#FFFFFF",border:"1px solid #E5E2DD",borderRadius:12,overflow:"hidden"}}>
@@ -991,7 +991,7 @@ function EstrategiaProyectosTab({projects,ing,cv,bp,hojas}){
             const proj=projects.find(p=>p.name===pn);
             const color=proj?.color||"#3D3A36";
             const etiq=ETIQUETAS_PROY.find(e=>e.id===estrategia[`p_${pn}_etiqueta`]);
-            const personas=INIT_MEMBERS.filter(m=>(estrategia[`verano_${m.name}_proy`]||[]).includes(pn));
+            const personas=MIEMBROS_VISIBLES.filter(m=>(estrategia[`verano_${m.name}_proy`]||[]).includes(pn));
             return(
               <div key={pn} style={{background:"#FFFFFF",border:"1px solid #E5E2DD",borderRadius:12,overflow:"hidden"}}>
                 <div style={{background:color,padding:"9px 14px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
@@ -1835,9 +1835,9 @@ function ProyectosTab({projects,setProjects,setProjectsDirectly,crm,setCRM,custo
                   </div>
                 ))}
               </div>
-              {(equipos[p.name]||[]).length>0&&(
+              {(equipos[p.name]||[]).filter(n=>!MIEMBROS_OCULTOS.includes(n)).length>0&&(
                 <div style={{display:"flex",gap:5,flexWrap:"wrap",marginTop:14,paddingTop:12,borderTop:`1px solid ${textColor}22`}}>
-                  {(equipos[p.name]||[]).map(n=>{
+                  {(equipos[p.name]||[]).filter(n=>!MIEMBROS_OCULTOS.includes(n)).map(n=>{
                     const mc=INIT_MEMBERS.find(x=>x.name===n)?.color||"#6B665F";
                     return <span key={n} style={{display:"inline-flex",alignItems:"center",gap:5,background:"rgba(0,0,0,.22)",borderRadius:99,padding:"3px 9px 3px 4px",fontSize:11,color:"#171717",fontWeight:500}}>
                       <span style={{width:16,height:16,borderRadius:99,background:mc,color:"#171717",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700}}>{n[0]}</span>{n}
@@ -1950,7 +1950,7 @@ function BookpointsTab({data,setData,groups,setGroups}){
   return(
     <div>
       <GroupManager groups={groups} setGroups={setGroups} color="#D94A32"/>
-      {INIT_MEMBERS.map(m=>{
+      {MIEMBROS_VISIBLES.map(m=>{
         const rows=data[m.name]||[],pts=rows.reduce((s,r)=>s+(parseFloat(r.puntos)||0),0);
         // group rows
         const noGroup=rows.filter(r=>!r.grupo||!groups.find(g=>g.name===r.grupo));
@@ -2075,7 +2075,7 @@ function CompanerosPopup({selected, exclude, onChange}){
             <div style={{fontSize:10,fontWeight:700,color:"#6B665F",marginBottom:8,paddingBottom:6,borderBottom:"1px solid #E5E2DD"}}>
               Seleccionar compañeros
             </div>
-            {INIT_MEMBERS.filter(m=>m.name!==exclude).map(m=>{
+            {MIEMBROS_VISIBLES.filter(m=>m.name!==exclude).map(m=>{
               const sel=selected.includes(m.name);
               return(
                 <div key={m.name} onClick={()=>{
@@ -2164,7 +2164,7 @@ function CustomersTab({data,setData,projects,groups,setGroups}){
   return(
     <div>
       <GroupManager groups={groups} setGroups={setGroups} color="#0EA5E9"/>
-      {INIT_MEMBERS.map(m=>{
+      {MIEMBROS_VISIBLES.map(m=>{
         const rows=data[m.name]||[];
         const cv=rows.filter(r=>r.cat==="CV").length,lv=rows.filter(r=>r.cat==="LV").length,tot=cv+lv;
         const noGroup=rows.filter(r=>!r.grupo||!groups.find(g=>g.name===r.grupo));
@@ -2264,7 +2264,7 @@ function AprobarFacturaModal({factura, facturas, onConfirm, onCancel}){
 // ── FINANCE — link factura ────────────────────────────────────────────────────
 // ── FACTURAS TAB — por proyecto con reparto ───────────────────────────────────
 function RepartoModal({factura, onSave, onClose}){
-  const ALL_REPARTO = [...INIT_MEMBERS, ...EXTERNAL_MEMBERS, EMPRESA_REPARTO];
+  const ALL_REPARTO = [...MIEMBROS_VISIBLES, ...EXTERNAL_MEMBERS, EMPRESA_REPARTO];
   const [reparto, setReparto] = useState(
     factura.reparto?.length ? factura.reparto :
     ALL_REPARTO.map(m=>({member:m.name, pct:"", importe:""}))
@@ -2285,11 +2285,11 @@ function RepartoModal({factura, onSave, onClose}){
   }
 
   function repartirIgual(){
-    const n=INIT_MEMBERS.length;
+    const n=MIEMBROS_VISIBLES.length;
     const pct=(100/n).toFixed(1);
     const imp=(base/n).toFixed(2);
     setReparto(ALL_REPARTO.map(m=>
-      INIT_MEMBERS.find(x=>x.name===m.name)
+      MIEMBROS_VISIBLES.find(x=>x.name===m.name)
         ? {member:m.name, pct, importe:imp}
         : {member:m.name, pct:"", importe:""}
     ));
@@ -2886,7 +2886,7 @@ function FormularioHojaGasto({form,updForm,updDia,addDia,delDia,updGasto,addTick
             <select value={form.nombre} onChange={e=>updForm("nombre",e.target.value)}
               style={{width:"100%",border:"1.5px solid #E5E2DD",borderRadius:8,padding:"7px 10px",fontSize:12,fontFamily:"inherit",outline:"none",boxSizing:"border-box",background:"#FFFFFF"}}>
               <option value="">— Selecciona tu nombre —</option>
-              {INIT_MEMBERS.map(m=><option key={m.name} value={m.name}>{m.name}</option>)}
+              {MIEMBROS_VISIBLES.map(m=><option key={m.name} value={m.name}>{m.name}</option>)}
             </select>
           </div>
           <div>
@@ -3631,7 +3631,7 @@ function HojasGastoTab({hojas, setHojas, gastos, projects, pagoInfo, onSaldada})
   const totHojas = rows.reduce((s,r)=>s+(parseFloat(r.importe)||0),0);
   const totFact  = gastos.reduce((s,r)=>s+signedBase(r),0);
   const totTotal = totHojas + totFact;
-  const ALL_MEMBERS_SEL = [...INIT_MEMBERS,...EXTERNAL_MEMBERS].map(m=>m.name);
+  const ALL_MEMBERS_SEL = [...MIEMBROS_VISIBLES,...EXTERNAL_MEMBERS].map(m=>m.name);
 
   const getYear = f => { if(!f) return "Sin fecha"; const p=f.split('/'); return p.length===3?p[2]:(f.length>=4?f.slice(-4):"Sin fecha"); };
   const years = [...new Set(rows.map(r=>getYear(r.fecha)))].sort((a,b)=>b-a);
@@ -7976,7 +7976,7 @@ function AuditoriaChecklist({data, storageKey, label, onUpdate}){
                     </div>
                     {/* Assignees */}
                     <div onClick={e=>e.stopPropagation()} style={{padding:"0 16px 8px 46px",display:"flex",flexWrap:"wrap",gap:4}}>
-                      {INIT_MEMBERS.map(m=>{
+                      {MIEMBROS_VISIBLES.map(m=>{
                         const sel = itemAssignees.includes(m.name);
                         return(
                           <button key={m.name} onClick={()=>toggleAssignee(item.id,m.name)} style={{
@@ -8304,7 +8304,7 @@ function DiamanteTab({ing, gas, hojas, projects, diamante, setDiamante}){
     };
   }
 
-  const allStats=INIT_MEMBERS.map(m=>({name:m.name,...memberStats(m.name)}));
+  const allStats=MIEMBROS_VISIBLES.map(m=>({name:m.name,...memberStats(m.name)}));
   const maxFact=Math.max(...allStats.map(s=>s.facturacion),1);
   const maxMB=Math.max(...allStats.map(s=>Math.max(s.margenBruto,0)),1);
   const maxCH=Math.max(...allStats.map(s=>Math.max(s.costeHoraReal,0)),1);
@@ -8423,7 +8423,7 @@ function DiamanteTab({ing, gas, hojas, projects, diamante, setDiamante}){
           <div style={{background:"#FFFFFF",borderRadius:14,padding:24,maxWidth:420,width:"95%",maxHeight:"85vh",overflowY:"auto",boxShadow:"0 8px 24px rgba(0,0,0,0.12)"}}>
             <div style={{fontWeight:700,fontSize:14,marginBottom:4,fontFamily:FONT_TITULOS}}>🎯 Proyecto principal por miembro</div>
             <div style={{fontSize:11,color:"#6B665F",marginBottom:16}}>Asigna un proyecto a cada persona. Las horas salen de ⏱ Horas.</div>
-            {INIT_MEMBERS.map(m=>(
+            {MIEMBROS_VISIBLES.map(m=>(
               <div key={m.name} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #E5E2DD"}}>
                 <span style={{fontSize:11,fontWeight:600,color:"#171717",width:80}}>{m.name}</span>
                 <Sel value={diamante[`projmain_${m.name}`]||""} onChange={v=>setDiamante(`projmain_${m.name}`,v)} options={projects.map(p=>p.name)} placeholder="— Sin proyecto —"/>
@@ -8442,7 +8442,7 @@ function DiamanteTab({ing, gas, hojas, projects, diamante, setDiamante}){
           <div style={{background:"#FFFFFF",borderRadius:14,padding:24,maxWidth:420,width:"95%",maxHeight:"85vh",overflowY:"auto",boxShadow:"0 8px 24px rgba(0,0,0,0.12)"}}>
             <div style={{fontWeight:700,fontSize:14,marginBottom:4,fontFamily:FONT_TITULOS}}>💰 Financiación e inversiones</div>
             <div style={{fontSize:11,color:"#6B665F",marginBottom:16}}>Financiación externa captada por cada miembro</div>
-            {INIT_MEMBERS.map(m=>(
+            {MIEMBROS_VISIBLES.map(m=>(
               <div key={m.name} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #E5E2DD"}}>
                 <span style={{fontSize:11,fontWeight:600,color:"#171717"}}>{m.name}</span>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -8688,7 +8688,7 @@ function CalendarioTab({tareas, setTareas, projects}){
                   <select value={form.responsable||""} onChange={e=>setForm(f=>({...f,responsable:e.target.value}))}
                     style={{width:"100%",border:"1px solid #E5E2DD",borderRadius:8,padding:"8px 10px",fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}>
                     <option value="">— Sin asignar</option>
-                    {INIT_MEMBERS.map(m=><option key={m.name} value={m.name}>{m.name}</option>)}
+                    {MIEMBROS_VISIBLES.map(m=><option key={m.name} value={m.name}>{m.name}</option>)}
                   </select>
                 </div>
               </div>
@@ -9021,7 +9021,7 @@ function ActasTab({actas, setActas, projects}){
     const id = Date.now();
     setActas(a=>[{
       id, fecha: new Date().toISOString().slice(0,10),
-      asistentes: [...INIT_MEMBERS.map(m=>m.name)],
+      asistentes: [...MIEMBROS_VISIBLES.map(m=>m.name)],
       proyectos: [], decisiones: [], tareas: [], titulo: ""
     }, ...a]);
     setOpen(id);
@@ -9138,7 +9138,7 @@ function ActasTab({actas, setActas, projects}){
                   <div style={{marginTop:14}}>
                     <div style={{fontSize:10,fontWeight:700,color:"#6B665F",marginBottom:7}}>👥 Asistentes</div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
-                      {INIT_MEMBERS.map(m=>{
+                      {MIEMBROS_VISIBLES.map(m=>{
                         const sel=acta.asistentes.includes(m.name);
                         return(
                           <button key={m.name} onClick={()=>{
@@ -9212,7 +9212,7 @@ function ActasTab({actas, setActas, projects}){
                               <select value={t.responsable||""} onChange={e=>updTarea(acta.id,t.id,"responsable",e.target.value)}
                                 style={{border:"1px solid #E5E2DD",borderRadius:5,padding:"2px 4px",fontSize:9,fontFamily:"inherit",background:resp?resp.light:"#FFFFFF",color:resp?resp.color:"#7F7973",fontWeight:700}}>
                                 <option value="">—</option>
-                                {INIT_MEMBERS.map(m=><option key={m.name} value={m.name}>{m.name}</option>)}
+                                {MIEMBROS_VISIBLES.map(m=><option key={m.name} value={m.name}>{m.name}</option>)}
                               </select>
                               <button onClick={()=>delTarea(acta.id,t.id)}
                                 style={{background:"none",border:"none",color:"#A19B93",cursor:"pointer",fontSize:12,padding:"0 2px"}}>✕</button>
@@ -9738,7 +9738,7 @@ function RendimientoTab({bp,cv,ing,gas,hojas,projects}){
   const [periodo,setPeriodo]   = useState("week");
   const [dateFrom,setDateFrom] = useState("");
   const [dateTo,setDateTo]     = useState("");
-  const [selectedM,setSelectedM] = useState(INIT_MEMBERS[0].name);
+  const [selectedM,setSelectedM] = useState(MIEMBROS_VISIBLES[0].name);
   // Horas registradas en ⏱ Horas (antes Clockify)
   const [horasEntries,,recargarHoras] = useHoras();
   const horasLoaded = horasEntries!==null;
@@ -9858,7 +9858,7 @@ function RendimientoTab({bp,cv,ing,gas,hojas,projects}){
         <div>
           <div style={{fontSize:9,color:"#6B665F",fontWeight:600,letterSpacing:"0.3px",marginBottom:4}}>Persona</div>
           <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-            {INIT_MEMBERS.map(mem=>(
+            {MIEMBROS_VISIBLES.map(mem=>(
               <button key={mem.name} onClick={()=>setSelectedM(mem.name)} style={{
                 background:selectedM===mem.name?mem.color+"22":"#F7F6F4",
                 color:selectedM===mem.name?mem.color:"#3D3A36",
@@ -10239,7 +10239,7 @@ function EquipoTab({bp,cv,ing,gas,hojas,projects,ultimaAct}){
       {/* Team KPIs */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:10,marginBottom:24}}>
         {[
-          {label:"Bookpoints",val:String(teamPts),color:"#A8341F",bg:"#FBEAE5",accent:"#D94A32",sub:"Meta: "+(INIT_MEMBERS.length*META_BP)},
+          {label:"Bookpoints",val:String(teamPts),color:"#A8341F",bg:"#FBEAE5",accent:"#D94A32",sub:"Meta: "+(MIEMBROS_VISIBLES.length*META_BP)},
           {label:"CV totales",val:String(teamCV),color:"#0C4A6E",bg:"#E6F3FB",accent:"#0EA5E9"},
           {label:"LV totales",val:String(teamLV),color:"#14532D",bg:"#E6F5EC",accent:"#10B981"},
           {label:"Ingresos",val:teamIng.toFixed(0)+"€",color:"#065F46",bg:"#E6F5EC",accent:"#059669"},
@@ -10950,7 +10950,7 @@ const CHAT_GROUPS = [
   { id:"general",   label:"💬 General",          password:null,   locked:false },
   { id:"training",  label:"🎯 Training Sessions", password:null,   locked:false },
 ];
-const ALL_MEMBERS_CHAT = [...INIT_MEMBERS.map(m=>m.name),...EXTERNAL_MEMBERS.map(m=>m.name)];
+const ALL_MEMBERS_CHAT = [...MIEMBROS_VISIBLES.map(m=>m.name),...EXTERNAL_MEMBERS.map(m=>m.name)];
 
 function ChatWidget(){
   const [open, setOpen]         = useState(false);
