@@ -83,7 +83,7 @@ export function Hero({ antetitulo, titulo, acciones = [], chips = [], destacada,
 // OJO: el desenfoque (backdrop-filter) va siempre en un ::before, nunca en el contenedor,
 // para no romper las ventanas emergentes con position:fixed que hay dentro.
 export const CSS_GLASS = (FONT_TITULOS) => `
-  html { background:#3a2a1f; } body { background:transparent !important; }
+  html { background:#3a2a1f; } body { background:transparent !important; overflow-x:clip; }
   .keia-fondo { position:fixed; inset:-40px; z-index:-2; background:#5a4232 url('/fondo-keia.jpg') center/cover no-repeat; filter:saturate(1.05); }
   .keia-fondo::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(28,20,15,.42) 0%, rgba(28,20,15,.18) 38%, rgba(20,14,10,.45) 100%); }
 
@@ -95,9 +95,11 @@ export const CSS_GLASS = (FONT_TITULOS) => `
     border:1px solid rgba(255,255,255,.14); box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 18px 40px -18px rgba(0,0,0,.55); }
   .keia-header-fila { display:flex; align-items:center; justify-content:space-between; gap:14px; height:64px; padding:0 14px 0 20px; }
   .keia-nav { display:flex; gap:2px; padding:4px; border-radius:999px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.08); overflow-x:auto; scrollbar-width:none; max-width:100%; }
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08); overflow-x:auto; overflow-y:hidden; scrollbar-width:none; max-width:100%;
+    /* En el móvil la barra solo se desliza de izquierda a derecha (no arriba/abajo ni rebota) */
+    touch-action:pan-x; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
   .keia-nav::-webkit-scrollbar { display:none; }
-  .keia-tab { position:relative; background:transparent; border:none; color:rgba(255,255,255,.66); padding:8px 15px; border-radius:999px; font-size:13px; font-weight:500;
+  .keia-tab { position:relative; flex-shrink:0; touch-action:pan-x; background:transparent; border:none; color:rgba(255,255,255,.66); padding:8px 15px; border-radius:999px; font-size:13px; font-weight:500;
     cursor:pointer; white-space:nowrap; font-family:inherit; transition:color .2s, background-color .25s, box-shadow .25s; }
   .keia-tab:hover { color:#FFFFFF; background:rgba(255,255,255,.08); }
   .keia-tab.activa { color:#FFFFFF; font-weight:600;

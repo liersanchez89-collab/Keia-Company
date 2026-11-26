@@ -5,6 +5,7 @@ import { perfil, puedoEditar, puedoGestionar, esVisitante, esFinanzas } from "./
 import { Avatar, BotonPerfil, iniciarFotos, FotoAmpliada } from "./Fotos.jsx";
 import Novedades from "./Novedades.jsx";
 import { Hero, CSS_GLASS } from "./Glass.jsx";
+import InversionesTab from "./Inversiones.jsx";
 
 // Tipografías de marca (manual KEIA): Manrope para titulares y cifras, Inter para el texto
 const FONT_TITULOS="'Manrope','Inter',system-ui,-apple-system,'Segoe UI',sans-serif";
@@ -7818,6 +7819,7 @@ function FinanzasTab({ing:ingTodo,setIng,gas:gasTodo,setGas,hojas,setHojas,proje
           {id:"facturas", label:"📄 Facturas"},
           {id:"hojas",    label:"🧾 Hojas Gasto"},
           {id:"otros",    label:"🧾 Otros gastos"},
+          {id:"inversiones", label:"📈 Inversiones"},
           {id:"banco",    label:bancoPend?`🏦 Banco (${bancoPend})`:"🏦 Banco"},
           {id:"diamante", label:"💎 Diamante Falkon"},
           {id:"previsiones", label:"📊 Previsiones"},
@@ -7843,6 +7845,7 @@ function FinanzasTab({ing:ingTodo,setIng,gas:gasTodo,setGas,hojas,setHojas,proje
       </div>}
       {sub==="hojas"   &&<HojasGastoTab hojas={hojas} setHojas={setHojas} gastos={gas} projects={projects} pagoInfo={pagoInfo} onSaldada={toggleSaldada}/>}
       {sub==="otros"   &&<OtrosGastosTab movs={bancoMovs} guardar={guardarBanco} projects={projects} irBanco={()=>setSub("banco")} ing={ing}/>}
+      {sub==="inversiones"&&<InversionesTab projects={projects} miembros={MIEMBROS_VISIBLES} fontTit={FONT_TITULOS}/>}
       {sub==="banco"   &&<BancoTab      ing={ing} setIng={setIng} gas={gas} setGas={setGas} hojas={hojas} onPendientes={setBancoPend} onMovs={setBancoMovs} irOtros={()=>setSub("otros")} rect={rect} saldadas={saldadas}/>}
       {sub==="diamante"&&<DiamanteTab   ing={ing} gas={gas} hojas={hojas} projects={projects} diamante={diamante} setDiamante={setDiamante}/>}
       {sub==="previsiones"&&<PrevisionesTab ing={ing} gas={gas} hojas={hojas} projects={projects} sb={sb} otros={otros} banco={bancoMovs}/>}
@@ -11826,7 +11829,7 @@ export default function Dashboard(){
       destacada:{etiqueta:"Customer visits",marca:"Checkpoints",valor:totCV,detalle:`${totPts.toLocaleString("es-ES")} bookpoints en total`}},
     clockify:{antetitulo:"Semana de viernes 9:00 a viernes 8:59 · objetivo 40 h por persona",titulo:"Registro de horas",
       destacada:{etiqueta:"Objetivo semanal",marca:"Horas",valor:40,sufijo:" h",detalle:"por persona",color:"#6FD3A0"}},
-    finanzas:{antetitulo:"Ingresos, gastos, facturas y hojas de gasto",titulo:"Finanzas",
+    finanzas:{antetitulo:"Ingresos, gastos, facturas, hojas de gasto e inversiones",titulo:"Finanzas",
       destacada:netoCard},
     calendario:{antetitulo:"Tareas y fechas importantes del equipo",titulo:"Calendario",
       destacada:{etiqueta:"Por hacer",marca:"Tareas",valor:tareasPend,detalle:`${(tareas||[]).length} tareas en total`}},

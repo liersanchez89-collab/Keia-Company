@@ -12,6 +12,17 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-26-14",
+    fecha: "26/11/2026",
+    titulo: "📈 Nuevo apartado de Inversiones",
+    cambios: [
+      "En Finanzas hay una pestaña nueva, 📈 Inversiones, para apuntar todo lo que invierte KEIA: máquinas y material, web o software, dinero metido en algo o lo que aporta cada socio.",
+      "Cada inversión lleva lo que costó y, si quieres, lo que vale ahora; arriba ves el total invertido y la ganancia o pérdida.",
+      "Cualquier miembro puede añadir, editar y borrar. Es solo un registro: no cambia las cuentas de 💰 Ingresos y gastos.",
+      "En el móvil, la barra de apartados de arriba ya solo se mueve de izquierda a derecha.",
+    ],
+  },
+  {
     id: "2026-11-26-13",
     fecha: "26/11/2026",
     titulo: "🤍 Menos colores, todo en cristal",
