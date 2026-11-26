@@ -12,6 +12,15 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-26-1",
+    fecha: "26/11/2026",
+    titulo: "Cambios en el equipo",
+    cambios: [
+      "Eneko Ruiz y Mario ya no están en KEIA: dejan de salir en Inicio y en los rankings.",
+      "Shazia entra como visitante (solo puede ver, no editar), igual que Bego.",
+    ],
+  },
+  {
     id: "2026-11-16-1",
     fecha: "16/11/2026",
     titulo: "Fotos de perfil",

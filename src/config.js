@@ -36,7 +36,7 @@ export const MIEMBROS = [
 ];
 
 // Personas que ya no están: se ocultan en Inicio pero sus datos siguen contando (pon aquí sus nombres)
-export const MIEMBROS_ANTIGUOS = [];
+export const MIEMBROS_ANTIGUOS = ["Eneko Ruiz", "Mario"];
 
 // Colaboradores externos que pueden aparecer en repartos y en el chat
 export const EXTERNOS = [];

@@ -22,11 +22,9 @@ insert into public.perfiles(email,nombre,rol) values
   ('ander.iribar@alumni.mondragon.edu','Ander','miembro'),
   ('asier.olloqui@alumni.mondragon.edu','Asier Olloqui','miembro'),
   ('asier.garciama@alumni.mondragon.edu','Asier Garcia','miembro'),
-  ('eneko.ruizd@alumni.mondragon.edu','Eneko Ruiz','miembro'),
   ('bruno.bravo@alumni.mondragon.edu','Bruno','miembro'),
   ('garazi.lopezm@alumni.mondragon.edu','Garazi','miembro'),
   ('leire.ferreiro@alumni.mondragon.edu','Leire','miembro'),
-  ('mario.espinosa@alumni.mondragon.edu','Mario','miembro'),
   ('naiara.novo@alumni.mondragon.edu','Naiara','miembro'),
   ('naroa.orellana@alumni.mondragon.edu','Naroa','miembro'),
   ('unai.arrausi@alumni.mondragon.edu','Unai','miembro'),
@@ -35,7 +33,7 @@ insert into public.perfiles(email,nombre,rol) values
   ('sarakristine.ovalle@alumni.mondragon.edu','Sara','miembro'),
   ('alejandro.juaristi@alumni.mondragon.edu','Alex','miembro'),
   ('iker.arrue@alumni.mondragon.edu','Iker','miembro'),
-  ('smaryam@mondragon.edu','Maryam','miembro')
+  ('smaryam@mondragon.edu','Shazia','visitante')
 on conflict (email) do update set nombre = excluded.nombre, rol = excluded.rol;
 
 create or replace function public.mi_nombre() returns text
