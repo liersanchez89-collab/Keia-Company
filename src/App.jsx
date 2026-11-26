@@ -3998,7 +3998,7 @@ function FactSwitch({value,onChange,compact}){
 }
 const OBJETIVO_SEMANAL_H=40; // objetivo de horas por persona y semana (lunes a domingo)
 const TODOS="__todos"; // "persona" especial: las horas se cuentan a todo el equipo a la vez
-const HORAS_ACT_DEFAULT=["Training Session","TLT","Finanzas","Reuniones de equipo","Formación"];
+const HORAS_ACT_DEFAULT=["Training Session","TLT","Finanzas","Reuniones de equipo","Tech Skills"];
 const nuevoIdHoras=()=>`${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
 
 // ── Recordatorio de horas: notificación push de lunes a viernes a las 9:00 (entrada), 11:00, 13:00 y 16:00 (si no tienes el contador en marcha) y 18:00 (salida) ──

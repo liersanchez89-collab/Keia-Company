@@ -12,6 +12,14 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-26-15",
+    fecha: "26/11/2026",
+    titulo: "🧩 Formación ahora es Tech Skills",
+    cambios: [
+      "En el registro de horas, la actividad \"Formación\" pasa a llamarse \"Tech Skills\".",
+    ],
+  },
+  {
     id: "2026-11-26-14",
     fecha: "26/11/2026",
     titulo: "📱 Barra de apartados en el móvil",
