@@ -12,6 +12,16 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-26-3",
+    fecha: "26/11/2026",
+    titulo: "Ver fotos en grande",
+    cambios: [
+      "Toca la foto de perfil de cualquier compañero para verla en grande.",
+      "Para cerrarla, toca en cualquier sitio o pulsa Esc.",
+      "Las fotos que subas a partir de ahora se guardan con más calidad.",
+    ],
+  },
+  {
     id: "2026-11-26-2",
     fecha: "26/11/2026",
     titulo: "Customer Visits: cada uno lo suyo",

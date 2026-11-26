@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, Fragment } from "react";
 import { EMPRESA, EMPRESA_SUB, MIEMBROS, MIEMBROS_ANTIGUOS, EXTERNOS, PROYECTOS_INICIALES, CLAVE_EDICION, CLAVE_CHAT_PRIVADO } from "./config.js";
 import { sb } from "./supabase.js";
 import { perfil, puedoEditar, puedoGestionar } from "./perfil.js";
-import { Avatar, BotonPerfil, iniciarFotos } from "./Fotos.jsx";
+import { Avatar, BotonPerfil, iniciarFotos, FotoAmpliada } from "./Fotos.jsx";
 import Novedades from "./Novedades.jsx";
 
 // Tipografías de marca (manual KEIA): Manrope para titulares y cifras, Inter para el texto
@@ -11672,6 +11672,7 @@ export default function Dashboard(){
 
       {/* Aviso de novedades tras actualizar (5 s, dentro de la app) */}
       <Novedades font={FONT_TEXTO}/>
+      <FotoAmpliada font={FONT_TEXTO}/>
 
       {/* ── CONTENT ── */}
       <div className="blesk-content" style={{padding:"28px 32px 48px",maxWidth:1400,margin:"0 auto"}}>
