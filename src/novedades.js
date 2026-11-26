@@ -12,6 +12,16 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-26-2",
+    fecha: "26/11/2026",
+    titulo: "Customer Visits: cada uno lo suyo",
+    cambios: [
+      "En Customer Visits ya no se pueden añadir compañeros a una visita.",
+      "Cada persona añade sus propias visitas, así no se suman dos veces.",
+      "Las visitas que ya tenías de un compañero (↗) se quedan como estaban.",
+    ],
+  },
+  {
     id: "2026-11-26-1",
     fecha: "26/11/2026",
     titulo: "Cambios en el equipo",

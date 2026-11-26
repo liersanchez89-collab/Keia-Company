@@ -2109,7 +2109,7 @@ function CVTable({rows,mname,mcolor,upd,del,projects,groupOptions}){
     <div style={{marginBottom:6}}>
       {sorted.map(r=>(
         <FilaMovil key={r.id} color={mcolor} onDel={()=>del(mname,r.id)}
-          extra={r.linkedFrom?<span style={{fontSize:11,color:"#7F7973",fontStyle:"italic"}}>↗ de {r.linkedOwner}</span>:<span style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:11,color:"#7F7973"}}>Compañeros <CompanerosPopup selected={r.companeros||[]} exclude={mname} onChange={v=>upd(mname,r.id,"companeros",v)}/></span>}
+          extra={r.linkedFrom?<span style={{fontSize:11,color:"#7F7973",fontStyle:"italic"}}>↗ de {r.linkedOwner}</span>:null}
           campos={[
           ["Cliente",<Inp value={r.cliente} onChange={v=>upd(mname,r.id,"cliente",v)} placeholder="Empresa"/>,true],
           ["Fecha",<DateInp value={r.fecha||""} onChange={v=>upd(mname,r.id,"fecha",v)} w="100%"/>],
@@ -2125,7 +2125,7 @@ function CVTable({rows,mname,mcolor,upd,del,projects,groupOptions}){
   return(
     <div style={{overflowX:"auto",marginBottom:6}}>
       <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
-        <THead cols={["Grupo","Fecha","CV/LV","Motorola","Cliente","Link Motorola","Proyecto","👥",""]} color={mcolor}/>
+        <THead cols={["Grupo","Fecha","CV/LV","Motorola","Cliente","Link Motorola","Proyecto",""]} color={mcolor}/>
         <tbody>
           {sorted.map((r,i)=>(
             <tr key={r.id} style={{background:i%2===0?"#FFFFFF88":"transparent"}}>
@@ -2133,20 +2133,9 @@ function CVTable({rows,mname,mcolor,upd,del,projects,groupOptions}){
               <td style={{padding:"3px 5px"}}><DateInp value={r.fecha||""} onChange={v=>upd(mname,r.id,"fecha",v)} w="110px"/></td>
               <td style={{padding:"3px 5px"}}><Sel value={r.cat}            onChange={v=>upd(mname,r.id,"cat",v)}            options={["CV","LV"]}/></td>
               <td style={{padding:"3px 5px"}}><Sel value={r.motorola}       onChange={v=>upd(mname,r.id,"motorola",v)}       options={["Sí","No"]}/></td>
-              <td style={{padding:"3px 5px"}}><Inp value={r.cliente}        onChange={v=>upd(mname,r.id,"cliente",v)}        placeholder="Empresa"/></td>
+              <td style={{padding:"3px 5px"}}><Inp value={r.cliente}        onChange={v=>upd(mname,r.id,"cliente",v)}        placeholder="Empresa"/>{r.linkedFrom&&<div style={{fontSize:9,color:"#7F7973",fontStyle:"italic"}}>↗ de {r.linkedOwner}</div>}</td>
               <td style={{padding:"3px 5px"}}><LinkInp value={r.linkMotorola} onChange={v=>upd(mname,r.id,"linkMotorola",v)} placeholder="Link motorola"/></td>
               <td style={{padding:"3px 5px"}}><Sel value={r.proyecto}       onChange={v=>upd(mname,r.id,"proyecto",v)}       options={projects.map(p=>p.name)}/></td>
-              <td style={{padding:"3px 5px",position:"relative"}}>
-                {r.linkedFrom?(
-                  <span style={{fontSize:9,color:"#7F7973",fontStyle:"italic"}}>↗ {r.linkedOwner}</span>
-                ):(
-                  <CompanerosPopup
-                    selected={r.companeros||[]}
-                    exclude={mname}
-                    onChange={v=>upd(mname,r.id,"companeros",v)}
-                  />
-                )}
-              </td>
               <td style={{padding:"3px 5px"}}><DelBtn onClick={()=>del(mname,r.id)}/></td>
             </tr>
           ))}
@@ -2157,59 +2146,18 @@ function CVTable({rows,mname,mcolor,upd,del,projects,groupOptions}){
 }
 
 function CustomersTab({data,setData,projects,groups,setGroups}){
-  // When adding a CV, also add a linked copy to teammates
+  // Cada persona añade solo sus propias Customer Visits (ya no se añaden compañeros,
+  // para que una misma visita no se sume dos veces)
   function add(m, grp){
     const newId = Date.now();
     const newRow = {id:newId, grupo:grp||"", fecha:"", cat:"", motorola:"", quien:"", cliente:"", linkMotorola:"", proyecto:"", companeros:[], linkedFrom:null};
     setData(d=>({...d,[m]:[...d[m],newRow]}));
   }
   function upd(m, id, f, v){
-    setData(d=>{
-      const next = {...d,[m]:d[m].map(r=>r.id===id?{...r,[f]:v}:r)};
-      // If updating companeros, sync linked rows to teammates
-      if(f==="companeros"){
-        const row = next[m].find(r=>r.id===id);
-        const prevRow = d[m].find(r=>r.id===id);
-        const prevComp = prevRow?.companeros||[];
-        const newComp = v||[];
-        // Remove from teammates no longer selected
-        prevComp.filter(c=>!newComp.includes(c)).forEach(c=>{
-          next[c] = (next[c]||[]).filter(r=>r.linkedFrom!==id);
-        });
-        // Add to new teammates
-        newComp.filter(c=>!prevComp.includes(c)).forEach(c=>{
-          const linked = {...row, id:Math.floor(Date.now()+Math.random()*1000), companeros:[], linkedFrom:id, linkedOwner:m};
-          next[c] = [...(next[c]||[]), linked];
-        });
-        // Update existing linked rows with latest data
-        newComp.filter(c=>prevComp.includes(c)).forEach(c=>{
-          next[c] = (next[c]||[]).map(r=>r.linkedFrom===id?{...row,id:r.id,companeros:[],linkedFrom:id,linkedOwner:m}:r);
-        });
-      }
-      // If updating any other field, sync to linked copies
-      if(f!=="companeros"){
-        const row = next[m].find(r=>r.id===id);
-        if(row?.companeros?.length){
-          row.companeros.forEach(c=>{
-            next[c] = (next[c]||[]).map(r=>r.linkedFrom===id?{...r,[f]:v}:r);
-          });
-        }
-      }
-      return next;
-    });
+    setData(d=>({...d,[m]:d[m].map(r=>r.id===id?{...r,[f]:v}:r)}));
   }
   function del(m, id){
-    setData(d=>{
-      const row = d[m].find(r=>r.id===id);
-      const next = {...d,[m]:d[m].filter(r=>r.id!==id)};
-      // Remove linked copies from teammates
-      if(row?.companeros?.length){
-        row.companeros.forEach(c=>{
-          next[c] = (next[c]||[]).filter(r=>r.linkedFrom!==id);
-        });
-      }
-      return next;
-    });
+    setData(d=>({...d,[m]:d[m].filter(r=>r.id!==id)}));
   }
 
   const groupOptions=groups.map(g=>g.name);
