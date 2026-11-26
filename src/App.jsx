@@ -9344,6 +9344,61 @@ function CRMTab({data,setData,projects}){
 
 
 // ── INICIO TAB ────────────────────────────────────────────────────────────────
+// ── 🏆 Trabajadores de la semana (semana de empresa: viernes 9:00 → viernes 8:59, igual que las horas) ──
+function TrabajadoresSemana({bp,cv}){
+  const [entries]=useHoras();
+  const [ahora,setAhora]=useState(()=>new Date());
+  useEffect(()=>{ const t=setInterval(()=>setAhora(new Date()),60000); return ()=>clearInterval(t); },[]);
+  const ini=inicioSemanaEmpresa(ahora), fin=new Date(ini.getFullYear(),ini.getMonth(),ini.getDate()+7,9);
+  // Bookpoints y visitas solo tienen día: cuentan de viernes a jueves
+  const diaIni=new Date(ini.getFullYear(),ini.getMonth(),ini.getDate()).getTime(), diaFin=diaIni+7*864e5;
+  const enSemana=f=>{ const t=parseDD(f); return t>=diaIni&&t<diaFin; };
+  const horas=horasMatriz(entries||[],ini.getTime(),fin.getTime()-1);
+  const filas=MIEMBROS_VISIBLES.map(m=>({
+    m,
+    h:Object.values(horas[m.name]||{}).reduce((a,x)=>a+x,0),
+    pts:(bp[m.name]||[]).filter(r=>enSemana(r.fecha)).reduce((s,r)=>s+(parseFloat(r.puntos)||0),0),
+    cvs:(cv[m.name]||[]).filter(r=>r.cat==="CV"&&enSemana(r.fecha)).length,
+  }));
+  const mejores=k=>{ const max=Math.max(0,...filas.map(f=>f[k])); return max>0?{max,quien:filas.filter(f=>f[k]===max).map(f=>f.m)}:null; };
+  const premios=[
+    {k:"h",icono:"⏱️",titulo:"Más horas",fmt:v=>fmtHoras(v),cargando:entries===null},
+    {k:"pts",icono:"📚",titulo:"Más lectura",fmt:v=>`${Math.round(v*10)/10} pts`},
+    {k:"cvs",icono:"🤝",titulo:"Más visitas a clientes",fmt:v=>`${v} CV${v===1?"":"s"}`},
+  ];
+  const f=d=>d.toLocaleDateString("es-ES",{weekday:"short",day:"numeric",month:"short"});
+  const resta=fin-ahora, dR=Math.floor(resta/864e5), hR=Math.floor((resta%864e5)/36e5);
+  return(
+    <div style={{background:"linear-gradient(135deg,#2B2926,#171717)",borderRadius:16,padding:"16px 18px",marginBottom:24,color:"#FFF"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:6,marginBottom:12}}>
+        <div style={{fontSize:15,fontWeight:800}}>🏆 Trabajadores de la semana</div>
+        <div style={{fontSize:11,color:"#A8A29E"}}>{f(ini)} 9:00 → {f(new Date(fin.getTime()-60000))} 8:59 · se reinicia en {dR>0?`${dR}d `:""}{hR}h</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:10}}>
+        {premios.map(p=>{
+          const b=mejores(p.k);
+          return(
+            <div key={p.k} style={{background:"rgba(255,255,255,.07)",border:"1px solid rgba(255,255,255,.1)",borderRadius:12,padding:"12px 14px"}}>
+              <div style={{fontSize:11,color:"#D6D3D1",fontWeight:600,marginBottom:8}}>{p.icono} {p.titulo}</div>
+              {p.cargando?<div style={{fontSize:12,color:"#A8A29E"}}>Cargando…</div>
+              :!b?<div style={{fontSize:12,color:"#A8A29E",fontStyle:"italic"}}>Nadie todavía esta semana</div>
+              :<div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{display:"flex"}}>
+                  {b.quien.slice(0,3).map((m,i)=><Avatar key={m.name} nombre={m.name} color={m.color} size={38} fontSize={15} style={{marginLeft:i?-10:0,boxShadow:"0 0 0 2px #2B2926"}}/>)}
+                </div>
+                <div style={{minWidth:0}}>
+                  <div style={{fontSize:15,fontWeight:800,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b.quien.map(m=>m.name).join(", ")}</div>
+                  <div style={{fontSize:12,color:"#FCD34D",fontWeight:700}}>{p.fmt(b.max)}</div>
+                </div>
+              </div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function InicioTab({bp,cv,ing,gas,hojas,projects,tareas,setTareas}){
   const [objetivo,setObjetivoRaw] = useState("");
   const [editObj,setEditObj] = useState(false);
@@ -9463,6 +9518,8 @@ function InicioTab({bp,cv,ing,gas,hojas,projects,tareas,setTareas}){
           <div style={{fontSize:11,color:"#7F7973",marginTop:3,letterSpacing:"0.1px"}}>{now.toLocaleDateString("es-ES",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}</div>
         </div>
       </div>
+
+      <TrabajadoresSemana bp={bp} cv={cv}/>
 
       {/* ── KPIs principales ── */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:10,marginBottom:24}}>

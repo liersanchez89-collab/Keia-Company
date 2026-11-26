@@ -12,6 +12,15 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-26-6",
+    fecha: "26/11/2026",
+    titulo: "🏆 Trabajadores de la semana",
+    cambios: [
+      "En Inicio salen los trabajadores de la semana: más horas, más lectura y más visitas a clientes.",
+      "Se reinicia cada viernes a las 9:00, igual que el contador de horas.",
+    ],
+  },
+  {
     id: "2026-11-26-5",
     fecha: "26/11/2026",
     titulo: "Finanzas más sencillas",
