@@ -7345,7 +7345,7 @@ const eur = n => (Math.round(n*100)/100).toLocaleString("es-ES",{minimumFraction
 const hoyDDMM = () => { const d=new Date(); return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`; };
 const importeIngreso = r => numE(r.total)||numE(r.base);
 
-function IngresoModal({inicial, projects, onGuardar, onCerrar}){
+function IngresoModal({inicial, projects, onGuardar, onCerrar, gasto}){
   const [concepto,setConcepto]=useState(inicial?.ref||inicial?.descripcion||"");
   const [fecha,setFecha]=useState(inicial?.fecha||hoyDDMM());
   const [importe,setImporte]=useState(inicial?String(importeIngreso(inicial)).replace(".",","):"");
@@ -7386,18 +7386,18 @@ function IngresoModal({inicial, projects, onGuardar, onCerrar}){
     <div onClick={onCerrar} style={{position:"fixed",inset:0,background:"rgba(23,23,23,.55)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:12}}>
       <div onClick={e=>e.stopPropagation()} style={{background:"#FFF",borderRadius:16,width:"100%",maxWidth:520,maxHeight:"92vh",overflowY:"auto",padding:"20px 20px 16px",boxShadow:"0 24px 64px rgba(0,0,0,.25)",color:"#171717"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-          <div style={{fontSize:16,fontWeight:700}}>{inicial?"Editar ingreso":"💰 Nuevo ingreso"}</div>
+          <div style={{fontSize:16,fontWeight:700}}>{inicial?(gasto?"Editar gasto":"Editar ingreso"):(gasto?"💸 Nuevo gasto":"💰 Nuevo ingreso")}</div>
           <button onClick={onCerrar} style={{background:"#F2F0ED",border:"none",borderRadius:8,width:28,height:28,cursor:"pointer"}}>✕</button>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-          <div style={{gridColumn:"1 / -1"}}><div style={lab}>¿De qué es el dinero?</div><input style={box} value={concepto} onChange={e=>setConcepto(e.target.value)} placeholder="Ej.: Premio Action Week"/></div>
+          <div style={{gridColumn:"1 / -1"}}><div style={lab}>{gasto?"¿En qué se ha gastado?":"¿De qué es el dinero?"}</div><input style={box} value={concepto} onChange={e=>setConcepto(e.target.value)} placeholder={gasto?"Ej.: Material para el stand":"Ej.: Premio Action Week"}/></div>
           <div><div style={lab}>Importe total (€)</div><input style={box} inputMode="decimal" value={importe} onChange={e=>setImporte(e.target.value)} placeholder="0,00"/></div>
           <div><div style={lab}>Fecha</div><DateInp value={fecha} onChange={setFecha} w="100%"/></div>
           <div style={{gridColumn:"1 / -1"}}><div style={lab}>Proyecto (opcional)</div><Sel value={proyecto} onChange={setProyecto} options={projects.map(p=>p.name)} placeholder="Sin proyecto"/></div>
           <div style={{gridColumn:"1 / -1"}}><div style={lab}>Nota (opcional)</div><input style={box} value={nota} onChange={e=>setNota(e.target.value)} placeholder="Cualquier detalle"/></div>
         </div>
         <div style={{marginTop:16,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
-          <div style={lab}>Repartir entre personas</div>
+          <div style={lab}>{gasto?"¿A quién le cuenta el gasto?":"Repartir entre personas"}</div>
           <div style={{display:"flex",gap:6}}>
             <button onClick={()=>igualar(MIEMBROS_VISIBLES.map(m=>m.name))} disabled={!total} style={{background:"#F2F0ED",border:"none",borderRadius:7,padding:"5px 10px",fontSize:11,fontWeight:600,cursor:"pointer"}}>Todos a partes iguales</button>
             <button onClick={()=>igualar([])} style={{background:"transparent",border:"1px solid #E5E2DD",borderRadius:7,padding:"5px 10px",fontSize:11,cursor:"pointer"}}>Nadie</button>
@@ -7423,8 +7423,8 @@ function IngresoModal({inicial, projects, onGuardar, onCerrar}){
           Repartido: {eur(repartido)} de {eur(total)}{Math.abs(falta)>=0.02&&` · ${falta>0?"faltan":"sobran"} ${eur(Math.abs(falta))}`}
         </div>
         <button onClick={guardar} disabled={!ok}
-          style={{marginTop:14,width:"100%",background:ok?"#059669":"#B5AFA8",color:"#FFF",border:"none",borderRadius:10,padding:12,fontSize:14,fontWeight:700,cursor:ok?"pointer":"default",fontFamily:"inherit"}}>
-          Guardar ingreso
+          style={{marginTop:14,width:"100%",background:ok?(gasto?"#B91C1C":"#059669"):"#B5AFA8",color:"#FFF",border:"none",borderRadius:10,padding:12,fontSize:14,fontWeight:700,cursor:ok?"pointer":"default",fontFamily:"inherit"}}>
+          {gasto?"Guardar gasto":"Guardar ingreso"}
         </button>
         {!ok&&<div style={{fontSize:11,color:"#7F7973",textAlign:"center",marginTop:6}}>Para guardar: concepto, fecha, importe y que el reparto sume el total.</div>}
       </div>
@@ -7432,45 +7432,47 @@ function IngresoModal({inicial, projects, onGuardar, onCerrar}){
   );
 }
 
-function IngresosDineroTab({ingresos, setIngresos, projects}){
+function MovimientosLista({filas, setFilas, projects, gasto}){
   const [modal,setModal]=useState(null);   // null | "nuevo" | fila
-  const lista=[...ingresos].sort((a,b)=>parseDD(b.fecha)-parseDD(a.fecha));
+  const lista=[...filas].sort((a,b)=>parseDD(b.fecha)-parseDD(a.fecha));
   const total=lista.reduce((s,r)=>s+importeIngreso(r),0);
   const visitante=esVisitante();
+  const ac=gasto?"#B91C1C":"#059669";
   function guardar(fila){
-    setIngresos(prev=>prev.find(x=>x.id===fila.id)?prev.map(x=>x.id===fila.id?fila:x):[...prev,fila]);
+    setFilas(prev=>prev.find(x=>x.id===fila.id)?prev.map(x=>x.id===fila.id?fila:x):[...prev,fila]);
     setModal(null);
   }
   return(
-    <div>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap",marginBottom:14}}>
+    <div style={{marginBottom:28}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap",marginBottom:12}}>
         <div>
-          <div style={{fontSize:11,color:"#6B665F"}}>Dinero que ha ganado el equipo (sin factura): premios, retos, pagos…</div>
-          <div style={{fontSize:22,fontWeight:800,color:"#059669",marginTop:2}}>{eur(total)}</div>
+          <div style={{fontSize:15,fontWeight:800,color:"#2B2926"}}>{gasto?"💸 Gastos":"💰 Ingresos"}</div>
+          <div style={{fontSize:11,color:"#6B665F"}}>{gasto?"Dinero que ha gastado el equipo":"Dinero que ha ganado el equipo: premios, retos, pagos…"}</div>
+          <div style={{fontSize:22,fontWeight:800,color:ac,marginTop:2}}>{gasto&&total?"−":""}{eur(total)}</div>
         </div>
-        {!visitante&&<button onClick={()=>setModal("nuevo")} style={{background:"#059669",color:"#FFF",border:"none",borderRadius:10,padding:"10px 16px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>+ Añadir ingreso</button>}
+        {!visitante&&<button onClick={()=>setModal("nuevo")} style={{background:ac,color:"#FFF",border:"none",borderRadius:10,padding:"10px 16px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>{gasto?"+ Añadir gasto":"+ Añadir ingreso"}</button>}
       </div>
-      {lista.length===0&&<div style={{fontSize:12,color:"#7F7973",fontStyle:"italic",padding:20,textAlign:"center",background:"#FFF",borderRadius:12,border:"1px dashed #E5E2DD"}}>Todavía no hay ingresos. Pulsa “Añadir ingreso” cuando ganéis dinero.</div>}
+      {lista.length===0&&<div style={{fontSize:12,color:"#7F7973",fontStyle:"italic",padding:20,textAlign:"center",background:"#FFF",borderRadius:12,border:"1px dashed #E5E2DD"}}>{gasto?"Todavía no hay gastos.":"Todavía no hay ingresos. Pulsa “Añadir ingreso” cuando ganéis dinero."}</div>}
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
         {lista.map(r=>{
-          const rep=(r.reparto||[]).filter(x=>numE(x.importe)>0);
+          const rp=(r.reparto||[]).filter(x=>numE(x.importe)>0);
           return(
-            <div key={r.id} style={{background:"#FFF",border:"1px solid #E5E2DD",borderRadius:12,padding:"12px 14px"}}>
+            <div key={r.id} style={{background:"#FFF",border:"1px solid #E5E2DD",borderLeft:`3px solid ${ac}`,borderRadius:12,padding:"12px 14px"}}>
               <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:14,fontWeight:700}}>{r.ref||r.descripcion||"Ingreso"}</div>
+                  <div style={{fontSize:14,fontWeight:700}}>{r.ref||r.descripcion||(gasto?"Gasto":"Ingreso")}</div>
                   <div style={{fontSize:11,color:"#6B665F",marginTop:2}}>{r.fecha}{r.proyecto?` · ${r.proyecto}`:""}{r.ref&&r.descripcion?` · ${r.descripcion}`:""}</div>
                   {r.linkFactura&&<a href={r.linkFactura} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#2563EB"}}>📎 Ver documento</a>}
                 </div>
-                <div style={{fontSize:16,fontWeight:800,color:"#059669",whiteSpace:"nowrap"}}>{eur(importeIngreso(r))}</div>
+                <div style={{fontSize:16,fontWeight:800,color:ac,whiteSpace:"nowrap"}}>{gasto?"−":""}{eur(importeIngreso(r))}</div>
                 {!visitante&&<div style={{display:"flex",gap:2}}>
                   <button onClick={()=>setModal(r)} title="Editar" style={{background:"transparent",border:"none",cursor:"pointer",fontSize:13,color:"#57534E"}}>✏️</button>
-                  <DelBtn onClick={()=>setIngresos(prev=>prev.filter(x=>x.id!==r.id))}/>
+                  <DelBtn onClick={()=>setFilas(prev=>prev.filter(x=>x.id!==r.id))}/>
                 </div>}
               </div>
               <div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:10}}>
-                {rep.length===0&&<span style={{fontSize:11,color:"#7F7973",fontStyle:"italic"}}>Sin repartir</span>}
-                {rep.map(x=>{
+                {rp.length===0&&<span style={{fontSize:11,color:"#7F7973",fontStyle:"italic"}}>Sin repartir</span>}
+                {rp.map(x=>{
                   const m=INIT_MEMBERS.find(k=>k.name===x.member)||EMPRESA_REPARTO;
                   return(
                     <span key={x.member} style={{display:"inline-flex",alignItems:"center",gap:5,background:m.light||"#F2F0ED",border:`1px solid ${m.color}44`,borderRadius:99,padding:"2px 8px 2px 3px",fontSize:11}}>
@@ -7485,23 +7487,44 @@ function IngresosDineroTab({ingresos, setIngresos, projects}){
           );
         })}
       </div>
-      {modal&&<IngresoModal inicial={modal==="nuevo"?null:modal} projects={projects} onGuardar={guardar} onCerrar={()=>setModal(null)}/>}
+      {modal&&<IngresoModal gasto={gasto} inicial={modal==="nuevo"?null:modal} projects={projects} onGuardar={guardar} onCerrar={()=>setModal(null)}/>}
     </div>
   );
 }
 
-function FinanzasTab({ing,setIng,gas,setGas,hojas,setHojas,projects,diamante,setDiamante,sb}){
+function IngresosDineroTab({ingresos, setIngresos, gastos, setGastos, projects}){
+  const ti=ingresos.reduce((s,r)=>s+importeIngreso(r),0), tg=gastos.reduce((s,r)=>s+importeIngreso(r),0);
+  const saldo=ti-tg;
+  return(
+    <div>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:18}}>
+        {[["Ingresos",ti,"#059669"],["Gastos",-tg,"#B91C1C"],["Saldo",saldo,saldo>=0?"#2B2926":"#B91C1C"]].map(([l,v,c])=>(
+          <div key={l} style={{flex:"1 1 140px",background:"#FFF",border:"1px solid #E5E2DD",borderRadius:12,padding:"10px 14px"}}>
+            <div style={{fontSize:11,color:"#6B665F",fontWeight:600}}>{l}</div>
+            <div style={{fontSize:18,fontWeight:800,color:c}}>{v<0?"−":""}{eur(Math.abs(v))}</div>
+          </div>
+        ))}
+      </div>
+      <MovimientosLista filas={ingresos} setFilas={setIngresos} projects={projects}/>
+      <MovimientosLista filas={gastos} setFilas={setGastos} projects={projects} gasto/>
+    </div>
+  );
+}
+
+function FinanzasTab({ing:ingTodo,setIng,gas:gasTodo,setGas,hojas,setHojas,projects,diamante,setDiamante,sb}){
   const [sub,setSub]=useState("dinero");
-  // Los ingresos sin factura (💰 Ingresos) y las facturas de ingreso comparten "ing" (cuentan igual en todo),
-  // pero cada pestaña solo ve y toca los suyos.
-  const esIngSimple=r=>!!r.es_ingreso;
-  const ingDinero=(ing||[]).filter(esIngSimple), ingFacturas=(ing||[]).filter(r=>!esIngSimple(r));
-  const setParte=quien=>upd=>setIng(prev=>{
+  // es_ingreso = true → movimiento de 💰 Ingresos y gastos: es lo único que cuenta en las cuentas.
+  // Las facturas (es_ingreso = false) solo se guardan como registro: no suman ni restan en ningún sitio.
+  const cuenta=r=>!!r.es_ingreso;
+  const ing=(ingTodo||[]).filter(cuenta), gas=(gasTodo||[]).filter(cuenta);
+  const factIng=(ingTodo||[]).filter(r=>!cuenta(r)), factGas=(gasTodo||[]).filter(r=>!cuenta(r));
+  const parte=(setter,quien)=>upd=>setter(prev=>{
     const mia=prev.filter(r=>quien(r)), otra=prev.filter(r=>!quien(r));
     const nueva=typeof upd==="function"?upd(mia):upd;
     return [...otra,...nueva];
   });
-  const setIngDinero=setParte(esIngSimple), setIngFacturas=setParte(r=>!esIngSimple(r));
+  const setIngDinero=parte(setIng,cuenta), setIngFacturas=parte(setIng,r=>!cuenta(r));
+  const setGasDinero=parte(setGas,cuenta), setGasFacturas=parte(setGas,r=>!cuenta(r));
   const [bancoMovs,setBancoMovs]=useState(null);
   const [bancoPend,setBancoPend]=useState(null);
   // Movimientos del banco: se recargan al cambiar de apartado (Banco los carga él mismo y los devuelve por onMovs)
@@ -7788,9 +7811,8 @@ function FinanzasTab({ing,setIng,gas,setGas,hojas,setHojas,projects,diamante,set
     <div>
       <div style={{display:"flex",flexWrap:"wrap",gap:0,borderBottom:"1px solid #E5E2DD",marginBottom:20}}>
         {[
-          {id:"dinero",   label:"💰 Ingresos"},
-          {id:"ingresos", label:"📄 Facturas ingreso"},
-          {id:"gastos",   label:"💸 Facturas gasto"},
+          {id:"dinero",   label:"💰 Ingresos y gastos"},
+          {id:"facturas", label:"📄 Facturas"},
           {id:"hojas",    label:"🧾 Hojas Gasto"},
           {id:"otros",    label:"🧾 Otros gastos"},
           {id:"banco",    label:bancoPend?`🏦 Banco (${bancoPend})`:"🏦 Banco"},
@@ -7807,9 +7829,15 @@ function FinanzasTab({ing,setIng,gas,setGas,hojas,setHojas,projects,diamante,set
           }}>{t.label}</button>
         ))}
       </div>
-      {sub==="dinero"  &&<IngresosDineroTab ingresos={ingDinero} setIngresos={setIngDinero} projects={projects}/>}
-      {sub==="ingresos"&&<FacturasTab   facturas={ingFacturas} setFacturas={setIngFacturas} tipo="ingresos" projects={projects} pagoInfo={pagoInfo} rect={rect} onRect={enlazarRect} onSaldada={toggleSaldada}/>}
-      {sub==="gastos"  &&<FacturasTab   facturas={gas} setFacturas={setGas} tipo="gastos"   projects={projects} pagoInfo={pagoInfo} rect={rect} onRect={enlazarRect} onSaldada={toggleSaldada}/>}
+      {sub==="dinero"  &&<IngresosDineroTab ingresos={ing} setIngresos={setIngDinero} gastos={gas} setGastos={setGasDinero} projects={projects}/>}
+      {sub==="facturas"&&<div>
+        <div style={{background:"#F7F6F4",border:"1px solid #E5E2DD",borderRadius:10,padding:"10px 14px",fontSize:12,color:"#57534E",marginBottom:14}}>
+          📄 Aquí solo se guardan las facturas (foto o PDF) como registro. <b>No suman ni restan</b>: el dinero se apunta en 💰 Ingresos y gastos.
+        </div>
+        <FacturasTab facturas={factIng} setFacturas={setIngFacturas} tipo="ingresos" projects={projects} pagoInfo={pagoInfo} rect={rect} onRect={enlazarRect} onSaldada={toggleSaldada}/>
+        <div style={{height:24}}/>
+        <FacturasTab facturas={factGas} setFacturas={setGasFacturas} tipo="gastos" projects={projects} pagoInfo={pagoInfo} rect={rect} onRect={enlazarRect} onSaldada={toggleSaldada}/>
+      </div>}
       {sub==="hojas"   &&<HojasGastoTab hojas={hojas} setHojas={setHojas} gastos={gas} projects={projects} pagoInfo={pagoInfo} onSaldada={toggleSaldada}/>}
       {sub==="otros"   &&<OtrosGastosTab movs={bancoMovs} guardar={guardarBanco} projects={projects} irBanco={()=>setSub("banco")} ing={ing}/>}
       {sub==="banco"   &&<BancoTab      ing={ing} setIng={setIng} gas={gas} setGas={setGas} hojas={hojas} onPendientes={setBancoPend} onMovs={setBancoMovs} irOtros={()=>setSub("otros")} rect={rect} saldadas={saldadas}/>}
@@ -11158,6 +11186,8 @@ export default function Dashboard(){
   const [cv,setCVRaw]          = useState(()=>initByMember(INIT_MEMBERS));
   const [ing,setIngRaw]        = useState([]);
   const [gas,setGasRaw]        = useState([]);
+  // Lo que cuenta en las cuentas: solo 💰 Ingresos y gastos (las facturas son solo registro)
+  const ingC = ing.filter(r=>r.es_ingreso), gasC = gas.filter(r=>r.es_ingreso);
   const [hojas,setHojasRaw]    = useState([]);
   const [crm,setCRMRaw]        = useState(()=>initCRM(INIT_PROJECTS));
   const [actas,setActasRaw] = useState([]);
@@ -11552,7 +11582,7 @@ export default function Dashboard(){
         base:r.base||"", iva:r.iva||"", total:r.total||"", ref:r.ref||"",
         descripcion:r.descripcion||"", link_factura:r.linkFactura||r.link_factura||"",
         reparto:JSON.stringify(r.reparto||[]), pagado:r.pagado||false,
-        frc_sign:r.frcSign||r.frc_sign||"+", estado:"aprobada"
+        frc_sign:r.frcSign||r.frc_sign||"+", estado:"aprobada", es_ingreso:!!r.es_ingreso
       }));
       if(deleted.length) sb.from("facturas").delete().in("id",deleted.map(r=>r.id)).then(({error})=>{if(error)console.error("❌ facturas delete",error);});
       if(upserted.length) sb.from("facturas").upsert(upserted).then(({error})=>{if(error)console.error("❌ facturas upsert gasto",error);else console.log("✅ facturas gasto guardado",upserted.length,"filas");});
@@ -11785,9 +11815,9 @@ export default function Dashboard(){
             {[
               {label:"Bookpoints", val:totPts},
               {label:"CV", val:allCV.filter(r=>r.cat==="CV"&&!r.linkedFrom).length},
-              {label:"Ingresos", val:ing.reduce((s,r)=>s+signedBase(r),0).toFixed(0)+"€"},
-              {label:"Gastos", val:(gas.reduce((s,r)=>s+signedBase(r),0)+hojas.reduce((s,r)=>s+(parseFloat(r.importe)||0),0)).toFixed(0)+"€"},
-              {label:"Neto", val:(ing.reduce((s,r)=>s+signedBase(r),0)-gas.reduce((s,r)=>s+signedBase(r),0)-hojas.reduce((s,r)=>s+(parseFloat(r.importe)||0),0)).toFixed(0)+"€", accent:(ing.reduce((s,r)=>s+signedBase(r),0)-gas.reduce((s,r)=>s+signedBase(r),0)-hojas.reduce((s,r)=>s+(parseFloat(r.importe)||0),0))>=0},
+              {label:"Ingresos", val:ingC.reduce((s,r)=>s+signedBase(r),0).toFixed(0)+"€"},
+              {label:"Gastos", val:(gasC.reduce((s,r)=>s+signedBase(r),0)+hojas.reduce((s,r)=>s+(parseFloat(r.importe)||0),0)).toFixed(0)+"€"},
+              {label:"Neto", val:(ingC.reduce((s,r)=>s+signedBase(r),0)-gasC.reduce((s,r)=>s+signedBase(r),0)-hojas.reduce((s,r)=>s+(parseFloat(r.importe)||0),0)).toFixed(0)+"€", accent:(ingC.reduce((s,r)=>s+signedBase(r),0)-gasC.reduce((s,r)=>s+signedBase(r),0)-hojas.reduce((s,r)=>s+(parseFloat(r.importe)||0),0))>=0},
               {label:"Ventas CRM", val:totVent},
               {label:"Proyectos", val:projects.length},
             ].map((k,i)=>(
@@ -11840,11 +11870,12 @@ export default function Dashboard(){
       <FotoAmpliada font={FONT_TEXTO}/>
 
       {/* ── CONTENT ── */}
+      {/* Solo cuentan los movimientos de 💰 Ingresos y gastos; las facturas son solo registro */}
       <div className="blesk-content" style={{padding:"28px 32px 48px",maxWidth:1400,margin:"0 auto"}}>
-        {tab==="inicio"     && <InicioTab bp={bp} cv={cv} ing={ing} gas={gas} hojas={hojas} projects={projects} tareas={tareas} setTareas={setTareas}/>}
-        {tab==="equipo"     && <EquipoTab     bp={bp} cv={cv} ing={ing} gas={gas} hojas={hojas} projects={projects} ultimaAct={ultimaAct}/>}
-        {tab==="proyectos"   && <ProyectosTab  projects={projects} setProjects={setProjects} setProjectsDirectly={setProjectsDirectly} crm={crm} setCRM={setCRM} customers={cv} ingresos={ing} gastos={gas} hojas={hojas} ing={ing} cv={cv} bp={bp}/>}
-        {tab==="checkpoints" && <CheckpointsTab ing={ing} gas={gas} hojas={hojas} bp={bp} setBP={setBP} bpGroups={bpGroups} setBPGroups={setBPGroups} cv={cv} setCV={setCV} cvGroups={cvGroups} setCVGroups={setCVGroups} projects={projects}/>}
+        {tab==="inicio"     && <InicioTab bp={bp} cv={cv} ing={ingC} gas={gasC} hojas={hojas} projects={projects} tareas={tareas} setTareas={setTareas}/>}
+        {tab==="equipo"     && <EquipoTab     bp={bp} cv={cv} ing={ingC} gas={gasC} hojas={hojas} projects={projects} ultimaAct={ultimaAct}/>}
+        {tab==="proyectos"   && <ProyectosTab  projects={projects} setProjects={setProjects} setProjectsDirectly={setProjectsDirectly} crm={crm} setCRM={setCRM} customers={cv} ingresos={ingC} gastos={gasC} hojas={hojas} ing={ingC} cv={cv} bp={bp}/>}
+        {tab==="checkpoints" && <CheckpointsTab ing={ingC} gas={gasC} hojas={hojas} bp={bp} setBP={setBP} bpGroups={bpGroups} setBPGroups={setBPGroups} cv={cv} setCV={setCV} cvGroups={cvGroups} setCVGroups={setCVGroups} projects={projects}/>}
         {tab==="finanzas"   && <FinanzasTab ing={ing} setIng={setIng} gas={gas} setGas={setGas} hojas={hojas} setHojas={setHojas} projects={projects} diamante={diamante} setDiamante={setDiamante} sb={sb}/>}
         {tab==="documentos" && <DocumentosTab/>}
         {tab==="auditoria"  && <AuditoriaTab/>}

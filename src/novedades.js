@@ -12,6 +12,16 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-26-5",
+    fecha: "26/11/2026",
+    titulo: "Finanzas más sencillas",
+    cambios: [
+      "💰 Ingresos y gastos: apunta el dinero que entra y el que sale, repartido entre personas.",
+      "📄 Facturas: ahora es un solo apartado y sirve solo de registro (foto o PDF).",
+      "Las facturas ya no suman ni restan: lo que cuenta es lo de Ingresos y gastos.",
+    ],
+  },
+  {
     id: "2026-11-26-4",
     fecha: "26/11/2026",
     titulo: "Nuevo: 💰 Ingresos en Finanzas",
