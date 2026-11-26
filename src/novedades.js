@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Cada vez que se cambie algo en la app, AÑADE UNA ENTRADA NUEVA ARRIBA DEL TODO
 // (con un id nuevo). Al abrir la app con la versión nueva, a cada persona le sale
-// un aviso dentro de la app con estos cambios durante 5 segundos (solo una vez).
+// un aviso dentro de la app con estos cambios durante 15 segundos (solo una vez).
 //
 //   id:      algo único, p. ej. la fecha + un número ("2026-11-16-1")
 //   fecha:   "DD/MM/AAAA"
@@ -11,6 +11,15 @@
 //   cambios: lista de cambios, en lenguaje normal (lo lee todo el equipo)
 
 export const NOVEDADES = [
+  {
+    id: "2026-11-26-12",
+    fecha: "26/11/2026",
+    titulo: "⏳ Avisos de novedades más largos",
+    cambios: [
+      "El mensaje con lo que ha cambiado en cada actualización ahora se queda 15 segundos en pantalla (antes 5), para que dé tiempo a leerlo.",
+      "Si ya lo has leído, puedes tocarlo para cerrarlo antes.",
+    ],
+  },
   {
     id: "2026-11-26-11",
     fecha: "26/11/2026",

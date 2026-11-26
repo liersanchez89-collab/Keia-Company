@@ -11926,7 +11926,7 @@ export default function Dashboard(){
       {/* ── HERO: saludo grande + cifra destacada (cambia con cada pestaña) ── */}
       <Hero key={`hero-${tab}`} {...hero} font={FONT_TEXTO} fontTit={FONT_TITULOS}/>
 
-      {/* Aviso de novedades tras actualizar (5 s, dentro de la app) */}
+      {/* Aviso de novedades tras actualizar (15 s, dentro de la app) */}
       <Novedades font={FONT_TEXTO}/>
       <FotoAmpliada font={FONT_TEXTO}/>
 

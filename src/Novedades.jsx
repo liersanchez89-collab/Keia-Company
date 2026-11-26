@@ -1,10 +1,10 @@
 // Aviso dentro de la app (no es una notificación del móvil) con lo que ha cambiado
-// en la última actualización. Sale 5 segundos, una sola vez por versión y persona.
+// en la última actualización. Sale 15 segundos, una sola vez por versión y persona.
 import { useState, useEffect } from "react";
 import { NOVEDADES } from "./novedades.js";
 
 const CLAVE = "keia_novedades_vistas";
-const DURACION = 5000;
+const DURACION = 15000;
 
 function pendientes(){
   if(!NOVEDADES.length) return [];
