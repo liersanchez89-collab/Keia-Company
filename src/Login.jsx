@@ -6,16 +6,16 @@ import { perfil } from "./perfil.js";
 // Marca KEIA: Inter para el texto, Manrope para titulares; blanco, ceniza, carbón y naranja Keia
 const font = "'Inter',system-ui,-apple-system,'Segoe UI',sans-serif";
 const fontTit = "'Manrope','Inter',system-ui,sans-serif";
-const box = {minHeight:"100vh",background:"#EDEBE8",display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:font,color:"#171717"};
-const card = {position:"relative",overflow:"hidden",background:"#FFFFFF",borderRadius:16,boxShadow:"0 1px 2px rgba(23,23,23,.05), 0 24px 48px -28px rgba(23,23,23,.35)",padding:"40px 30px 30px",width:"100%",maxWidth:370,display:"flex",flexDirection:"column",gap:18};
-const input = {width:"100%",boxSizing:"border-box",border:"1px solid #D3CFC9",background:"#FFFFFF",borderRadius:10,padding:"12px 14px",fontSize:16,fontFamily:"inherit",outline:"none",color:"#171717"};
-const btn = {background:"#D94A32",color:"#FFF",border:"none",borderRadius:10,padding:"13px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:fontTit};
+const box = {minHeight:"100vh",background:"#5a4232 url('/fondo-keia.jpg') center/cover no-repeat fixed",display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:font,color:"#171717"};
+const card = {position:"relative",overflow:"hidden",background:"linear-gradient(160deg, rgba(70,54,44,.55), rgba(30,22,17,.62))",WebkitBackdropFilter:"blur(22px) saturate(1.3)",backdropFilter:"blur(22px) saturate(1.3)",border:"1px solid rgba(255,255,255,.18)",borderRadius:28,boxShadow:"inset 0 1px 0 rgba(255,255,255,.18), 0 30px 60px -24px rgba(0,0,0,.7)",padding:"40px 30px 30px",width:"100%",maxWidth:380,display:"flex",flexDirection:"column",gap:18,color:"#FFFFFF"};
+const input = {width:"100%",boxSizing:"border-box",border:"1px solid rgba(255,255,255,.6)",background:"rgba(255,255,255,.92)",borderRadius:999,padding:"12px 14px",fontSize:16,fontFamily:"inherit",outline:"none",color:"#171717"};
+const btn = {background:"linear-gradient(180deg, #F0785C, #D94A32)",color:"#FFF",border:"none",borderRadius:999,boxShadow:"inset 0 1px 0 rgba(255,255,255,.35), 0 10px 22px -10px rgba(217,74,50,.9)",padding:"13px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:fontTit};
 
 function Pantalla({children}){
   return (
     <div style={box}>
       <div style={card}>
-        <img src="/keia-logo.svg" alt={EMPRESA} style={{height:46,alignSelf:"center",display:"block"}}/>
+        <img src="/keia-logo-negativo.svg" alt={EMPRESA} style={{height:46,alignSelf:"center",display:"block"}}/>
         {children}
       </div>
     </div>
@@ -39,12 +39,12 @@ function Login(){
   return (
     <Pantalla>
       <div style={{textAlign:"center"}}>
-        <div style={{fontSize:13,color:"#6B665F"}}>Entra con tu correo de Mondragon</div>
+        <div style={{fontSize:13,color:"rgba(255,255,255,.75)"}}>Entra con tu correo de Mondragon</div>
       </div>
       <form onSubmit={entrar} style={{display:"flex",flexDirection:"column",gap:10}}>
         <input style={input} type="email" autoComplete="username" placeholder="tu.correo@alumni.mondragon.edu" value={email} onChange={e=>setEmail(e.target.value)} required/>
         <input style={input} type="password" autoComplete="current-password" placeholder="Contraseña" value={pass} onChange={e=>setPass(e.target.value)} required/>
-        {err&&<div style={{color:"#B91C1C",fontSize:12}}>{err}</div>}
+        {err&&<div style={{color:"#FFB4A6",fontSize:12}}>{err}</div>}
         <button style={{...btn,opacity:busy?0.6:1}} disabled={busy}>{busy?"Entrando…":"Entrar"}</button>
       </form>
     </Pantalla>

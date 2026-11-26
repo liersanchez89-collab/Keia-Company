@@ -12,6 +12,17 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-26-11",
+    fecha: "26/11/2026",
+    titulo: "✨ Nuevo diseño de la app",
+    cambios: [
+      "La app estrena look: fondo cálido, paneles de cristal y el menú de arriba en forma de píldora.",
+      "Cada pestaña tiene ahora una cabecera grande con su título y la cifra más importante (por ejemplo, el neto de la cuenta), que se anima al entrar.",
+      "En Inicio tienes accesos rápidos para registrar horas o ir a finanzas.",
+      "Todos los datos y permisos siguen igual: solo ha cambiado la apariencia.",
+    ],
+  },
+  {
     id: "2026-11-26-10",
     fecha: "26/11/2026",
     titulo: "🛠 Arreglo en hojas de gasto",

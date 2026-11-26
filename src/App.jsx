@@ -4,6 +4,7 @@ import { sb } from "./supabase.js";
 import { perfil, puedoEditar, puedoGestionar, esVisitante, esFinanzas } from "./perfil.js";
 import { Avatar, BotonPerfil, iniciarFotos, FotoAmpliada } from "./Fotos.jsx";
 import Novedades from "./Novedades.jsx";
+import { Hero, CSS_GLASS } from "./Glass.jsx";
 
 // Tipografías de marca (manual KEIA): Manrope para titulares y cifras, Inter para el texto
 const FONT_TITULOS="'Manrope','Inter',system-ui,-apple-system,'Segoe UI',sans-serif";
@@ -11781,9 +11782,11 @@ export default function Dashboard(){
   }
 
   if(loading) return(
-    <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:18,fontFamily:FONT_TEXTO}}>
-      <img src="/keia-logo.svg" alt={EMPRESA} style={{height:44,display:"block"}}/>
-      <div style={{color:"#6B665F",fontSize:13,fontWeight:500}}>Cargando datos...</div>
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:18,fontFamily:FONT_TEXTO}}>
+      <style>{CSS_GLASS(FONT_TITULOS)}</style>
+      <div className="keia-fondo"/>
+      <img src="/keia-logo-negativo.svg" alt={EMPRESA} style={{height:44,display:"block",filter:"drop-shadow(0 4px 18px rgba(0,0,0,.35))"}}/>
+      <div style={{color:"rgba(255,255,255,.8)",fontSize:13,fontWeight:500}}>Cargando datos...</div>
     </div>
   );
 
@@ -11792,15 +11795,47 @@ export default function Dashboard(){
   const totPts=allBP.reduce((s,r)=>s+(parseFloat(r.puntos)||0),0);
   const totVent=allCRM.filter(r=>r.estado==="Venta cerrada").length;
 
+  // Cifras de la cabecera (las mismas que salían arriba antes)
+  const totIngresos=ingC.reduce((s,r)=>s+signedBase(r),0);
+  const totGastos=gasC.reduce((s,r)=>s+signedBase(r),0)+hojas.reduce((s,r)=>s+(parseFloat(r.importe)||0),0);
+  const totNeto=totIngresos-totGastos;
+  const totCV=allCV.filter(r=>r.cat==="CV"&&!r.linkedFrom).length;
+  const tareasPend=(tareas||[]).filter(t=>(t.estado||"Pendiente")!=="Completada"&&t.estado!=="Hecho").length;
+  const eur=n=>n.toLocaleString("es-ES",{maximumFractionDigits:0})+" €";
+  const hoyTxt=(()=>{const s=new Date().toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long"});return s.charAt(0).toUpperCase()+s.slice(1);})();
+  const netoCard={etiqueta:"Cuenta de la empresa",marca:"Neto",valor:totNeto,decimales:2,sufijo:" €",color:totNeto>=0?"#6FD3A0":"#F08A78",
+    detalle:`↑ ${eur(totIngresos)} ingresos · ↓ ${eur(totGastos)} gastos`,pie:`${projects.length} proyectos activos`};
+  const chipsBase=[
+    {icono:"📚",label:"Bookpoints",valor:totPts},
+    {icono:"🤝",label:"Customer visits",valor:totCV},
+    {icono:"🏆",label:"Ventas CRM",valor:totVent},
+    {icono:"📁",label:"Proyectos",valor:projects.length},
+  ];
+  const HERO={
+    inicio:{antetitulo:`${hoyTxt} · Esto es lo que pasa hoy en ${EMPRESA}`,titulo:perfil.nombre?`¡Hola de nuevo, ${perfil.nombre.split(" ")[0]}!`:`¡Hola de nuevo!`,
+      acciones:[{icono:"⏱",label:"Registrar horas",onClick:()=>setTab("clockify")},{icono:"💰",label:"Ir a finanzas",onClick:()=>setTab("finanzas")}],chips:chipsBase,destacada:netoCard},
+    equipo:{antetitulo:"Rankings y estadísticas de todo el equipo",titulo:"Equipo",chips:chipsBase.slice(0,3),
+      destacada:{etiqueta:"Todo el equipo",marca:"Bookpoints",valor:totPts,detalle:`${totCV} customer visits · ${totVent} ventas`,pie:`${MIEMBROS_VISIBLES.length} miembros`}},
+    proyectos:{antetitulo:"Arrastra, organiza y sigue cada proyecto",titulo:"Proyectos",
+      destacada:{etiqueta:"En marcha",marca:"Proyectos",valor:projects.length,detalle:`${totVent} ventas cerradas en el CRM`,color:"#6FD3A0"}},
+    checkpoints:{antetitulo:"Bookpoints, customer visits y learning visits",titulo:"Checkpoints",chips:chipsBase.slice(0,2),
+      destacada:{etiqueta:"Customer visits",marca:"Checkpoints",valor:totCV,detalle:`${totPts.toLocaleString("es-ES")} bookpoints en total`}},
+    clockify:{antetitulo:"Semana de viernes 9:00 a viernes 8:59 · objetivo 40 h por persona",titulo:"Registro de horas",
+      destacada:{etiqueta:"Objetivo semanal",marca:"Horas",valor:40,sufijo:" h",detalle:"por persona",color:"#6FD3A0"}},
+    finanzas:{antetitulo:"Ingresos, gastos, facturas y hojas de gasto",titulo:"Finanzas",
+      destacada:netoCard},
+    calendario:{antetitulo:"Tareas y fechas importantes del equipo",titulo:"Calendario",
+      destacada:{etiqueta:"Por hacer",marca:"Tareas",valor:tareasPend,detalle:`${(tareas||[]).length} tareas en total`}},
+  };
+  const hero=HERO[tab]||{antetitulo:EMPRESA_SUB,titulo:(TABS.find(t=>t.id===tab)||{}).label||EMPRESA,destacada:netoCard};
+
   return(
-    <div style={{minHeight:"100vh",background:"#EDEBE8",fontFamily:FONT_TEXTO,color:"#171717"}}>
+    <div style={{minHeight:"100vh",fontFamily:FONT_TEXTO,color:"#171717",position:"relative",isolation:"auto"}}>
+      <div className="keia-fondo" aria-hidden="true"/>
+      <style>{CSS_GLASS(FONT_TITULOS)}</style>
       <style>{`
         * { box-sizing: border-box; }
         @media (max-width: 768px) {
-          .blesk-header-kpis { display: none !important; }
-          .blesk-header-pad { padding: 0 12px !important; }
-          .blesk-tabs-wrap { padding: 0 12px !important; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-          .blesk-tabs-wrap::-webkit-scrollbar { display: none; }
           .blesk-content { padding: 16px 12px !important; }
           .blesk-grid-2 { grid-template-columns: 1fr !important; }
           .blesk-grid-3 { grid-template-columns: 1fr 1fr !important; }
@@ -11839,87 +11874,57 @@ export default function Dashboard(){
         input, select, textarea { background-color:#FFFFFF; color:#171717; border-color:#D3CFC9; }
         input::placeholder, textarea::placeholder { color:#A19B93; }
         option { background:#FFFFFF; color:#171717; }
-        body { margin:0; background:#EDEBE8; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; font-feature-settings:"tnum" 1,"cv11" 1; }
+        body { margin:0; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; font-feature-settings:"tnum" 1,"cv11" 1; }
         ::selection { background:#F6D3CB; color:#171717; }
         button { transition: background-color .15s, color .15s, border-color .15s, box-shadow .15s; }
         button:active { opacity: 0.75; }
         button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--keia-naranja); outline-offset: 2px; }
         input:focus, select:focus, textarea:focus { border-color: #D94A32 !important; }
-        /* Tarjetas blancas sobre ceniza: sombra muy suave */
-        .blesk-content div[style*="background: rgb(255, 255, 255)"][style*="border-radius"] { box-shadow: 0 1px 2px rgba(23,23,23,.04), 0 8px 24px -16px rgba(23,23,23,.18); }
         ::-webkit-scrollbar { width:10px; height:10px; }
         ::-webkit-scrollbar-thumb { background:#D3CFC9; border-radius:99px; border:3px solid transparent; background-clip:content-box; }
         ::-webkit-scrollbar-thumb:hover { background:#A19B93; background-clip:content-box; border:3px solid transparent; }
-        .keia-tab:hover { color:#FFFFFF !important; }
-        .keia-salir:hover { background:rgba(255,255,255,.14) !important; }
-        h1,h2,h3 { font-family:${FONT_TITULOS}; }
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition:none !important; animation-duration:.01ms !important; } }
         input, select, textarea { -webkit-appearance: none; font-size: 16px !important; }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
-      {/* ── HEADER ── */}
-      <div style={{background:"#171717",position:"sticky",top:0,zIndex:100,boxShadow:"0 8px 24px -16px rgba(23,23,23,.45)"}}>
-        <div className="blesk-header-pad" style={{padding:"0 32px",display:"flex",alignItems:"center",justifyContent:"space-between",height:60}}>
+      {/* ── HEADER: barra de cristal flotante con menú en píldora ── */}
+      <header className="keia-header">
+        <div className="keia-header-fila">
           {/* Logo */}
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <img src="/keia-logo-negativo.svg" alt={EMPRESA} style={{height:28,display:"block"}}/>
-            {EMPRESA_SUB&&<div className="blesk-hide-mobile" style={{fontSize:10.5,color:"#A8A29E",fontWeight:500,letterSpacing:"0.6px",textTransform:"uppercase",borderLeft:"1px solid rgba(255,255,255,.14)",paddingLeft:12,marginLeft:4}}>{EMPRESA_SUB}</div>}
+          <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+            <img src="/keia-logo-negativo.svg" alt={EMPRESA} style={{height:26,display:"block"}}/>
+            {EMPRESA_SUB&&<div className="blesk-hide-mobile" style={{fontSize:10.5,color:"rgba(255,255,255,.6)",fontWeight:500,letterSpacing:"0.6px",textTransform:"uppercase",borderLeft:"1px solid rgba(255,255,255,.16)",paddingLeft:12,marginLeft:4}}>{EMPRESA_SUB}</div>}
           </div>
-          {/* KPIs */}
-          <div className="blesk-header-kpis" style={{display:"flex",gap:0,alignItems:"center"}}>
-            {[
-              {label:"Bookpoints", val:totPts},
-              {label:"CV", val:allCV.filter(r=>r.cat==="CV"&&!r.linkedFrom).length},
-              {label:"Ingresos", val:ingC.reduce((s,r)=>s+signedBase(r),0).toFixed(0)+"€"},
-              {label:"Gastos", val:(gasC.reduce((s,r)=>s+signedBase(r),0)+hojas.reduce((s,r)=>s+(parseFloat(r.importe)||0),0)).toFixed(0)+"€"},
-              {label:"Neto", val:(ingC.reduce((s,r)=>s+signedBase(r),0)-gasC.reduce((s,r)=>s+signedBase(r),0)-hojas.reduce((s,r)=>s+(parseFloat(r.importe)||0),0)).toFixed(0)+"€", accent:(ingC.reduce((s,r)=>s+signedBase(r),0)-gasC.reduce((s,r)=>s+signedBase(r),0)-hojas.reduce((s,r)=>s+(parseFloat(r.importe)||0),0))>=0},
-              {label:"Ventas CRM", val:totVent},
-              {label:"Proyectos", val:projects.length},
-            ].map((k,i)=>(
-              <div key={k.label} style={{textAlign:"right",padding:"0 16px",borderLeft:i>0?"1px solid rgba(255,255,255,.08)":"none"}}>
-                <div style={{fontSize:10.5,color:"#A8A29E",fontWeight:500,marginBottom:2}}>{k.label}</div>
-                <div style={{fontSize:14,fontWeight:700,fontFamily:FONT_TITULOS,color:k.accent===false?"#F08A78":k.accent===true?"#6FD3A0":"#FFFFFF",letterSpacing:"-0.2px"}}>{k.val}</div>
-              </div>
+          {/* Pestañas */}
+          <nav className="keia-nav" aria-label="Secciones">
+            {TABS.map(t=>(
+              <button key={t.id} className={`keia-tab${tab===t.id?" activa":""}`} onClick={()=>setTab(t.id)} aria-current={tab===t.id?"page":undefined}>
+                {t.label}
+              </button>
             ))}
-          </div>
-          <div style={{display:"flex",alignItems:"center"}}>
-          <button className="keia-salir" onClick={()=>sb.auth.signOut()} title="Cerrar sesión"
-            style={{marginLeft:12,background:"rgba(255,255,255,.07)",color:"#E6E8EC",border:"1px solid rgba(255,255,255,.1)",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
-            {perfil.nombre?`${perfil.nombre} · Salir`:"Salir"}
-          </button>
-          <BotonPerfil color={(MIEMBROS.find(x=>x.name===perfil.nombre)||{}).color||"#D94A32"} font={FONT_TEXTO}/>
+          </nav>
+          <div className="keia-header-der">
+            <button className="keia-salir" onClick={()=>sb.auth.signOut()} title="Cerrar sesión">
+              <span className="keia-salir-texto">{perfil.nombre?`${perfil.nombre} · `:""}</span>Salir
+            </button>
+            <BotonPerfil color={(MIEMBROS.find(x=>x.name===perfil.nombre)||{}).color||"#D94A32"} font={FONT_TEXTO}/>
           </div>
         </div>
         {/* Banner actualización */}
         {updateAvailable&&(
-          <div style={{background:"#FEF6DC",borderTop:"1px solid #F1DE9C",padding:"6px 32px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+          <div style={{margin:"0 10px 10px",background:"rgba(254,246,220,.95)",borderRadius:14,padding:"7px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
             <span style={{fontSize:11,color:"#A8341F",fontWeight:600}}>🔄 Hay una nueva versión del dashboard disponible</span>
             <button onClick={()=>window.location.replace(`${window.location.pathname}?v=${Date.now()}`)}
-              style={{background:"#D97706",color:"#FFF",border:"none",borderRadius:6,padding:"5px 14px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+              style={{background:"#D97706",color:"#FFF",border:"none",borderRadius:99,padding:"5px 14px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
               Actualizar ahora
             </button>
           </div>
         )}
-        {/* Tab bar */}
-        <div className="blesk-tabs-wrap" style={{padding:"0 24px",display:"flex",gap:2,overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
-          {TABS.map(t=>(
-            <button key={t.id} className="keia-tab" onClick={()=>setTab(t.id)} style={{
-              position:"relative",
-              background:"transparent",
-              color:tab===t.id?"#FFFFFF":"#A8A29E",
-              border:"none",
-              padding:"11px 14px 13px",
-              fontSize:13,fontWeight:tab===t.id?600:500,
-              cursor:"pointer",fontFamily:"inherit",
-              whiteSpace:"nowrap",
-            }}>
-              {t.label}
-              {tab===t.id&&<span aria-hidden="true" style={{position:"absolute",left:14,right:14,bottom:0,height:3,borderRadius:"3px 3px 0 0",background:"#D94A32"}}/>}
-            </button>
-          ))}
-        </div>
-      </div>
+      </header>
+
+      {/* ── HERO: saludo grande + cifra destacada (cambia con cada pestaña) ── */}
+      <Hero key={`hero-${tab}`} {...hero} font={FONT_TEXTO} fontTit={FONT_TITULOS}/>
 
       {/* Aviso de novedades tras actualizar (5 s, dentro de la app) */}
       <Novedades font={FONT_TEXTO}/>
@@ -11927,7 +11932,8 @@ export default function Dashboard(){
 
       {/* ── CONTENT ── */}
       {/* Solo cuentan los movimientos de 💰 Ingresos y gastos; las facturas son solo registro */}
-      <div className="blesk-content" style={{padding:"28px 32px 48px",maxWidth:1400,margin:"0 auto"}}>
+      <div className="keia-hoja">
+      <div key={tab} className="blesk-content keia-entrar" style={{padding:"28px 32px 48px",maxWidth:1400,margin:"0 auto"}}>
         {tab==="inicio"     && <InicioTab bp={bp} cv={cv} ing={ingC} gas={gasC} hojas={hojas} projects={projects} tareas={tareas} setTareas={setTareas}/>}
         {tab==="equipo"     && <EquipoTab     bp={bp} cv={cv} ing={ingC} gas={gasC} hojas={hojas} projects={projects} ultimaAct={ultimaAct}/>}
         {tab==="proyectos"   && <ProyectosTab  projects={projects} setProjects={setProjects} setProjectsDirectly={setProjectsDirectly} crm={crm} setCRM={setCRM} customers={cv} ingresos={ingC} gastos={gasC} hojas={hojas} ing={ingC} cv={cv} bp={bp}/>}
@@ -11939,6 +11945,7 @@ export default function Dashboard(){
         {tab==="mta"        && <MTAModelTab   mta={mta} setMta={setMta}/>}
         {tab==="calendario" && <CalendarioTab tareas={tareas} setTareas={setTareas} projects={projects}/>}
         {tab==="evaluaciones" && <EvaluacionesTab/>}
+      </div>
       </div>
     </div>
   );
