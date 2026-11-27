@@ -12,6 +12,15 @@
 
 export const NOVEDADES = [
   {
+    id: "2026-11-27-1",
+    fecha: "27/11/2026",
+    titulo: "📣 Aviso de hojas de gastos aprobadas",
+    cambios: [
+      "Cuando la líder financiera aprueba una hoja de gastos, a todo el equipo le llega una notificación con quién la envió, el importe y el proyecto.",
+      "Llega a quien tenga activadas las notificaciones de la app (las mismas de los recordatorios de horas).",
+    ],
+  },
+  {
     id: "2026-11-26-15",
     fecha: "26/11/2026",
     titulo: "🧩 Formación ahora es Tech Skills",

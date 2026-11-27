@@ -3487,6 +3487,9 @@ ${form.tickets&&form.tickets.length>0?`
     if(error||!cambiadas?.length){ console.error("❌ cambiar estado solicitud",error); if(error?.code!=="42501") alert("No se ha podido guardar el cambio. Recarga la página e inténtalo otra vez."); return; }
     setSolicitudes(prev=>prev.map(s=>s.id===id?{...s,estado}:s));
     // Al aprobarla, se añade sola al listado de hojas de gasto del dashboard
+    // Al aprobarla se avisa a todo el equipo con una notificación (una sola vez por hoja)
+    if(estado==="aprobada") sb.auth.getSession().then(({data})=>fetch(`/api/aviso-hoja?id=${id}`,{method:"POST",headers:{Authorization:`Bearer ${data?.session?.access_token||""}`}}))
+      .then(r=>r?.json?.()).then(r=>console.log("📣 aviso hoja aprobada",r)).catch(e=>console.error("❌ aviso hoja",e));
     if(estado==="aprobada"){ const s=solicitudes.find(x=>x.id===id); if(s&&!datosSolicitud(s).hoja_id){ procesadas.current.add(s.id); const igual=hojaParecida(s); if(igual) guardarEnlace(s,igual.id); else añadirAHojas(s); } }
   }
 
